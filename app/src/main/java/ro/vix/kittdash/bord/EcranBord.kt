@@ -1,6 +1,7 @@
 package ro.vix.kittdash.bord
 
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -55,14 +56,20 @@ fun EcranBord(
     val context = LocalContext.current
     val bord = remember { BordKitt() }
     val muzica = remember { Muzica(context) }
-    val netezitor = remember { Netezitor(melodiaAcum = { muzica.melodia()?.text }) }
     var stare by remember { mutableStateOf(StareBord()) }
 
     // Bucla de desen porneste o singura data si tine pana la iesire, deci
-    // trebuie sa citeasca de fiecare data ULTIMA stare a masinii. Fara
-    // asta ramane agatata de starea din clipa pornirii si bordul arata
-    // vesnic zero, desi datele curg.
+    // trebuie sa citeasca de fiecare data ULTIMA stare a masinii si ULTIMA
+    // tema. Fara asta ramane agatata de ce era in clipa pornirii.
     val masinaAcum by rememberUpdatedState(masina)
+    val noapteAcum by rememberUpdatedState(isSystemInDarkTheme())
+
+    val netezitor = remember {
+        Netezitor(
+            melodiaAcum = { muzica.melodia()?.text },
+            esteNoapte = { noapteAcum },
+        )
+    }
 
     // Un cadru nou la fiecare cadru al ecranului.
     LaunchedEffect(Unit) {

@@ -48,6 +48,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalContext
 import ro.vix.kittdash.bord.EcranBord
+import ro.vix.kittdash.masina.AdaptorTinutMinte
+import ro.vix.kittdash.obd.CarStateRepository
 import ro.vix.kittdash.muzica.Muzica
 import ro.vix.kittdash.obd.CarState
 import ro.vix.kittdash.obd.Marime
@@ -98,9 +100,17 @@ class MainActivity : ComponentActivity() {
      * iar cand ecranul se stingea atingerile se pierdeau.
      */
     private fun pornesteDinIntent(intent: Intent?) {
-        val adresa = intent?.getStringExtra("adresa") ?: return
-        val sonda = intent.getBooleanExtra("sonda", false)
-        ObdService.porneste(this, adresa, sonda)
+        val adresa = intent?.getStringExtra("adresa")
+        if (adresa != null) {
+            ObdService.porneste(this, adresa, intent.getBooleanExtra("sonda", false))
+            return
+        }
+        // Fara nimic anume cerut: ne legam singuri la adaptorul de data
+        // trecuta. Cand urci in masina vrei bordul, nu o lista de aparate.
+        val tinutMinte = AdaptorTinutMinte.citeste(this) ?: return
+        if (!CarStateRepository.INSTANTA.stare.value.conectat) {
+            ObdService.porneste(this, tinutMinte)
+        }
     }
 
     private fun cerePermisiunileNecesare() {
@@ -145,7 +155,7 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
             fontFamily = FontFamily.Monospace,
         )
         Text(
-            text = "etapa 2 - datele hibride",
+            text = "bord pentru Lexus NX 300h",
             color = ROSU_STINS,
             fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,

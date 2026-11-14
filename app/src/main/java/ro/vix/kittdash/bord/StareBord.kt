@@ -39,6 +39,10 @@ data class StareBord(
     val melodie: String? = null,
     /** Cat a strabatut banda cu melodia, 0..1. */
     val melodieProgres: Float = 0f,
+    /** Noaptea bordul se stinge, ca sa nu bata in parbriz. */
+    val noapte: Boolean = false,
+    /** Ce merita spus soferului acum. */
+    val avertizari: List<Avertizare> = emptyList(),
 )
 
 /**
@@ -57,6 +61,15 @@ class Netezitor(
      * n-avem acces la notificari. E intrebat rar, o data pe secunda.
      */
     private val melodiaAcum: () -> String? = { null },
+    /** Spune daca e noapte: masina stie, telefonul se ia dupa tema. */
+    private val esteNoapte: () -> Boolean = { false },
+    /**
+     * Ceasul de perete. Separat de [ceas], care masoara doar scurgerea
+     * timpului: citirile din masina poarta ora lumii, nu nanosecundele de
+     * la pornire, iar daca le-am compara intre ele ar iesi ca toate datele
+     * sunt vechi.
+     */
+    private val ceasulLumii: () -> Long = { System.currentTimeMillis() },
 ) {
 
     private var ultimaNs = ceas()
@@ -111,6 +124,8 @@ class Netezitor(
             scanerFaza = (t * SCANER_PE_SECUNDA) % (2f * SCANER_PASI),
             vocePlin = voce,
             timpS = t,
+            noapte = esteNoapte(),
+            avertizari = Avertizare.din(masina, ceasulLumii()),
             melodie = melodiaDeAratat,
             melodieProgres = if (melodiaDeAratat == null) {
                 0f

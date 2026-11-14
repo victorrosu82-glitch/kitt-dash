@@ -34,6 +34,39 @@ Puterea bateriei iese din tensiune ori curent. **Semnul conteaza**: plus inseamn
 bateria da curent (tractiune), minus ca primeste (incarcare sau recuperare la franare).
 Bordul KITT asta deseneaza, tractiunea in sus si recuperarea in jos.
 
+### Finisaje (etapa 5)
+
+- **se conecteaza singur** la adaptorul de data trecuta, si pe telefon, si pe
+  ecranul masinii. Alegi adaptorul o data, din lista; dupa aceea urci si merge;
+- **zi si noapte**: noaptea bordul trage o perdea subtire peste tot desenul,
+  ca sa nu bata in parbriz. Pe masina se ia dupa ce spune Android Auto, care
+  are senzor de lumina; pe telefon, dupa tema sistemului;
+- **avertizari**, una singura si cea mai grava, sub ceas: motor fierbinte
+  (peste 105 °C), tensiune de bord mica (sub 11,8 V), bateria HV scazuta (sub
+  35 %) si adaptorul care a amutit fara sa pice legatura - se intampla la
+  clonele ELM327. Cele grave clipesc rar;
+- **temperatura de afara** si **melodia care canta**, trecand o data ca o banda
+  prin locul modulatorului de voce.
+
+### APK-ul de predat
+
+```
+gradlew.bat assembleRelease
+```
+
+apoi, din `build-tools.0.0`, `zipalign` si `apksigner` (vezi mai sus).
+Rezultatul: **2,04 MB**, semnat.
+
+Minificarea cere grija: Android Auto porneste serviciul dupa numele scris in
+manifest, nu printr-un apel din cod, deci R8 l-ar sterge fara sa spuna nimic -
+bordul pur si simplu n-ar aparea pe ecranul masinii. Regulile din
+`app/proguard-rules.pro` il tin pe loc, impreuna cu serviciul OBD si cel de
+notificari.
+
+Varianta de predat **nu are** butonul Simulator de pe ecranul masinii si
+foloseste lista oficiala de gazde Android Auto, nu "oricine" - deci emulatorul
+DHU merge numai cu varianta de lucru.
+
 ### Android Auto
 
 Probat pe emulatorul Desktop Head Unit (15.11.2026, 00:11): bordul se deseneaza
@@ -76,9 +109,9 @@ Nicio formula nu e scrisa din memorie. Fiecare are o dovada pe masina asta:
 | 0 | Ce date da masina prin Viecar | **gata** (vezi mai sus) |
 | 1 | Conexiunea, datele standard, ecran de test | **gata, probata pe masina** |
 | 2 | Datele hibride (baterie HV, kW, mod) | **gata, probata pe masina** |
-| 3 | Bordul KITT pe telefon | **gata**, de vazut in mers |
+| 3 | Bordul KITT pe telefon | **gata** |
 | 4 | Android Auto | **merge pe emulator**, de probat pe Lexus |
-| 5 | Finisaje | nu a inceput |
+| 5 | Finisaje | **gata** |
 
 ## Sonda de pe laptop (etapa 0)
 

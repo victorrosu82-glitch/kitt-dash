@@ -59,6 +59,7 @@ class BordKitt {
     }
     private val oval = RectF()
 
+
     /**
      * Deseneaza un cadru pe toata suprafata data.
      *
@@ -98,6 +99,11 @@ class BordKitt {
         canvas.restoreToCount(salvatDreapta)
 
         canvas.restoreToCount(salvat)
+
+        // Noaptea tragem o perdea subtire peste tot. E mai bine decat sa
+        // stingem fiecare culoare in parte: asa raman aceleasi culori, doar
+        // cu mai putina lumina, si nu se poate uita vreuna.
+        if (stare.noapte) canvas.drawColor(PERDEA_NOAPTE)
     }
 
     // --- partile bordului ----------------------------------------------
@@ -193,8 +199,24 @@ class BordKitt {
         )
         text(canvas, 640f, 488f, 28f, rosuSters, "km/h", Paint.Align.CENTER, 4f)
 
-        modulatorVoce(canvas, stare)
+        modulatorVoce(canvas, stare, intindere)
+        avertizari(canvas, stare)
         canvas.restoreToCount(salvat)
+    }
+
+    /**
+     * Avertizarile, sub ceas. Una singura: cea mai grava. Doua randuri pe un
+     * bord de masina nu se citesc din mers, iar daca motorul e fierbinte nu
+     * conteaza ca si bateria e scazuta.
+     */
+    private fun avertizari(canvas: Canvas, stare: StareBord) {
+        val prima = stare.avertizari.firstOrNull() ?: return
+        val culoare = if (prima.gravitate == Avertizare.Gravitate.MARE) rosu else ambra
+        // Clipeste rar, cat sa se vada, nu cat sa enerveze.
+        val vizibila = prima.gravitate == Avertizare.Gravitate.MICA ||
+            (stare.timpS * 1.6f).toInt() % 2 == 0
+        if (!vizibila) return
+        text(canvas, 640f, 566f, 30f, culoare, prima.text, Paint.Align.CENTER, 4f, gros = true)
     }
 
     private fun coloanaStanga(canvas: Canvas, stare: StareBord) {
@@ -271,10 +293,10 @@ class BordKitt {
      * Modulatorul de voce: 24 de bare care joaca cu puterea. Cand nu avem
      * legatura cu masina n-are ce sa joace, asa ca in locul lui scriem de ce.
      */
-    private fun modulatorVoce(canvas: Canvas, stare: StareBord) {
+    private fun modulatorVoce(canvas: Canvas, stare: StareBord, intindere: Float) {
         val melodie = stare.melodie
         if (melodie != null) {
-            bandaMelodie(canvas, melodie, stare.melodieProgres)
+            bandaMelodie(canvas, melodie, stare.melodieProgres, intindere)
             return
         }
         if (!stare.areLegatura) {
@@ -304,13 +326,22 @@ class BordKitt {
      * Intra din dreapta si iese prin stanga, o singura data. Se stinge usor
      * la capete, ca sa nu apara si sa dispara brusc.
      */
-    private fun bandaMelodie(canvas: Canvas, melodie: String, progres: Float) {
+    private fun bandaMelodie(
+        canvas: Canvas,
+        melodie: String,
+        progres: Float,
+        intindere: Float,
+    ) {
         scris.textSize = 34f
         scris.letterSpacing = 0.06f
         val latimeText = scris.measureText(melodie)
 
-        val deLa = LATIME_BANDA + 20f
-        val panaLa = -latimeText - 20f
+        // Banda tine toata latimea ecranului, nu doar caietul de 1280:
+        // altfel, pe un ecran lat, textul intra peste coloana din dreapta.
+        val stanga = -intindere
+        val dreapta = LATIME_BANDA + intindere
+        val deLa = dreapta + 20f
+        val panaLa = stanga - latimeText - 20f
         val x = deLa + (panaLa - deLa) * progres
 
         // Se stinge in primele si ultimele doua zecimi ale drumului.
@@ -321,7 +352,7 @@ class BordKitt {
         }
 
         val salvat = canvas.save()
-        canvas.clipRect(0f, 612f, LATIME_BANDA, 668f)
+        canvas.clipRect(stanga, 612f, dreapta, 668f)
         scris.color = ambra
         scris.alpha = (opacitate * 255).roundToInt().coerceIn(0, 255)
         scris.textAlign = Paint.Align.LEFT
@@ -417,6 +448,13 @@ class BordKitt {
          * de desen, nu pe ecran: banda sta sub ceas, unde e si modulatorul.
          */
         const val LATIME_BANDA = 1280f
+
+        /**
+         * Cat de tare se stinge bordul noaptea. 0x8C din 0xFF inseamna ca
+         * mai trece cam 45% din lumina - destul cat sa se citeasca, putin
+         * cat sa nu bata in parbriz.
+         */
+        val PERDEA_NOAPTE = Color.argb(0x8C, 0, 0, 0)
 
         /** Ce scriem acolo unde masina nu da valoarea. */
         const val LIPSA = "---"

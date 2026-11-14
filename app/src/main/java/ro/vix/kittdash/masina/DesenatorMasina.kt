@@ -29,7 +29,12 @@ class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
 
     private val bord = BordKitt()
     private val muzica = Muzica(carContext)
-    private val netezitor = Netezitor(melodiaAcum = { muzica.melodia()?.text })
+    private val netezitor = Netezitor(
+        melodiaAcum = { muzica.melodia()?.text },
+        // Masina stie ea cand e noapte: are senzor de lumina si stie daca
+        // sunt aprinse farurile. Ne luam dupa ea.
+        esteNoapte = { carContext.isDarkMode },
+    )
     private val mana = Handler(Looper.getMainLooper())
 
     private var suprafata: Surface? = null
