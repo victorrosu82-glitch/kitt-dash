@@ -34,6 +34,25 @@ Puterea bateriei iese din tensiune ori curent. **Semnul conteaza**: plus inseamn
 bateria da curent (tractiune), minus ca primeste (incarcare sau recuperare la franare).
 Bordul KITT asta deseneaza, tractiunea in sus si recuperarea in jos.
 
+### Android Auto
+
+Probat pe emulatorul Desktop Head Unit (15.11.2026, 00:11): bordul se deseneaza
+pe ecranul masinii, umple latimea si nu intra sub barele Android Auto, iar
+valorile curg. Ramane proba pe ecranul Lexusului.
+
+Ca sa pornesti emulatorul: pe telefon, in **Android Auto > meniu > Setari pentru
+dezvoltatori**, apasa **Porniti serverul unitatii principale**. E de unica
+folosinta: dupa fiecare incercare trebuie apasat din nou. Apoi:
+
+```
+cd C:\Users\vix\Proiecte\dhu
+.\adb.exe forward tcp:5277 tcp:5277
+.\desktop-head-unit.exe
+```
+
+In bara de sus a ecranului de masina, butonul **Simulator** (numai in varianta
+de lucru) porneste datele fara masina si fara adaptor.
+
 ### Cum au fost verificate formulele
 
 Nicio formula nu e scrisa din memorie. Fiecare are o dovada pe masina asta:
@@ -57,8 +76,8 @@ Nicio formula nu e scrisa din memorie. Fiecare are o dovada pe masina asta:
 | 0 | Ce date da masina prin Viecar | **gata** (vezi mai sus) |
 | 1 | Conexiunea, datele standard, ecran de test | **gata, probata pe masina** |
 | 2 | Datele hibride (baterie HV, kW, mod) | **gata, probata pe masina** |
-| 3 | Bordul KITT pe telefon | **gata pe simulator**, de vazut in mers |
-| 4 | Android Auto | nu a inceput |
+| 3 | Bordul KITT pe telefon | **gata**, de vazut in mers |
+| 4 | Android Auto | **merge pe emulator**, de probat pe Lexus |
 | 5 | Finisaje | nu a inceput |
 
 ## Sonda de pe laptop (etapa 0)
