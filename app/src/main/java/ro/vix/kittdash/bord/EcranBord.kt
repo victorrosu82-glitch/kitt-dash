@@ -25,6 +25,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import ro.vix.kittdash.muzica.Muzica
 import ro.vix.kittdash.obd.CarState
 
 /**
@@ -51,8 +52,10 @@ fun EcranBord(
     modifier: Modifier = Modifier,
     laAtingere: (() -> Unit)? = null,
 ) {
+    val context = LocalContext.current
     val bord = remember { BordKitt() }
-    val netezitor = remember { Netezitor() }
+    val muzica = remember { Muzica(context) }
+    val netezitor = remember { Netezitor(melodiaAcum = { muzica.melodia()?.text }) }
     var stare by remember { mutableStateOf(StareBord()) }
 
     // Bucla de desen porneste o singura data si tine pana la iesire, deci
@@ -73,7 +76,7 @@ fun EcranBord(
     // altfel ramane o fasie in mijlocul ecranului. Si dam deoparte barele
     // Android: ceasul telefonului acoperea tocmai numele masinii, iar
     // butoanele de navigare stateau peste bara de putere.
-    val activitate = LocalContext.current.activitate()
+    val activitate = context.activitate()
     val vedere = LocalView.current
     DisposableEffect(activitate) {
         val inainte = activitate?.requestedOrientation

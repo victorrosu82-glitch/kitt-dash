@@ -201,8 +201,11 @@ class BordKitt {
         text(canvas, 60f, 118f, 22f, eticheta, "COOLANT", Paint.Align.LEFT, 3f)
         text(canvas, 60f, 160f, 44f, valoare, grade(stare.tempLichid), Paint.Align.LEFT)
 
-        text(canvas, 60f, 204f, 22f, eticheta, "FUEL", Paint.Align.LEFT, 3f)
-        text(canvas, 60f, 246f, 44f, valoare, procent(stare.combustibil), Paint.Align.LEFT)
+        // In machta aici statea FUEL. Masina asta nu da nivelul de
+        // combustibil (PID 2F raspunde NO DATA), deci locul ramanea mort cu
+        // un "---" vesnic. Il ia temperatura de afara, care chiar vine.
+        text(canvas, 60f, 204f, 22f, eticheta, "OUTSIDE", Paint.Align.LEFT, 3f)
+        text(canvas, 60f, 246f, 44f, valoare, grade(stare.tempExterioara), Paint.Align.LEFT)
 
         text(canvas, 60f, 290f, 22f, eticheta, "HV BATTERY", Paint.Align.LEFT, 3f)
         // Paisprezece trepte, de jos in sus. Primele trei sunt rosii: sub
@@ -269,6 +272,11 @@ class BordKitt {
      * legatura cu masina n-are ce sa joace, asa ca in locul lui scriem de ce.
      */
     private fun modulatorVoce(canvas: Canvas, stare: StareBord) {
+        val melodie = stare.melodie
+        if (melodie != null) {
+            bandaMelodie(canvas, melodie, stare.melodieProgres)
+            return
+        }
         if (!stare.areLegatura) {
             text(
                 canvas, 640f, 648f, 26f, ambra,
@@ -288,6 +296,39 @@ class BordKitt {
             val x = 496f + i * 12f
             canvas.drawRect(x, 640f - h / 2f, x + 8f, 640f + h / 2f, umplere)
         }
+    }
+
+    /**
+     * Melodia noua, trecand ca o banda prin locul modulatorului.
+     *
+     * Intra din dreapta si iese prin stanga, o singura data. Se stinge usor
+     * la capete, ca sa nu apara si sa dispara brusc.
+     */
+    private fun bandaMelodie(canvas: Canvas, melodie: String, progres: Float) {
+        scris.textSize = 34f
+        scris.letterSpacing = 0.06f
+        val latimeText = scris.measureText(melodie)
+
+        val deLa = LATIME_BANDA + 20f
+        val panaLa = -latimeText - 20f
+        val x = deLa + (panaLa - deLa) * progres
+
+        // Se stinge in primele si ultimele doua zecimi ale drumului.
+        val opacitate = when {
+            progres < 0.2f -> progres / 0.2f
+            progres > 0.8f -> (1f - progres) / 0.2f
+            else -> 1f
+        }
+
+        val salvat = canvas.save()
+        canvas.clipRect(0f, 612f, LATIME_BANDA, 668f)
+        scris.color = ambra
+        scris.alpha = (opacitate * 255).roundToInt().coerceIn(0, 255)
+        scris.textAlign = Paint.Align.LEFT
+        canvas.drawText(melodie, x, 652f, scris)
+        scris.alpha = 255
+        scris.letterSpacing = 0f
+        canvas.restoreToCount(salvat)
     }
 
     // --- unelte ----------------------------------------------------------
@@ -370,6 +411,12 @@ class BordKitt {
          */
         const val PUTERE_TRACTIUNE = 22f
         const val PUTERE_RECUPERARE = 24f
+
+        /**
+         * Cat de lata e banda pe care trece melodia. E masurata in caietul
+         * de desen, nu pe ecran: banda sta sub ceas, unde e si modulatorul.
+         */
+        const val LATIME_BANDA = 1280f
 
         /** Ce scriem acolo unde masina nu da valoarea. */
         const val LIPSA = "---"

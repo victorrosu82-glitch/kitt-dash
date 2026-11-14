@@ -54,6 +54,20 @@
             android:foregroundServiceType="connectedDevice" />
 
         <!--
+          Nu asculta notificari. Exista doar fiindca Android cere un serviciu
+          de acest fel ca sa dea voie cuiva sa intrebe ce melodie canta.
+        -->
+        <service
+            android:name=".muzica.AscultatorNotificari"
+            android:exported="false"
+            android:label="@string/app_name"
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            <intent-filter>
+                <action android:name="android.service.notification.NotificationListenerService" />
+            </intent-filter>
+        </service>
+
+        <!--
           Usa prin care intra Android Auto. Categoria de navigatie e cea care
           ne da o suprafata libera de desenat; fara ea am avea doar sabloane
           cu liste, care n-ar arata niciodata ca macheta.

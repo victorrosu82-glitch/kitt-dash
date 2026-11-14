@@ -11,6 +11,7 @@ import androidx.car.app.SurfaceCallback
 import androidx.car.app.SurfaceContainer
 import ro.vix.kittdash.bord.BordKitt
 import ro.vix.kittdash.bord.Netezitor
+import ro.vix.kittdash.muzica.Muzica
 import ro.vix.kittdash.obd.CarStateRepository
 
 /**
@@ -27,7 +28,8 @@ import ro.vix.kittdash.obd.CarStateRepository
 class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
 
     private val bord = BordKitt()
-    private val netezitor = Netezitor()
+    private val muzica = Muzica(carContext)
+    private val netezitor = Netezitor(melodiaAcum = { muzica.melodia()?.text })
     private val mana = Handler(Looper.getMainLooper())
 
     private var suprafata: Surface? = null

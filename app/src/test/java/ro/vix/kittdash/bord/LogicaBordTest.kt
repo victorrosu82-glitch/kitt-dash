@@ -1,6 +1,7 @@
 package ro.vix.kittdash.bord
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import ro.vix.kittdash.obd.CarState
@@ -151,7 +152,7 @@ class LogicaBordTest {
     @Test
     fun `valoarea desenata alearga dupa cea citita, fara s-o depaseasca`() {
         var ceas = 0L
-        val netezitor = Netezitor { ceas }
+        val netezitor = Netezitor(ceas = { ceas })
         val masina = CarState(
             conexiune = StareConexiune.CONECTAT,
             valori = mapOf(Marime.VITEZA to Citire(100.0, 0L)),
@@ -170,7 +171,7 @@ class LogicaBordTest {
     @Test
     fun `primul cadru nu sare direct la valoarea citita`() {
         var ceas = 0L
-        val netezitor = Netezitor { ceas }
+        val netezitor = Netezitor(ceas = { ceas })
         ceas += 16_000_000L
         val stare = netezitor.urmatoareaStare(
             CarState(valori = mapOf(Marime.VITEZA to Citire(100.0, 0L))),
@@ -181,7 +182,7 @@ class LogicaBordTest {
     @Test
     fun `fara citire valoarea ramane unde era, nu cade la zero`() {
         var ceas = 0L
-        val netezitor = Netezitor { ceas }
+        val netezitor = Netezitor(ceas = { ceas })
         val cuViteza = CarState(valori = mapOf(Marime.VITEZA to Citire(80.0, 0L)))
         repeat(200) {
             ceas += 16_000_000L
@@ -196,7 +197,7 @@ class LogicaBordTest {
     @Test
     fun `modulatorul de voce creste cu puterea, incotro ar merge ea`() {
         var ceas = 0L
-        val netezitor = Netezitor { ceas }
+        val netezitor = Netezitor(ceas = { ceas })
         val cuPutere = CarState(valori = mapOf(Marime.HV_PUTERE to Citire(-20.0, 0L)))
         repeat(200) {
             ceas += 16_000_000L
@@ -208,10 +209,89 @@ class LogicaBordTest {
             stare.vocePlin > 0.6f)
     }
 
+    // --- banda cu melodia -----------------------------------------------
+
+    @Test
+    fun `melodia gasita la pornire nu se anunta`() {
+        var ceas = 0L
+        val netezitor = Netezitor(ceas = { ceas }, melodiaAcum = { "Saliva" })
+        repeat(5) {
+            ceas += 1_100_000_000L
+            val stare = netezitor.urmatoareaStare(CarState())
+            assertNull(
+                "nu tu ai pus-o, doar ai urcat peste ea: ${stare.melodie}",
+                stare.melodie,
+            )
+        }
+    }
+
+    @Test
+    fun `melodia schimbata se anunta o singura data`() {
+        var ceas = 0L
+        var melodia = "Saliva"
+        val netezitor = Netezitor(ceas = { ceas }, melodiaAcum = { melodia })
+
+        // Prima intrebare doar afla ce canta.
+        ceas += 1_100_000_000L
+        netezitor.urmatoareaStare(CarState())
+
+        melodia = "Stargazing"
+        ceas += 1_100_000_000L
+        val dupaSchimbare = netezitor.urmatoareaStare(CarState())
+        assertEquals("Stargazing", dupaSchimbare.melodie)
+
+        // Dupa ce trece banda, modulatorul isi ia locul inapoi.
+        var ultima: StareBord? = null
+        repeat(20) {
+            ceas += 600_000_000L
+            ultima = netezitor.urmatoareaStare(CarState())
+        }
+        assertNull("banda trebuie sa treaca, nu sa ramana", ultima!!.melodie)
+    }
+
+    @Test
+    fun `banda strabate tot drumul, de la un capat la altul`() {
+        var ceas = 0L
+        var melodia: String? = "unu"
+        val netezitor = Netezitor(ceas = { ceas }, melodiaAcum = { melodia })
+        ceas += 1_100_000_000L
+        netezitor.urmatoareaStare(CarState())
+
+        melodia = "doi"
+        ceas += 1_100_000_000L
+        val inceput = netezitor.urmatoareaStare(CarState())
+        assertEquals("porneste de la zero", 0f, inceput.melodieProgres, 0.05f)
+
+        ceas += (Netezitor.SECUNDE_MELODIE * 1_000_000_000L / 2).toLong()
+        val mijloc = netezitor.urmatoareaStare(CarState())
+        assertEquals("la jumatatea drumului", 0.5f, mijloc.melodieProgres, 0.1f)
+    }
+
+    @Test
+    fun `fara acces la notificari bordul nu anunta nimic`() {
+        var ceas = 0L
+        val netezitor = Netezitor(ceas = { ceas }, melodiaAcum = { null })
+        repeat(10) {
+            ceas += 1_100_000_000L
+            assertNull(netezitor.urmatoareaStare(CarState()).melodie)
+        }
+    }
+
+    @Test
+    fun `temperatura de afara ajunge pe bord`() {
+        var ceas = 0L
+        val netezitor = Netezitor(ceas = { ceas })
+        ceas += 16_000_000L
+        val stare = netezitor.urmatoareaStare(
+            CarState(valori = mapOf(Marime.TEMP_EXTERIOARA to Citire(11.0, 1L))),
+        )
+        assertEquals(11f, stare.tempExterioara!!, 0.01f)
+    }
+
     @Test
     fun `starea bordului duce mai departe modul masinii`() {
         var ceas = 0L
-        val netezitor = Netezitor { ceas }
+        val netezitor = Netezitor(ceas = { ceas })
         ceas += 16_000_000L
         val stare = netezitor.urmatoareaStare(
             CarState(

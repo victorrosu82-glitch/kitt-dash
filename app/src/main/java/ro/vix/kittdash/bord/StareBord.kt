@@ -21,6 +21,7 @@ data class StareBord(
     val tempLichid: Float? = null,
     val combustibil: Float? = null,
     val tempAer: Float? = null,
+    val tempExterioara: Float? = null,
     val tempBaterie: Float? = null,
     val mod: ModHibrid = ModHibrid.NECUNOSCUT,
     val areLegatura: Boolean = false,
@@ -31,6 +32,13 @@ data class StareBord(
     val vocePlin: Float = 0f,
     /** Ceasul desenului, pentru undele modulatorului. */
     val timpS: Float = 0f,
+    /**
+     * Melodia de anuntat acum, sau null. Apare o singura data, cand se
+     * schimba melodia, si trece ca o banda peste modulatorul de voce.
+     */
+    val melodie: String? = null,
+    /** Cat a strabatut banda cu melodia, 0..1. */
+    val melodieProgres: Float = 0f,
 )
 
 /**
@@ -42,7 +50,14 @@ data class StareBord(
  * ori pe secunda. Intre doua citiri mergem spre valoarea noua cu un pas
  * proportional cu cat a trecut - acelasi lucru pe care il face si macheta.
  */
-class Netezitor(private val ceas: () -> Long = { System.nanoTime() }) {
+class Netezitor(
+    private val ceas: () -> Long = { System.nanoTime() },
+    /**
+     * De unde aflam ce cânta. Intoarce null cand nu canta nimic sau cand
+     * n-avem acces la notificari. E intrebat rar, o data pe secunda.
+     */
+    private val melodiaAcum: () -> String? = { null },
+) {
 
     private var ultimaNs = ceas()
     private var pornireNs = ultimaNs
@@ -52,6 +67,11 @@ class Netezitor(private val ceas: () -> Long = { System.nanoTime() }) {
     private var putere = 0f
     private var soc: Float? = null
     private var voce = 0f
+
+    private var ultimaIntrebareNs = 0L
+    private var melodiaStiuta: String? = null
+    private var melodiaDeAratat: String? = null
+    private var melodieInceputS = 0f
 
     fun urmatoareaStare(masina: CarState): StareBord {
         val acum = ceas()
@@ -73,6 +93,8 @@ class Netezitor(private val ceas: () -> Long = { System.nanoTime() }) {
         val vocePropusa = min(1f, abs(putere) / PUTERE_VOCE_PLINA)
         voce += (vocePropusa - voce) * min(1f, dt * VOCE_PE_SECUNDA)
 
+        urmaresteMelodia(acum, t)
+
         return StareBord(
             vitezaKmh = viteza,
             turatie = turatie,
@@ -81,6 +103,7 @@ class Netezitor(private val ceas: () -> Long = { System.nanoTime() }) {
             tempLichid = masina.valoare(Marime.TEMP_LICHID)?.toFloat(),
             combustibil = masina.valoare(Marime.NIVEL_COMBUSTIBIL)?.toFloat(),
             tempAer = masina.valoare(Marime.TEMP_AER_ADMISIE)?.toFloat(),
+            tempExterioara = masina.valoare(Marime.TEMP_EXTERIOARA)?.toFloat(),
             tempBaterie = null,
             mod = ModHibrid.din(masina),
             areLegatura = masina.conectat,
@@ -88,7 +111,36 @@ class Netezitor(private val ceas: () -> Long = { System.nanoTime() }) {
             scanerFaza = (t * SCANER_PE_SECUNDA) % (2f * SCANER_PASI),
             vocePlin = voce,
             timpS = t,
+            melodie = melodiaDeAratat,
+            melodieProgres = if (melodiaDeAratat == null) {
+                0f
+            } else {
+                ((t - melodieInceputS) / SECUNDE_MELODIE).coerceIn(0f, 1f)
+            },
         )
+    }
+
+    /**
+     * Intreaba o data pe secunda ce cânta. Cand melodia s-a schimbat,
+     * porneste banda; dupa ce trece, modulatorul isi ia locul inapoi.
+     *
+     * Prima melodie gasita la pornire nu se anunta: n-ai schimbat-o tu
+     * atunci, doar ai urcat in masina peste ea.
+     */
+    private fun urmaresteMelodia(acumNs: Long, t: Float) {
+        if (melodiaDeAratat != null && t - melodieInceputS >= SECUNDE_MELODIE) {
+            melodiaDeAratat = null
+        }
+        if (acumNs - ultimaIntrebareNs < NS_INTRE_INTREBARI) return
+        val primaOara = ultimaIntrebareNs == 0L
+        ultimaIntrebareNs = acumNs
+
+        val acum = melodiaAcum()
+        if (acum != null && acum != melodiaStiuta && !primaOara) {
+            melodiaDeAratat = acum
+            melodieInceputS = t
+        }
+        melodiaStiuta = acum
     }
 
     private fun apropie(acum: Float, tinta: Float?, dt: Float, viteza: Float): Float {
@@ -106,6 +158,12 @@ class Netezitor(private val ceas: () -> Long = { System.nanoTime() }) {
 
         /** Puterea la care modulatorul de voce e plin. */
         const val PUTERE_VOCE_PLINA = 25f
+
+        /** Cat tine banda cu melodia, de la un capat la altul. */
+        const val SECUNDE_MELODIE = 9f
+
+        /** Cat de rar intrebam ce cânta: o data pe secunda ajunge. */
+        const val NS_INTRE_INTREBARI = 1_000_000_000L
 
         /** Cate casute are scanerul si cat de repede le strabate. */
         const val SCANER_PASI = 29f

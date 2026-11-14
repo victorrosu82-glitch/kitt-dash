@@ -12,6 +12,7 @@ enum class Marime(val eticheta: String, val unitate: String) {
     CLAPETA("Clapeta", "%"),
     TEMP_LICHID("Temp. lichid racire", "°C"),
     TEMP_AER_ADMISIE("Temp. aer admisie", "°C"),
+    TEMP_EXTERIOARA("Temp. exterioara", "°C"),
     TENSIUNE_MODUL("Tensiune modul", "V"),
     NIVEL_COMBUSTIBIL("Combustibil", "%"),
     TIMP_FUNCTIONARE("Timp de la pornire", "s"),
@@ -64,6 +65,14 @@ enum class ObdPid(
     TEMP_AER_ADMISIE(
         0x0F, 1, null, 2000L,
         listOf(Marime.TEMP_AER_ADMISIE to { b: IntArray -> b[0] - 40.0 }),
+    ),
+    /**
+     * Temperatura de afara. O dau amandoua calculatoarele; o cerem de la cel
+     * al motorului, ca sa nu mai schimbam adresa pentru ea.
+     */
+    TEMP_EXTERIOARA(
+        0x46, 1, null, 5000L,
+        listOf(Marime.TEMP_EXTERIOARA to { b: IntArray -> b[0] - 40.0 }),
     ),
     TENSIUNE_MODUL(
         0x42, 2, null, 2000L,

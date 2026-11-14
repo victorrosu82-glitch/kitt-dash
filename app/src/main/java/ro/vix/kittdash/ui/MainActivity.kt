@@ -46,7 +46,9 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.ui.platform.LocalContext
 import ro.vix.kittdash.bord.EcranBord
+import ro.vix.kittdash.muzica.Muzica
 import ro.vix.kittdash.obd.CarState
 import ro.vix.kittdash.obd.Marime
 import ro.vix.kittdash.obd.ModHibrid
@@ -151,6 +153,34 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
 
         Spacer(Modifier.height(16.dp))
         PanouStare(stare)
+
+        // Melodia de pe bord are nevoie de acces la notificari, dat o
+        // singura data, de mana, din Setari.
+        val context = LocalContext.current
+        val muzica = remember { Muzica(context) }
+        var areMuzica by remember { mutableStateOf(muzica.areVoie()) }
+        if (!areMuzica) {
+            Spacer(Modifier.height(8.dp))
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(PANOU, RoundedCornerShape(6.dp))
+                    .clickable {
+                        context.startActivity(muzica.intentSetari())
+                        areMuzica = true
+                    }
+                    .padding(12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = "Bordul poate anunta melodia care canta. " +
+                        "Atinge aici si bifeaza KITT Dash in lista.",
+                    color = AMBRA,
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
+                )
+            }
+        }
 
         Spacer(Modifier.height(12.dp))
         // Trei butoane nu incap pe un rand de telefon: fiecare primeste o

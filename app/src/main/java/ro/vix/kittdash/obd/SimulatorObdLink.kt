@@ -63,8 +63,14 @@ class SimulatorObdLink(
         c == "ATDP" -> "AUTO, ISO 15765-4 (CAN 11/500)\r\r"
         c == "ATRV" -> "13.9V\r\r"
         c.startsWith("AT") -> "OK\r\r"
-        c == "0100" -> "4100BE3FA813\r\r"
-        c == "0120" -> "412080000000\r\r"
+        // Mastile se socotesc din ce stie simulatorul sa raspunda, ca sa nu
+        // anunte altceva decat da. Prima data erau scrise de mana si
+        // temperatura de afara lipsea din ele, desi simulatorul o avea.
+        c == "0100" -> masca(0x00)
+        c == "0120" -> masca(0x20)
+        c == "0140" -> masca(0x40)
+        c == "0160" -> masca(0x60)
+        c == "0180" -> masca(0x80)
         c.startsWith("01") && c.length >= 4 -> raspundePid(c)
         else -> "?\r\r"
     }
@@ -89,6 +95,7 @@ class SimulatorObdLink(
         ObdPid.POZITIE_CLAPETA -> intArrayOf(procentOctet(drum.clapeta))
         ObdPid.TEMP_LICHID -> intArrayOf((drum.tempLichid + 40).roundToInt().coerceIn(0, 255))
         ObdPid.TEMP_AER_ADMISIE -> intArrayOf((18.0 + 40).roundToInt())
+        ObdPid.TEMP_EXTERIOARA -> intArrayOf((11.0 + 40).roundToInt())
         ObdPid.TENSIUNE_MODUL -> {
             val mv = (drum.tensiune * 1000).roundToInt().coerceIn(0, 65535)
             intArrayOf(mv / 256, mv % 256)
@@ -108,6 +115,22 @@ class SimulatorObdLink(
             val i = if (iBrut < 0) iBrut + 0x10000 else iBrut
             intArrayOf(0x07, 0x00, v / 256, v % 256, i / 256, i % 256)
         }
+    }
+
+    /**
+     * Raspunsul la "ce PID-uri stii din grupa asta": 32 de biti, plus
+     * ultimul, care spune daca mai urmeaza o grupa.
+     */
+    private fun masca(baza: Int): String {
+        var biti = 0L
+        for (i in 0 until 32) {
+            val pid = baza + i + 1
+            if (ObdPid.dupaPid(pid) != null && pid !in pidLipsa) {
+                biti = biti or (1L shl (31 - i))
+            }
+        }
+        if (ObdPid.entries.any { it.pid > baza + 32 }) biti = biti or 1L
+        return "41%02X%08X".format(baza, biti) + "\r\r"
     }
 
     private fun procentOctet(procent: Double): Int =
