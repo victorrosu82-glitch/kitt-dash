@@ -129,7 +129,7 @@ tools/fals_elm327.py         ELM fals în Python, pentru proba sondei
 ```
 
 Desenătorul lucrează pe `android.graphics.Canvas`, nu pe ceva din Compose, tocmai ca la
-etapa 4 ecranul mașinii să-l poată folosi nespus nimic — primește altă pânză, atât.
+etapa 4 ecranul mașinii să-l poată folosi neschimbat — primește altă pânză, atât.
 
 ## Mediul de build
 
