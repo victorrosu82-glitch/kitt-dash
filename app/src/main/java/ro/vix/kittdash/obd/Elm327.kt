@@ -48,6 +48,13 @@ class Elm327(private val legatura: ObdLink) {
     }
 
     /**
+     * Trimite o comanda si intoarce raspunsul brut, nedecodat. Serveste
+     * sondei hibride, care are nevoie sa vada exact ce spune masina.
+     */
+    fun comandaBruta(comanda: String, timeoutMs: Long = TIMEOUT_AT): String =
+        legatura.comanda(comanda, timeoutMs)
+
+    /**
      * Intreaba masina ce PID-uri standard da, grupa cu grupa (0100, 0120, ...).
      * Intoarce numerele PID-urilor anuntate.
      */
@@ -70,24 +77,47 @@ class Elm327(private val legatura: ObdLink) {
         return gasite
     }
 
+    /** Calculatorul caruia ii vorbim acum; null = cel implicit. */
+    private var antetCurent: String? = null
+
+    /** Dupa ce altcineva a umblat la ATSH (sonda), nu mai stim pe ce adresa suntem. */
+    fun uitaAntetul() {
+        antetCurent = "necunoscut"
+    }
+
     /**
-     * Cere un PID si intoarce valoarea decodata, sau null daca masina nu
-     * da PID-ul (NO DATA) ori raspunsul e stricat.
+     * Cere un PID si intoarce marimile decodate, sau o harta goala daca
+     * masina nu da PID-ul (NO DATA) ori raspunsul e stricat.
+     *
+     * Daca PID-ul sta la alt calculator (de ex. bateria HV, la 7E2),
+     * schimba intai adresa cu ATSH - dar numai cand chiar se schimba,
+     * fiindca fiecare comanda in plus fura din cele ~10 raspunsuri pe
+     * secunda pe care le da adaptorul.
      */
-    fun citeste(pid: ObdPid): Double? {
+    fun citeste(pid: ObdPid): Map<Marime, Double> {
+        if (pid.antet != antetCurent) {
+            val tinta = pid.antet ?: ANTET_IMPLICIT
+            val raspuns = legatura.comanda("ATSH$tinta", TIMEOUT_AT)
+            if (!raspuns.contineOk()) {
+                throw ObdException("Adaptorul a refuzat ATSH$tinta: ${raspuns.peUnRand()}")
+            }
+            antetCurent = pid.antet
+        }
         val raspuns = legatura.comanda(pid.cerere, TIMEOUT_PID)
-        val octeti = octetiDin(raspuns, pid.antetRaspuns) ?: return null
-        if (octeti.size < pid.octeti) return null
+        val octeti = octetiDin(raspuns, pid.antetRaspuns) ?: return emptyMap()
+        if (octeti.size < pid.octeti) return emptyMap()
         return try {
-            pid.decodeaza(octeti)
+            pid.marimi.associate { (marime, formula) -> marime to formula(octeti) }
         } catch (_: IndexOutOfBoundsException) {
-            null
+            emptyMap()
         }
     }
 
     companion object {
         private const val TIMEOUT_AT = 2_000L
         private const val TIMEOUT_RESET = 6_000L
+        /** Adresa motorului termic; cu ea lucreaza PID-urile obisnuite. */
+        private const val ANTET_IMPLICIT = "7E0"
         private const val TIMEOUT_PRIMA_CERERE = 8_000L
         // Viecar-ul real a depasit 1200 ms din cand in cand si a rupt legatura
         // degeaba. Mai bine asteptam, ca o reconectare costa secunde.
@@ -106,21 +136,52 @@ class Elm327(private val legatura: ObdLink) {
          * "410D" da [0x1F]. Merge si cu spatii, si cu raspunsuri pe mai multe
          * linii, si cu ecoul comenzii in fata.
          */
+        /** Cadru dintr-un raspuns lung: "0:419A07004580". */
+        private val CADRU = Regex("""(\d)\s*:\s*([0-9A-F]+)""")
+
         fun octetiDin(raspuns: String, antet: String): IntArray? {
-            val text = raspuns
-                .filter { it.isLetterOrDigit() }
-                .uppercase()
-            if ("NODATA" in text || "UNABLETOCONNECT" in text) return null
-            val poz = text.indexOf(antet)
+            val brut = raspuns.uppercase()
+            if ("NO DATA" in brut || "NODATA" in brut.replace(" ", "")) return null
+            if ("UNABLE TO CONNECT" in brut || "STOPPED" in brut) return null
+
+            // Raspunsurile mai lungi de 7 octeti vin in cadre numerotate:
+            //   008 0:419A07004580 1:000D0000000000
+            // Daca lipim totul de-a valma, cifra cadrului ("1") intra in
+            // date si strica octetii de dupa ea - asa a iesit un curent de
+            // 409 A acolo unde erau 1,3 A.
+            val cadre = CADRU.findAll(brut).toList()
+            val hex: String
+            var deAsteptat = -1
+            if (cadre.isNotEmpty()) {
+                hex = cadre.sortedBy { it.groupValues[1].toInt() }
+                    .joinToString("") { it.groupValues[2] }
+                // Inaintea cadrelor sta lungimea intregului raspuns, in hex.
+                val inainte = brut.substring(0, cadre.first().range.first)
+                    .filter { it in HEX }
+                if (inainte.isNotEmpty()) {
+                    deAsteptat = inainte.takeLast(3).toIntOrNull(16) ?: -1
+                }
+            } else {
+                hex = brut.filter { it in HEX }
+            }
+
+            val poz = hex.indexOf(antet)
             if (poz < 0) return null
-            val hex = text.substring(poz + antet.length)
-                .takeWhile { it in "0123456789ABCDEF" }
-            val lungime = hex.length - hex.length % 2
+            var date = hex.substring(poz + antet.length).takeWhile { it in HEX }
+            // Cadrul din urma e umplut cu zerouri pana la 7 octeti; lungimea
+            // anuntata spune cat din el conteaza cu adevarat.
+            if (deAsteptat > 0) {
+                val utili = (deAsteptat - antet.length / 2) * 2
+                if (utili in 1..date.length) date = date.substring(0, utili)
+            }
+            val lungime = date.length - date.length % 2
             if (lungime == 0) return null
             return IntArray(lungime / 2) { i ->
-                hex.substring(i * 2, i * 2 + 2).toInt(16)
+                date.substring(i * 2, i * 2 + 2).toInt(16)
             }
         }
+
+        private const val HEX = "0123456789ABCDEF"
 
         private fun String.peUnRand(): String =
             replace('\r', ' ').replace('\n', ' ').split(" ")

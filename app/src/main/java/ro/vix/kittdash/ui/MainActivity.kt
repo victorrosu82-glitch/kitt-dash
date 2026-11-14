@@ -1,6 +1,7 @@
 package ro.vix.kittdash.ui
 
 import android.Manifest
+import android.content.Intent
 import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -42,10 +43,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.abs
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import ro.vix.kittdash.obd.CarState
-import ro.vix.kittdash.obd.ObdPid
+import ro.vix.kittdash.obd.Marime
+import ro.vix.kittdash.obd.ModHibrid
+import ro.vix.kittdash.obd.ObdService
+import ro.vix.kittdash.obd.RandSonda
 import ro.vix.kittdash.obd.StareConexiune
 
 /** Culorile KITT, aceleasi ca in macheta. */
@@ -70,6 +75,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         cerePermisiunileNecesare()
+        pornesteDinIntent(intent)
         setContent {
             MaterialTheme {
                 Surface(color = FUNDAL, modifier = Modifier.fillMaxSize()) {
@@ -77,6 +83,21 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    /**
+     * Pornire din linia de comanda, pentru probele pe masina:
+     *
+     *   adb shell am start -n ro.vix.kittdash/.ui.MainActivity \
+     *       --es adresa 66:1E:87:02:48:A7 --ez sonda true
+     *
+     * Fara asta, probele depindeau de atins butoane la coordonate ghicite,
+     * iar cand ecranul se stingea atingerile se pierdeau.
+     */
+    private fun pornesteDinIntent(intent: Intent?) {
+        val adresa = intent?.getStringExtra("adresa") ?: return
+        val sonda = intent.getBooleanExtra("sonda", false)
+        ObdService.porneste(this, adresa, sonda)
     }
 
     private fun cerePermisiunileNecesare() {
@@ -97,6 +118,7 @@ class MainActivity : ComponentActivity() {
 private fun EcranDeTest(vm: MainViewModel = viewModel()) {
     val stare by vm.stare.collectAsStateWithLifecycle()
     var adaptoare by remember { mutableStateOf(vm.adaptoare()) }
+    var cuSonda by remember { mutableStateOf(false) }
 
     Column(
         modifier = Modifier
@@ -112,7 +134,7 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
             fontFamily = FontFamily.Monospace,
         )
         Text(
-            text = "etapa 1 - legatura cu masina",
+            text = "etapa 2 - datele hibride",
             color = ROSU_STINS,
             fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
@@ -160,6 +182,28 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
                     fontFamily = FontFamily.Monospace,
                 )
             } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { cuSonda = !cuSonda }
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = if (cuSonda) "[x]" else "[ ]",
+                        color = if (cuSonda) CYAN else ROSU_STINS,
+                        fontSize = 14.sp,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Text(
+                        text = "intreaba si calculatoarele hibride",
+                        color = if (cuSonda) CYAN else ROSU_STINS,
+                        fontSize = 12.sp,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+                Spacer(Modifier.height(6.dp))
                 Text(
                     text = "Alege adaptorul:",
                     color = ROSU_STINS,
@@ -167,9 +211,13 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
                     fontFamily = FontFamily.Monospace,
                 )
                 Spacer(Modifier.height(6.dp))
-                ListaAdaptoare(adaptoare, vm)
+                ListaAdaptoare(adaptoare, vm, cuSonda)
             }
         } else {
+            if (stare.sonda.isNotEmpty()) {
+                Spacer(Modifier.height(12.dp))
+                RezultatSonda(stare.sonda)
+            }
             Spacer(Modifier.height(16.dp))
             ListaValori(stare)
         }
@@ -199,6 +247,33 @@ private fun PanouStare(stare: CarState) {
             Rand("Viteza de citire", "%.1f raspunsuri/s".format(stare.raspunsuriPeSecunda), CYAN)
             Rand("PID-uri utile", "${stare.pidSuportate.size}", ROSU_STINS)
         }
+        if (stare.areDateHibride) {
+            val mod = ModHibrid.din(stare)
+            Rand(
+                "Mod",
+                mod.eticheta,
+                when (mod) {
+                    ModHibrid.REGEN -> CYAN
+                    ModHibrid.EV -> CYAN
+                    ModHibrid.HYBRID -> AMBRA
+                    else -> ROSU_STINS
+                },
+            )
+            // Puterea cu semn e greu de citit dintr-o cifra: spunem in
+            // cuvinte incotro merge curentul.
+            stare.valoare(Marime.HV_PUTERE)?.let { kw ->
+                val incotro = when {
+                    kw <= -ModHibrid.PRAG_REGEN_KW -> "spre baterie"
+                    kw >= ModHibrid.PRAG_REGEN_KW -> "spre roti"
+                    else -> "in echilibru"
+                }
+                Rand(
+                    "Putere",
+                    "%.1f kW %s".format(abs(kw), incotro),
+                    if (kw < 0) CYAN else ROSU,
+                )
+            }
+        }
         stare.mesajEroare?.let { Rand("Ultima eroare", it, AMBRA) }
         if (stare.erori > 0) Rand("Reconectari", "${stare.erori}", AMBRA)
         if (stare.simulator) Rand("Atentie", "date din simulator, nu din masina", AMBRA)
@@ -211,7 +286,7 @@ private fun PanouStare(stare: CarState) {
  * legat la ce nu trebuia. Cele care par adaptoare OBD sunt insemnate.
  */
 @Composable
-private fun ListaAdaptoare(adaptoare: List<Adaptor>, vm: MainViewModel) {
+private fun ListaAdaptoare(adaptoare: List<Adaptor>, vm: MainViewModel, cuSonda: Boolean) {
     LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
         items(adaptoare) { adaptor ->
             val pare = vm.pareAdaptorObd(adaptor)
@@ -219,7 +294,7 @@ private fun ListaAdaptoare(adaptoare: List<Adaptor>, vm: MainViewModel) {
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(PANOU, RoundedCornerShape(6.dp))
-                    .clickable { vm.conecteaza(adaptor) }
+                    .clickable { vm.conecteaza(adaptor, cuSonda) }
                     .padding(horizontal = 12.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -251,6 +326,35 @@ private fun ListaAdaptoare(adaptoare: List<Adaptor>, vm: MainViewModel) {
     }
 }
 
+/** Raspunsurile brute ale calculatoarelor hibride, pe scurt. */
+@Composable
+private fun RezultatSonda(randuri: List<RandSonda>) {
+    val cuDate = randuri.count { it.areDate }
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(PANOU, RoundedCornerShape(6.dp))
+            .padding(10.dp),
+        verticalArrangement = Arrangement.spacedBy(3.dp),
+    ) {
+        Text(
+            text = "Sonda hibrida: $cuDate din ${randuri.size} cereri au dat date",
+            color = if (cuDate > 0) CYAN else AMBRA,
+            fontSize = 12.sp,
+            fontWeight = FontWeight.Bold,
+            fontFamily = FontFamily.Monospace,
+        )
+        for (rand in randuri) {
+            Text(
+                text = "${rand.adresa} ${rand.cerere}  ${rand.raspuns.take(60)}",
+                color = if (rand.areDate) ROSU else ROSU_STINS,
+                fontSize = 10.sp,
+                fontFamily = FontFamily.Monospace,
+            )
+        }
+    }
+}
+
 @Composable
 private fun ListaValori(stare: CarState) {
     if (stare.valori.isEmpty()) {
@@ -264,8 +368,8 @@ private fun ListaValori(stare: CarState) {
     }
     val acum = System.currentTimeMillis()
     LazyColumn(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        items(ObdPid.entries.filter { it in stare.valori.keys }) { pid ->
-            val citire = stare.valori.getValue(pid)
+        items(Marime.entries.filter { it in stare.valori.keys }) { marime ->
+            val citire = stare.valori.getValue(marime)
             val veche = citire.vecheDeMs(acum) > 5_000
             Row(
                 modifier = Modifier
@@ -275,14 +379,14 @@ private fun ListaValori(stare: CarState) {
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
-                    text = pid.eticheta,
+                    text = marime.eticheta,
                     color = if (veche) ROSU_STINS else ROSU,
                     fontSize = 13.sp,
                     fontFamily = FontFamily.Monospace,
                     modifier = Modifier.weight(1f),
                 )
                 Text(
-                    text = "%.1f %s".format(citire.valoare, pid.unitate),
+                    text = "%.1f %s".format(citire.valoare, marime.unitate),
                     color = if (veche) ROSU_STINS else CYAN,
                     fontSize = 15.sp,
                     fontWeight = FontWeight.Bold,

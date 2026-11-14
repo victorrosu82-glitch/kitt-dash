@@ -22,6 +22,10 @@ class ObdPoller(
     private val depozit: CarStateRepository,
     private val faLegatura: () -> ObdLink,
     private val ceas: () -> Long = { System.currentTimeMillis() },
+    /** Daca da, dupa initializare intreaba o data calculatoarele hibride. */
+    private val faceSondaHibrida: Boolean = false,
+    /** Unde se scriu raspunsurile brute ale sondei, ca sa nu se piarda. */
+    private val scrieSonda: (List<RandSonda>) -> Unit = {},
 ) {
 
     /** Ruleaza pana la anularea corutinei. */
@@ -58,6 +62,16 @@ class ObdPoller(
                     )
                 }
                 Log.i(TAG, "Conectat la ${link.nume}, ${suportate.size} PID-uri utile")
+
+                if (faceSondaHibrida) {
+                    val randuri = SondaHibrid(elm).ruleaza()
+                    depozit.actualizeaza { it.copy(sonda = randuri) }
+                    scrieSonda(randuri)
+                    // Sonda a umblat la ATSH; bucla trebuie sa-l puna la loc.
+                    elm.uitaAntetul()
+                    Log.i(TAG, "Sonda hibrida: ${randuri.count { r -> r.areDate }} " +
+                        "raspunsuri cu date din ${randuri.size} cereri")
+                }
 
                 pauzaMs = PAUZA_MINIMA_MS
                 interogheazaLaNesfarsit(elm, suportate)
@@ -110,7 +124,7 @@ class ObdPoller(
                 if (acum < (urmatoarea[pid] ?: 0L)) continue
 
                 var aTacut = false
-                val valoare = try {
+                val valori = try {
                     val v = elm.citeste(pid)
                     taceriLaRand = 0
                     v
@@ -123,7 +137,7 @@ class ObdPoller(
                         )
                     }
                     Log.d(TAG, "${pid.eticheta}: ${e.message} (tacerea $taceriLaRand)")
-                    null
+                    emptyMap()
                 }
                 contorRaspunsuri++
                 amCerutCeva = true
@@ -133,7 +147,7 @@ class ObdPoller(
                     // Tacerea e vina legaturii, nu a PID-ului: nu-l scoatem
                     // din lista pentru ca adaptorul a intarziat o data.
                     aTacut -> Unit
-                    valoare == null -> {
+                    valori.isEmpty() -> {
                         val n = (ratari[pid] ?: 0) + 1
                         ratari[pid] = n
                         if (n >= RATARI_MAXIME) {
@@ -143,7 +157,7 @@ class ObdPoller(
                     }
                     else -> {
                         ratari[pid] = 0
-                        depozit.pune(pid, valoare, ceas())
+                        depozit.pune(valori, ceas())
                     }
                 }
             }

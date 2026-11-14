@@ -40,8 +40,8 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun pareAdaptorObd(adaptor: Adaptor): Boolean =
         NUME_CUNOSCUTE.any { adaptor.nume.contains(it, ignoreCase = true) }
 
-    fun conecteaza(adaptor: Adaptor) =
-        ObdService.porneste(getApplication(), adaptor.adresa)
+    fun conecteaza(adaptor: Adaptor, sondaHibrida: Boolean = false) =
+        ObdService.porneste(getApplication(), adaptor.adresa, sondaHibrida)
 
     fun conecteazaSimulator() =
         ObdService.pornesteSimulator(getApplication())

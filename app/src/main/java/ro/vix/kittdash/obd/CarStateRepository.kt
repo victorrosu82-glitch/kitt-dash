@@ -21,10 +21,11 @@ class CarStateRepository {
         _stare.update(schimbare)
     }
 
-    /** Pune o valoare citita, pastrand momentul citirii. */
-    fun pune(pid: ObdPid, valoare: Double, laMs: Long) {
+    /** Pune valorile citite dintr-un raspuns, cu momentul citirii. */
+    fun pune(valori: Map<Marime, Double>, laMs: Long) {
+        if (valori.isEmpty()) return
         _stare.update { vechi ->
-            vechi.copy(valori = vechi.valori + (pid to Citire(valoare, laMs)))
+            vechi.copy(valori = vechi.valori + valori.mapValues { Citire(it.value, laMs) })
         }
     }
 

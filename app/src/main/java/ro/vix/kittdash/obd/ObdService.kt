@@ -8,10 +8,15 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
 import android.os.Build
+import android.util.Log
 import androidx.lifecycle.LifecycleService
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import ro.vix.kittdash.R
 import ro.vix.kittdash.ui.MainActivity
 
@@ -34,16 +39,41 @@ class ObdService : LifecycleService() {
 
         val adresa = intent?.getStringExtra(EXTRA_ADRESA)
         val simulator = intent?.getBooleanExtra(EXTRA_SIMULATOR, false) ?: false
+        val sonda = intent?.getBooleanExtra(EXTRA_SONDA, false) ?: false
 
         bucla?.cancel()
         bucla = lifecycleScope.launch {
             val poller = ObdPoller(
                 depozit = CarStateRepository.INSTANTA,
                 faLegatura = { construiesteLegatura(adresa, simulator) },
+                faceSondaHibrida = sonda,
+                scrieSonda = ::scrieJurnalSonda,
             )
             poller.ruleaza()
         }
         return START_STICKY
+    }
+
+    /**
+     * Scrie raspunsurile sondei intr-un fisier, nu doar in jurnalul
+     * telefonului: jurnalul se roteste si inghite liniile exact cand ai
+     * nevoie de ele. Fisierul se ia cu
+     * `adb pull /sdcard/Android/data/ro.vix.kittdash/files/`.
+     */
+    private fun scrieJurnalSonda(randuri: List<RandSonda>) {
+        try {
+            val dosar = getExternalFilesDir(null) ?: filesDir
+            val acum = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
+            val fisier = File(dosar, "sonda-$acum.txt")
+            fisier.printWriter().use { scriitor ->
+                scriitor.println("Sonda hibrida KITT Dash  $acum")
+                scriitor.println("=".repeat(70))
+                for (rand in randuri) scriitor.println(rand.toString())
+            }
+            Log.i(TAG, "Sonda scrisa in ${fisier.absolutePath}")
+        } catch (e: Exception) {
+            Log.w(TAG, "Nu pot scrie jurnalul sondei: ${e.message}")
+        }
     }
 
     private fun construiesteLegatura(adresa: String?, simulator: Boolean): ObdLink {
@@ -89,15 +119,21 @@ class ObdService : LifecycleService() {
     }
 
     companion object {
+        private const val TAG = "ObdService"
         const val CANAL = "obd"
         private const val ID_NOTIFICARE = 1
         private const val EXTRA_ADRESA = "adresa"
         private const val EXTRA_SIMULATOR = "simulator"
+        private const val EXTRA_SONDA = "sonda"
 
-        /** Porneste serviciul pe adaptorul cu adresa data. */
-        fun porneste(context: Context, adresa: String) {
+        /**
+         * Porneste serviciul pe adaptorul cu adresa data. Cu [sondaHibrida],
+         * intreaba o data calculatoarele hibride si pastreaza raspunsurile brute.
+         */
+        fun porneste(context: Context, adresa: String, sondaHibrida: Boolean = false) {
             val intent = Intent(context, ObdService::class.java)
                 .putExtra(EXTRA_ADRESA, adresa)
+                .putExtra(EXTRA_SONDA, sondaHibrida)
             context.startForegroundService(intent)
         }
 

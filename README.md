@@ -8,26 +8,58 @@ Macheta aprobată a bordului: [docs/dashboard-kitt.html](docs/dashboard-kitt.htm
 
 ## Unde suntem
 
-**Etapa 1 — gata, probată pe mașină** (14.11.2026, Lexus NX 300h, Samsung S25+/Android 17,
-adaptor „Viecar" prin Bluetooth):
+**Etapele 1 si 2 — gata, probate pe masina** (14.11.2026, Lexus NX 300h, Samsung S25+ /
+Android 17, adaptor „Viecar" prin Bluetooth):
 
-- ELM327 v1.5, protocol ISO 15765-4 (CAN 11/500), **8 PID-uri** date de mașină
-- **10,5 răspunsuri/s** — cu 8 valori urmărite, fiecare se reînnoiește de ~1,3 ori/s
-- 90 de secunde fără nicio reconectare; tăcerile izolate ale adaptorului sunt înghițite
-- valori reale citite: turație 1292 rot/min, lichid 48 → 55 °C, aer admisie 12 °C,
-  tensiune modul 14,3 V, sarcină 27,8 %, clapetă 17,6 %, viteză 0 km/h (staționat)
-- citirea ține și cu ecranul stins (serviciul în prim-plan)
+- ELM327 v1.5, protocol ISO 15765-4 (CAN 11/500), **10,5 raspunsuri/s**
+- datele standard: viteza, turatie, sarcina, clapeta, temperaturi, tensiune modul
+- **datele hibride**, de la calculatorul hibrid (adresa `7E2`): cat a mai ramas din
+  bateria HV, tensiunea si curentul ei, puterea cu semn si modul EV / HYBRID / REGEN
+- 90 de secunde fara nicio reconectare; tacerile izolate ale adaptorului sunt inghitite
+- citirea tine si cu ecranul stins (serviciul in prim-plan)
 
-Mașina **nu dă** nivelul de combustibil (`2F`) — cum era prevăzut la Toyota/Lexus.
+Masina **nu da** nivelul de combustibil (`2F`) — cum era prevazut la Toyota/Lexus.
 
-| Etapă | Ce cuprinde | Stare |
+### De unde vin datele hibride
+
+Nu din blocurile Toyota (`2102`–`2105` raspund „nu stiu"), ci din doua PID-uri **standard**
+pe care masina le tine la calculatorul hibrid:
+
+| Cerere | Ce da | Formula |
 |---|---|---|
-| 0 | Ce date dă mașina prin Viecar | sonda e scrisă, de rulat în mașină |
-| 1 | Conexiunea, datele standard, ecran de test | **gata, probată pe mașină** |
-| 2 | Datele hibride (baterie HV, kW, mod) | nu a început |
-| 3 | Bordul KITT pe telefon | nu a început |
-| 4 | Android Auto | nu a început |
-| 5 | Finisaje | nu a început |
+| `015B` la `7E2` | cat a mai ramas din bateria HV | `A · 100 / 255` |
+| `019A` la `7E2` | stare, tensiune, curent | `C-D / 64` volti, `E-F / 10` amperi, cu semn |
+
+Puterea bateriei iese din tensiune ori curent. **Semnul conteaza**: plus inseamna ca
+bateria da curent (tractiune), minus ca primeste (incarcare sau recuperare la franare).
+Bordul KITT asta deseneaza, tractiunea in sus si recuperarea in jos.
+
+### Cum au fost verificate formulele
+
+Nicio formula nu e scrisa din memorie. Fiecare are o dovada pe masina asta:
+
+- **semnul curentului**: in timpul probelor a pornit singur motorul termic ca sa incarce
+  bateria, si in aceeasi clipa curentul a sarit de la `00 0D` la `FF 89`, adica de la
+  +1,3 A la −11,9 A. Simultan tensiunea a urcat si procentul bateriei la fel — trei
+  lucruri potrivindu-se deodata;
+- **scara tensiunii** (1/64 V): confruntata cu aplicatia Dr Prius, care citea aceeasi
+  masina in aceleasi minute si arata 274,87–283,51 V (suma celor 17 blocuri). Octetii
+  nostri impartiti la 64 dau 266–285 V. Impartirea la 100, cum incepusem, dadea 174 V;
+- **scara curentului** (0,1 A): Dr Prius arata „DISCHARGING 1.3 amp" in toate cele patru
+  capturi, iar octetii nostri dau `00 0D` = 1,3 A;
+- **procentul bateriei**: acelasi octet se regaseste ca ultimul octet util al blocului
+  Toyota `2101`, la doua citiri diferite (`A3` si `9D`);
+- **caderea de tensiune sub sarcina**: cand demarorul a tras 19,8 A, tensiunea a cazut la
+  266 V si s-a ridicat la loc dupa.
+
+| Etapa | Ce cuprinde | Stare |
+|---|---|---|
+| 0 | Ce date da masina prin Viecar | **gata** (vezi mai sus) |
+| 1 | Conexiunea, datele standard, ecran de test | **gata, probata pe masina** |
+| 2 | Datele hibride (baterie HV, kW, mod) | **gata, probata pe masina** |
+| 3 | Bordul KITT pe telefon | nu a inceput |
+| 4 | Android Auto | nu a inceput |
+| 5 | Finisaje | nu a inceput |
 
 ## Sonda de pe laptop (etapa 0)
 
@@ -75,7 +107,9 @@ ghicea singură și s-a legat la primul aparat în ordine alfabetică, care nu e
 
 ```
 app/src/main/java/ro/vix/kittdash/
-  obd/ObdPid.kt              PID-urile standard și formulele (SAE J1979)
+  obd/ObdPid.kt              cererile, formulele și mărimile care ies din ele
+  obd/ModHibrid.kt           modul EV / HYBRID / REGEN / READY
+  obd/SondaHibrid.kt         întreabă calculatoarele hibride, fără să decodeze
   obd/ObdLink.kt             legătura ca text: trimite comandă, citește până la '>'
   obd/BluetoothObdLink.kt      ... peste Bluetooth clasic (RFCOMM/SPP)
   obd/SimulatorObdLink.kt      ... adaptor fals, pentru lucru fără mașină

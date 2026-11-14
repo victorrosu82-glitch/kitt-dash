@@ -31,18 +31,24 @@ data class CarState(
     val versiuneElm: String? = null,
     /** Protocolul ales de adaptor (ATDP). */
     val protocol: String? = null,
-    /** PID-urile pe care masina le-a confirmat ca suportate. */
+    /** Cererile pe care masina le-a confirmat ca suportate. */
     val pidSuportate: Set<ObdPid> = emptySet(),
-    /** Ultima valoare citita pentru fiecare PID. */
-    val valori: Map<ObdPid, Citire> = emptyMap(),
+    /** Ultima valoare citita pentru fiecare marime. */
+    val valori: Map<Marime, Citire> = emptyMap(),
     /** Raspunsuri pe secunda, mediat - arata cat de repede merge adaptorul. */
     val raspunsuriPeSecunda: Double = 0.0,
     /** Numarul de erori de la ultima conectare reusita. */
     val erori: Int = 0,
     /** Simulatorul e activ in locul masinii. */
     val simulator: Boolean = false,
+    /** Raspunsurile brute ale sondei hibride, daca a rulat. */
+    val sonda: List<RandSonda> = emptyList(),
 ) {
-    fun valoare(pid: ObdPid): Double? = valori[pid]?.valoare
+    fun valoare(marime: Marime): Double? = valori[marime]?.valoare
+
+    /** Masina da datele bateriei HV. */
+    val areDateHibride: Boolean
+        get() = Marime.BATERIE_HV in valori || Marime.HV_PUTERE in valori
 
     val conectat: Boolean get() = conexiune == StareConexiune.CONECTAT
 }

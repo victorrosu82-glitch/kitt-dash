@@ -98,6 +98,16 @@ class SimulatorObdLink(
             val s = ((ceas() - inceputMs) / 1000).toInt().coerceIn(0, 65535)
             intArrayOf(s / 256, s % 256)
         }
+        ObdPid.BATERIE_HV -> intArrayOf(procentOctet(drum.bateriaHv))
+        ObdPid.BATERIE_HV_ELECTRIC -> {
+            // Aceeasi asezare ca pe masina: A stare, B stare extinsa,
+            // C-D tensiune, E-F curent.
+            val v = (drum.tensiuneHv * ObdPid.SCARA_TENSIUNE).roundToInt().coerceIn(0, 65535)
+            // Curentul e un intreg cu semn pe doi octeti, ca pe masina.
+            val iBrut = (drum.curentHv * ObdPid.SCARA_CURENT).roundToInt().coerceIn(-32768, 32767)
+            val i = if (iBrut < 0) iBrut + 0x10000 else iBrut
+            intArrayOf(0x07, 0x00, v / 256, v % 256, i / 256, i % 256)
+        }
     }
 
     private fun procentOctet(procent: Double): Int =
@@ -119,6 +129,9 @@ class SimulatorObdLink(
         var clapeta = 0.0; private set
         var tempLichid = 22.0; private set
         var tensiune = 14.1; private set
+        var bateriaHv = 62.0; private set
+        var tensiuneHv = 278.0; private set
+        var curentHv = 1.3; private set
 
         fun avanseaza(deLaPornireMs: Long) {
             val t = deLaPornireMs / 1000.0
@@ -158,6 +171,26 @@ class SimulatorObdLink(
             tempLichid += (tinta - tempLichid) * 0.004
 
             tensiune = 13.6 + 0.5 * sin(t / 9.0)
+
+            // Bateria HV: curentul creste la accelerare si la franare, cand
+            // masina recupereaza. Pe masina reala nu stim inca semnul
+            // curentului, asa ca simulatorul da tot valori pozitive, ca
+            // ele sa fie citite la fel ca acolo.
+            val franeaza = vizata < vitezaKmh - 1.0
+            // Semnul: plus cand bateria da curent, minus cand primeste.
+            // Dr Prius si masina arata ~22 kW la descarcare si ~24 kW la
+            // incarcare ca limite, deci curentii stau sub ~80 A.
+            val curentTinta = when {
+                franeaza -> -(30.0 + vitezaKmh * 0.3)
+                accelereaza -> 20.0 + clapeta * 0.5
+                vitezaKmh < 0.5 -> 1.3
+                else -> 4.0 + 2.0 * sin(t / 6.0)
+            }
+            curentHv += (curentTinta - curentHv) * 0.2
+            // Banda masurata pe masina: 266-285 V, cu caderi sub sarcina.
+            tensiuneHv = 280.0 + 5.0 * sin(t / 13.0) - curentHv * 0.35
+            // Se descarca la tractiune si se incarca la franare.
+            bateriaHv = (bateriaHv + if (franeaza) 0.004 else -0.002).coerceIn(38.0, 78.0)
         }
     }
 }
