@@ -57,7 +57,7 @@ Nicio formula nu e scrisa din memorie. Fiecare are o dovada pe masina asta:
 | 0 | Ce date da masina prin Viecar | **gata** (vezi mai sus) |
 | 1 | Conexiunea, datele standard, ecran de test | **gata, probata pe masina** |
 | 2 | Datele hibride (baterie HV, kW, mod) | **gata, probata pe masina** |
-| 3 | Bordul KITT pe telefon | nu a inceput |
+| 3 | Bordul KITT pe telefon | **gata pe simulator**, de vazut in mers |
 | 4 | Android Auto | nu a inceput |
 | 5 | Finisaje | nu a inceput |
 
@@ -118,14 +118,18 @@ app/src/main/java/ro/vix/kittdash/
   obd/CarState.kt            starea mașinii, un singur obiect imutabil
   obd/CarStateRepository.kt  singurul loc unde stă starea
   obd/ObdService.kt          serviciu în prim-plan, ține legătura cu ecranul stins
+  bord/BordKitt.kt           desenează bordul pe Canvas, în caietul de 1280x720
+  bord/LogicaBord.kt         deciziile desenului (câte bare, ce culoare), probate
+  bord/StareBord.kt          ce se desenează acum + netezirea între citiri
+  bord/EcranBord.kt          bordul pe telefon: pe lat, fără barele Android
   ui/MainActivity.kt         ecranul de test al etapei 1 (valorile brute)
 tools/sonda_elm327.py        sonda de pe laptop (etapa 0)
 tools/serial_win.py          port serial pe Windows, fără pyserial
 tools/fals_elm327.py         ELM fals în Python, pentru proba sondei
 ```
 
-Desenătorul KITT (etapa 3) se va așeza lângă `ui/`, ca o singură bucată de cod folosită
-și pe telefon, și pe ecranul mașinii.
+Desenătorul lucrează pe `android.graphics.Canvas`, nu pe ceva din Compose, tocmai ca la
+etapa 4 ecranul mașinii să-l poată folosi nespus nimic — primește altă pânză, atât.
 
 ## Mediul de build
 

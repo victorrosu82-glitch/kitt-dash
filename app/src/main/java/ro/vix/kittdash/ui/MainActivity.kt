@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.sp
 import kotlin.math.abs
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import ro.vix.kittdash.bord.EcranBord
 import ro.vix.kittdash.obd.CarState
 import ro.vix.kittdash.obd.Marime
 import ro.vix.kittdash.obd.ModHibrid
@@ -119,6 +120,14 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
     val stare by vm.stare.collectAsStateWithLifecycle()
     var adaptoare by remember { mutableStateOf(vm.adaptoare()) }
     var cuSonda by remember { mutableStateOf(false) }
+    var aratBordul by remember { mutableStateOf(true) }
+
+    // Cat suntem legati la masina, bordul e ce vrea Victor sa vada. Ecranul
+    // cu cifre ramane la o atingere distanta, pentru cand ceva nu merge.
+    if (stare.conectat && aratBordul) {
+        EcranBord(masina = stare, laAtingere = { aratBordul = false })
+        return
+    }
 
     Column(
         modifier = Modifier
@@ -163,11 +172,19 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
                     modifier = Modifier.weight(1f),
                 ) { Text("Opreste", color = AMBRA, maxLines = 1, fontSize = 13.sp) }
             }
-            OutlinedButton(
-                onClick = { adaptoare = vm.adaptoare() },
-                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
-                modifier = Modifier.weight(1f),
-            ) { Text("Caut", color = ROSU_STINS, maxLines = 1, fontSize = 13.sp) }
+            if (stare.conectat) {
+                OutlinedButton(
+                    onClick = { aratBordul = true },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Bordul", color = ROSU, maxLines = 1, fontSize = 13.sp) }
+            } else {
+                OutlinedButton(
+                    onClick = { adaptoare = vm.adaptoare() },
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Caut", color = ROSU_STINS, maxLines = 1, fontSize = 13.sp) }
+            }
         }
 
         if (stare.conexiune == StareConexiune.DECONECTAT) {
