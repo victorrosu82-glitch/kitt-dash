@@ -97,6 +97,9 @@ class ObdPoller(
         val ratari = mutableMapOf<ObdPid, Int>()
         var contorRaspunsuri = 0
         var inceputMasurare = ceas()
+        // Un raspuns intarziat nu inseamna ca adaptorul a murit. Rupem
+        // legatura abia dupa mai multe la rand.
+        var taceriLaRand = 0
 
         while (coroutineContext.isActive) {
             val acum = ceas()
@@ -106,21 +109,42 @@ class ObdPoller(
                 if (pid !in deCerut) continue
                 if (acum < (urmatoarea[pid] ?: 0L)) continue
 
-                val valoare = elm.citeste(pid)
+                var aTacut = false
+                val valoare = try {
+                    val v = elm.citeste(pid)
+                    taceriLaRand = 0
+                    v
+                } catch (e: ObdException) {
+                    aTacut = true
+                    taceriLaRand++
+                    if (taceriLaRand >= TACERI_MAXIME) {
+                        throw ObdException(
+                            "Adaptorul a tacut de $taceriLaRand ori la rand: ${e.message}", e,
+                        )
+                    }
+                    Log.d(TAG, "${pid.eticheta}: ${e.message} (tacerea $taceriLaRand)")
+                    null
+                }
                 contorRaspunsuri++
                 amCerutCeva = true
                 urmatoarea[pid] = ceas() + pid.perioadaMs
 
-                if (valoare == null) {
-                    val n = (ratari[pid] ?: 0) + 1
-                    ratari[pid] = n
-                    if (n >= RATARI_MAXIME) {
-                        deCerut.remove(pid)
-                        Log.i(TAG, "${pid.eticheta}: masina nu da PID-ul, nu-l mai cer")
+                when {
+                    // Tacerea e vina legaturii, nu a PID-ului: nu-l scoatem
+                    // din lista pentru ca adaptorul a intarziat o data.
+                    aTacut -> Unit
+                    valoare == null -> {
+                        val n = (ratari[pid] ?: 0) + 1
+                        ratari[pid] = n
+                        if (n >= RATARI_MAXIME) {
+                            deCerut.remove(pid)
+                            Log.i(TAG, "${pid.eticheta}: masina nu da PID-ul, nu-l mai cer")
+                        }
                     }
-                } else {
-                    ratari[pid] = 0
-                    depozit.pune(pid, valoare, ceas())
+                    else -> {
+                        ratari[pid] = 0
+                        depozit.pune(pid, valoare, ceas())
+                    }
                 }
             }
 
@@ -143,5 +167,6 @@ class ObdPoller(
         private const val PAUZA_MAXIMA_MS = 30_000L
         private const val TURA_MINIMA_MS = 20L
         private const val RATARI_MAXIME = 3
+        private const val TACERI_MAXIME = 5
     }
 }

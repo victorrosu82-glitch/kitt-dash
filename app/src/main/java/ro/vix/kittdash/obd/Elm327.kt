@@ -89,7 +89,9 @@ class Elm327(private val legatura: ObdLink) {
         private const val TIMEOUT_AT = 2_000L
         private const val TIMEOUT_RESET = 6_000L
         private const val TIMEOUT_PRIMA_CERERE = 8_000L
-        private const val TIMEOUT_PID = 1_200L
+        // Viecar-ul real a depasit 1200 ms din cand in cand si a rupt legatura
+        // degeaba. Mai bine asteptam, ca o reconectare costa secunde.
+        private const val TIMEOUT_PID = 2_500L
 
         private val COMENZI_SETARE = listOf(
             "ATL0", // fara linefeed

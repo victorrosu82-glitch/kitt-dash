@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -128,13 +129,6 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (stare.conexiune == StareConexiune.DECONECTAT) {
-                Button(
-                    onClick = { vm.adaptorProbabil()?.let(vm::conecteaza) },
-                    colors = ButtonDefaults.buttonColors(containerColor = ROSU),
-                    enabled = adaptoare.isNotEmpty(),
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
-                    modifier = Modifier.weight(1f),
-                ) { Text("Masina", maxLines = 1, fontSize = 13.sp) }
                 OutlinedButton(
                     onClick = vm::conecteazaSimulator,
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
@@ -156,22 +150,29 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
 
         if (stare.conexiune == StareConexiune.DECONECTAT) {
             Spacer(Modifier.height(12.dp))
-            Text(
-                text = if (adaptoare.isEmpty()) {
-                    "Niciun aparat imperecheat. Porneste Bluetooth-ul si " +
+            if (adaptoare.isEmpty()) {
+                Text(
+                    text = "Niciun aparat imperecheat. Porneste Bluetooth-ul si " +
                         "imperecheaza adaptorul din Setari > Bluetooth (cod 1234), " +
-                        "apoi apasa \"Caut\". Butonul \"Masina\" se aprinde dupa aceea."
-                } else {
-                    "Imperecheate: " + adaptoare.joinToString { it.nume }
-                },
-                color = ROSU_STINS,
-                fontSize = 12.sp,
-                fontFamily = FontFamily.Monospace,
-            )
+                        "apoi apasa \"Caut\".",
+                    color = ROSU_STINS,
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
+                )
+            } else {
+                Text(
+                    text = "Alege adaptorul:",
+                    color = ROSU_STINS,
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
+                )
+                Spacer(Modifier.height(6.dp))
+                ListaAdaptoare(adaptoare, vm)
+            }
+        } else {
+            Spacer(Modifier.height(16.dp))
+            ListaValori(stare)
         }
-
-        Spacer(Modifier.height(16.dp))
-        ListaValori(stare)
     }
 }
 
@@ -201,6 +202,52 @@ private fun PanouStare(stare: CarState) {
         stare.mesajEroare?.let { Rand("Ultima eroare", it, AMBRA) }
         if (stare.erori > 0) Rand("Reconectari", "${stare.erori}", AMBRA)
         if (stare.simulator) Rand("Atentie", "date din simulator, nu din masina", AMBRA)
+    }
+}
+
+/**
+ * Aparatele imperecheate, de atins ca sa se conecteze. Nu ghicim noi: prima
+ * oara aplicatia a ales singura primul aparat in ordine alfabetica si s-a
+ * legat la ce nu trebuia. Cele care par adaptoare OBD sunt insemnate.
+ */
+@Composable
+private fun ListaAdaptoare(adaptoare: List<Adaptor>, vm: MainViewModel) {
+    LazyColumn(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+        items(adaptoare) { adaptor ->
+            val pare = vm.pareAdaptorObd(adaptor)
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(PANOU, RoundedCornerShape(6.dp))
+                    .clickable { vm.conecteaza(adaptor) }
+                    .padding(horizontal = 12.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = adaptor.nume,
+                        color = if (pare) ROSU else ROSU_STINS,
+                        fontSize = 15.sp,
+                        fontWeight = if (pare) FontWeight.Bold else FontWeight.Normal,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                    Text(
+                        text = adaptor.adresa,
+                        color = ROSU_STINS,
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+                if (pare) {
+                    Text(
+                        text = "pare adaptor OBD",
+                        color = CYAN,
+                        fontSize = 11.sp,
+                        fontFamily = FontFamily.Monospace,
+                    )
+                }
+            }
+        }
     }
 }
 

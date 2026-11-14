@@ -31,13 +31,14 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         }
     }
 
-    /** Ghiceste care dispozitiv imperecheat e adaptorul OBD. */
-    fun adaptorProbabil(): Adaptor? {
-        val lista = adaptoare()
-        return lista.firstOrNull { a ->
-            NUME_CUNOSCUTE.any { a.nume.contains(it, ignoreCase = true) }
-        } ?: lista.firstOrNull()
-    }
+    /**
+     * Spune daca numele arata a adaptor OBD. Serveste doar la insemnarea
+     * randului din lista - alegerea o face userul, nu aplicatia. Prima data
+     * am ghicit, si aplicatia s-a legat la primul aparat in ordine
+     * alfabetica, care nu era adaptorul.
+     */
+    fun pareAdaptorObd(adaptor: Adaptor): Boolean =
+        NUME_CUNOSCUTE.any { adaptor.nume.contains(it, ignoreCase = true) }
 
     fun conecteaza(adaptor: Adaptor) =
         ObdService.porneste(getApplication(), adaptor.adresa)
@@ -49,6 +50,10 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
         ObdService.opreste(getApplication())
 
     private companion object {
-        val NUME_CUNOSCUTE = listOf("VIECAR", "OBD", "ELM", "V-LINK", "VGATE", "OBDII")
+        // Numele sub care se dau clonele ELM327. "CAR2-xxxx" e numele cu care
+        // se anunta chiar adaptorul lui Victor.
+        val NUME_CUNOSCUTE = listOf(
+            "VIECAR", "OBD", "ELM", "V-LINK", "VGATE", "CAR2", "OBDII", "KONNWEI",
+        )
     }
 }

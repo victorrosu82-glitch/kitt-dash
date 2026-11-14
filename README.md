@@ -8,12 +8,22 @@ Macheta aprobată a bordului: [docs/dashboard-kitt.html](docs/dashboard-kitt.htm
 
 ## Unde suntem
 
-**Etapa 1 — legătura cu mașina.** Codul e scris; mai trebuie compilat și probat pe telefon.
+**Etapa 1 — gata, probată pe mașină** (14.11.2026, Lexus NX 300h, Samsung S25+/Android 17,
+adaptor „Viecar" prin Bluetooth):
+
+- ELM327 v1.5, protocol ISO 15765-4 (CAN 11/500), **8 PID-uri** date de mașină
+- **10,5 răspunsuri/s** — cu 8 valori urmărite, fiecare se reînnoiește de ~1,3 ori/s
+- 90 de secunde fără nicio reconectare; tăcerile izolate ale adaptorului sunt înghițite
+- valori reale citite: turație 1292 rot/min, lichid 48 → 55 °C, aer admisie 12 °C,
+  tensiune modul 14,3 V, sarcină 27,8 %, clapetă 17,6 %, viteză 0 km/h (staționat)
+- citirea ține și cu ecranul stins (serviciul în prim-plan)
+
+Mașina **nu dă** nivelul de combustibil (`2F`) — cum era prevăzut la Toyota/Lexus.
 
 | Etapă | Ce cuprinde | Stare |
 |---|---|---|
 | 0 | Ce date dă mașina prin Viecar | sonda e scrisă, de rulat în mașină |
-| 1 | Conexiunea, datele standard, ecran de test | cod scris |
+| 1 | Conexiunea, datele standard, ecran de test | **gata, probată pe mașină** |
 | 2 | Datele hibride (baterie HV, kW, mod) | nu a început |
 | 3 | Bordul KITT pe telefon | nu a început |
 | 4 | Android Auto | nu a început |
@@ -57,8 +67,9 @@ apksigner sign --ks %USERPROFILE%\.android\debug.keystore --ks-pass pass:android
 ```
 
 Pe telefon, butonul **Simulator** pornește bordul pe date inventate, fără mașină și fără
-adaptor — util acasă. **Conectează** caută adaptorul împerecheat (după nume: Viecar, OBD,
-ELM) și se leagă la el.
+adaptor — util acasă. Dedesubt stau aparatele împerecheate; atingi unul și se leagă la el.
+Cele care par adaptoare OBD sunt însemnate, dar **alegerea o faci tu**: prima variantă
+ghicea singură și s-a legat la primul aparat în ordine alfabetică, care nu era adaptorul.
 
 ## Cum e alcătuit
 
