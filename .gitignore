@@ -6,3 +6,6 @@ build/
 captures/
 *.apk
 *.aab
+
+# emulatorul DHU, copiat local; nu e codul nostru
+tools/dhu/
