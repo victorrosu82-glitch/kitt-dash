@@ -3,4 +3,5 @@
     <string name="app_name">KITT Dash</string>
     <string name="obd_channel_name">Conexiune OBD</string>
     <string name="obd_channel_desc">Citirea datelor din masina prin adaptorul ELM327</string>
+    <string name="fara_adaptor_ales">Alege intai adaptorul din aplicatia de pe telefon</string>
 </resources>

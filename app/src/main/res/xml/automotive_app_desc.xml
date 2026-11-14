@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Spune Android Auto ce fel de aplicatie suntem. "template" inseamna ca
+  folosim Car App Library; categoria de navigatie (din manifest) e cea care
+  ne da o suprafata de desenat libera, nu un sablon cu liste.
+-->
+<automotiveApp>
+    <uses name="template" />
+</automotiveApp>
