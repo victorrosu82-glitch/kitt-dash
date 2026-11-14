@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard KITT - Lexus NX 300h (macheta)</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+svg{display:block;width:100vw;height:100vh}
+</style>
+</head>
+<body>
+<svg id="k" viewBox="0 0 1280 720" preserveAspectRatio="xMidYMid meet"></svg>
+<script>
+const S=document.getElementById('k'),NS='http://www.w3.org/2000/svg',F='Arial, Helvetica, sans-serif';
+const DIM='#2b0c0a',RED='#ff2d1c',ORG='#ff7a1a',AMB='#ffb21c',CY='#35d0ff',LAB='#9a2f26';
+function mk(t,a,txt){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!==undefined)e.textContent=txt;S.appendChild(e);return e}
+function tx(x,y,s,fill,txt,anc,ls){return mk('text',{x:x,y:y,'font-size':s,fill:fill,'font-family':F,'text-anchor':anc||'start','letter-spacing':ls||0},txt)}
+mk('rect',{x:0,y:0,width:1280,height:720,fill:'#050505'});
+tx(60,48,26,'#ff3b2a','LEXUS NX 300h','start',6);
+const modeT=tx(1220,48,26,AMB,'HYBRID','end',6);
+mk('line',{x1:60,y1:62,x2:1220,y2:62,stroke:'#3a0f0c','stroke-width':2});
+const scan=[];
+for(let i=0;i<30;i++)scan.push(mk('rect',{x:340+i*20,y:76,width:16,height:20,fill:DIM}));
+const cx=640,cy=400,N=54,tk=[];
+function arc(r){const a=135*Math.PI/180,b=45*Math.PI/180;return 'M'+(cx+r*Math.cos(a))+' '+(cy+r*Math.sin(a))+' A'+r+' '+r+' 0 1 1 '+(cx+r*Math.cos(b))+' '+(cy+r*Math.sin(b))}
+mk('path',{d:arc(252),fill:'none',stroke:'#3a0f0c','stroke-width':3});
+mk('path',{d:arc(186),fill:'none',stroke:'#2b0c0a','stroke-width':2});
+for(let i=0;i<N;i++){const a=(135+i*270/(N-1))*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
+tk.push(mk('line',{x1:cx+200*c,y1:cy+200*s,x2:cx+234*c,y2:cy+234*s,stroke:DIM,'stroke-width':8}))}
+for(let v=0;v<=180;v+=30){const a=(135+v/180*270)*Math.PI/180;
+mk('text',{x:cx+162*Math.cos(a),y:cy+162*Math.sin(a),'font-size':24,fill:'#8a2a22','font-family':F,'text-anchor':'middle','dominant-baseline':'central'},v)}
+tx(640,290,26,AMB,'READY','middle',8);
+const spdT=tx(640,445,170,'#ff3b2a','0','middle');
+spdT.setAttribute('font-weight',500);
+tx(640,488,28,'#8a2a22','km/h','middle',4);
+tx(60,118,22,LAB,'COOLANT','start',3);const coolT=tx(60,160,44,'#ff5a2a','86°C');
+tx(60,204,22,LAB,'FUEL','start',3);const fuelT=tx(60,246,44,'#ff5a2a','54%');
+tx(60,290,22,LAB,'HV BATTERY','start',3);
+const bat=[];
+for(let i=0;i<14;i++)bat.push(mk('rect',{x:60,y:304+(13-i)*25,width:90,height:19,fill:DIM}));
+const socT=tx(180,470,70,AMB,'68%');
+tx(180,506,22,LAB,'SOC','start',2);
+const btT=tx(180,546,26,'#b8861c','BATT 31°C');
+tx(1220,118,22,LAB,'ENGINE','end',3);const rpmT=tx(1220,160,44,'#ff5a2a','0 rpm','end');
+tx(1220,204,22,LAB,'INTAKE','end',3);tx(1220,246,44,'#ff5a2a','24°C','end');
+tx(1220,290,22,LAB,'POWER','end',3);
+const up=[],dn=[];
+for(let j=0;j<7;j++){up.push(mk('rect',{x:1130,y:479-6-19-j*25,width:90,height:19,fill:DIM}));dn.push(mk('rect',{x:1130,y:479+6+j*25,width:90,height:19,fill:DIM}))}
+const pwT=tx(1105,470,54,AMB,'0','end');
+tx(1105,506,24,LAB,'kW','end',2);
+const vb=[];
+for(let i=0;i<24;i++)vb.push(mk('rect',{x:496+i*12,y:637,width:8,height:6,fill:'#4a120e'}));
+let t0=performance.now(),last=0,sp=0,pw=0,soc=68,env=0;
+function tick(now){
+const t=(now-t0)/1000,dt=Math.max(0.001,Math.min(0.05,t-last));last=t;
+const tgt=Math.max(0,Math.min(180,62+52*Math.sin(t*0.33)+22*Math.sin(t*0.93+1)));
+const prev=sp;sp+=(tgt-sp)*Math.min(1,dt*3);
+const acc=(sp-prev)/dt;
+const pT=Math.max(-40,Math.min(60,6+sp*0.22+acc*1.6));
+pw+=(pT-pw)*Math.min(1,dt*6);
+soc=Math.max(35,Math.min(85,soc+(-pw*0.004+0.07)*dt));
+const eng=sp>58||pw>34;
+const rpm=eng?Math.round((1300+sp*14+pw*8+Math.sin(t*5)*40)/10)*10:0;
+const mode=pw<-3?'REGEN':(eng?'HYBRID':'EV');
+modeT.textContent=mode;modeT.setAttribute('fill',mode==='HYBRID'?AMB:CY);
+spdT.textContent=Math.round(sp);
+rpmT.textContent=rpm+' rpm';
+coolT.textContent=Math.round(86+Math.sin(t*0.2)*1.4)+'°C';
+fuelT.textContent='54%';
+socT.textContent=Math.round(soc)+'%';
+btT.textContent='BATT '+Math.round(31+t*0.01)+'°C';
+const lit=Math.round(sp/180*(N-1));
+for(let i=0;i<N;i++){tk[i].setAttribute('stroke',i>lit?DIM:(i===lit?'#ffd6cc':(i>43?ORG:RED)))}
+const ph=(t*24)%58,pos=ph<29?ph:58-ph,dir=ph<29?1:-1;
+for(let i=0;i<30;i++){const d=i-pos,ad=Math.abs(d);
+const op=d*dir<0?Math.max(0.1,1-ad/7):Math.max(0.1,1-ad/2.5);
+scan[i].setAttribute('fill',RED);scan[i].setAttribute('opacity',op.toFixed(2))}
+const nb=soc/100*14;
+for(let i=0;i<14;i++)bat[i].setAttribute('fill',i<nb?(i<3?RED:AMB):DIM);
+const nu=pw>0?pw/60*7:0,nd=pw<0?-pw/40*7:0;
+for(let j=0;j<7;j++){up[j].setAttribute('fill',j<nu?(j>4?RED:(j>2?ORG:AMB)):DIM);dn[j].setAttribute('fill',j<nd?CY:DIM)}
+pwT.textContent=(pw>0?'+':'')+Math.round(pw);pwT.setAttribute('fill',pw<0?CY:AMB);
+const target=(t%7)<3.2?1:0;env+=(target-env)*Math.min(1,dt*8);
+for(let i=0;i<24;i++){const h=6+env*84*Math.abs(Math.sin(t*9+i*1.7)*Math.cos(t*4.3+i*0.6));
+vb[i].setAttribute('y',640-h/2);vb[i].setAttribute('height',h);vb[i].setAttribute('fill',env>0.1?RED:'#4a120e')}
+requestAnimationFrame(tick)}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>

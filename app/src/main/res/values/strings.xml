@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">KITT Dash</string>
+    <string name="obd_channel_name">Conexiune OBD</string>
+    <string name="obd_channel_desc">Citirea datelor din masina prin adaptorul ELM327</string>
+</resources>

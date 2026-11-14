@@ -1,0 +1,147 @@
+package ro.vix.kittdash.obd
+
+import android.util.Log
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
+import kotlin.coroutines.coroutineContext
+
+/**
+ * Bucla de interogare. Deschide legatura, initializeaza adaptorul si apoi
+ * cere PID-urile la nesfarsit, publicand fiecare valoare in [depozit].
+ * Daca legatura pica, incearca din nou - cu pauze din ce in ce mai lungi,
+ * ca sa nu macine bateria telefonului cand masina e oprita.
+ *
+ * Un ELM327 da cam 10-20 de raspunsuri pe secunda in total, deci nu cerem
+ * totul la fel de des: viteza si turatia la fiecare tura, temperaturile din
+ * doua in doua secunde. Perioadele sunt in [ObdPid.perioadaMs].
+ */
+class ObdPoller(
+    private val depozit: CarStateRepository,
+    private val faLegatura: () -> ObdLink,
+    private val ceas: () -> Long = { System.currentTimeMillis() },
+) {
+
+    /** Ruleaza pana la anularea corutinei. */
+    suspend fun ruleaza() = withContext(Dispatchers.IO) {
+        var pauzaMs = PAUZA_MINIMA_MS
+        while (coroutineContext.isActive) {
+            var legatura: ObdLink? = null
+            try {
+                val link = faLegatura()
+                legatura = link
+                depozit.actualizeaza {
+                    it.copy(
+                        conexiune = StareConexiune.SE_CONECTEAZA,
+                        numeAdaptor = link.nume,
+                        simulator = link.esteSimulator,
+                        mesajEroare = null,
+                    )
+                }
+                link.deschide()
+
+                depozit.actualizeaza { it.copy(conexiune = StareConexiune.SE_INITIALIZEAZA) }
+                val elm = Elm327(link)
+                elm.initializeaza()
+
+                val anunt = elm.pidSuportate()
+                val suportate = ObdPid.entries.filter { it.pid in anunt }.toSet()
+                depozit.actualizeaza {
+                    it.copy(
+                        conexiune = StareConexiune.CONECTAT,
+                        versiuneElm = elm.versiune,
+                        protocol = elm.protocol,
+                        pidSuportate = suportate,
+                        erori = 0,
+                    )
+                }
+                Log.i(TAG, "Conectat la ${link.nume}, ${suportate.size} PID-uri utile")
+
+                pauzaMs = PAUZA_MINIMA_MS
+                interogheazaLaNesfarsit(elm, suportate)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.w(TAG, "Legatura a picat: ${e.message}")
+                depozit.actualizeaza {
+                    it.copy(
+                        conexiune = StareConexiune.EROARE,
+                        mesajEroare = e.message ?: e::class.simpleName,
+                        erori = it.erori + 1,
+                    )
+                }
+            } finally {
+                try {
+                    legatura?.close()
+                } catch (_: Exception) {
+                }
+            }
+
+            if (!coroutineContext.isActive) break
+            delay(pauzaMs)
+            pauzaMs = (pauzaMs * 2).coerceAtMost(PAUZA_MAXIMA_MS)
+        }
+    }
+
+    /**
+     * Cere PID-urile dupa perioada fiecaruia. Iese prin excepție cand
+     * legatura pica, ca sa reia bucla de afara cu o reconectare.
+     */
+    private suspend fun interogheazaLaNesfarsit(elm: Elm327, suportate: Set<ObdPid>) {
+        // Daca masina nu anunta un PID, il cerem oricum o data: anunturile
+        // mint uneori, mai ales la Toyota. Ce da NO DATA de 3 ori, iese.
+        val deCerut = (suportate + ObdPid.RAPIDE).toMutableSet()
+        val urmatoarea = mutableMapOf<ObdPid, Long>()
+        val ratari = mutableMapOf<ObdPid, Int>()
+        var contorRaspunsuri = 0
+        var inceputMasurare = ceas()
+
+        while (coroutineContext.isActive) {
+            val acum = ceas()
+            var amCerutCeva = false
+
+            for (pid in ObdPid.entries) {
+                if (pid !in deCerut) continue
+                if (acum < (urmatoarea[pid] ?: 0L)) continue
+
+                val valoare = elm.citeste(pid)
+                contorRaspunsuri++
+                amCerutCeva = true
+                urmatoarea[pid] = ceas() + pid.perioadaMs
+
+                if (valoare == null) {
+                    val n = (ratari[pid] ?: 0) + 1
+                    ratari[pid] = n
+                    if (n >= RATARI_MAXIME) {
+                        deCerut.remove(pid)
+                        Log.i(TAG, "${pid.eticheta}: masina nu da PID-ul, nu-l mai cer")
+                    }
+                } else {
+                    ratari[pid] = 0
+                    depozit.pune(pid, valoare, ceas())
+                }
+            }
+
+            // Media raspunsurilor pe secunda, reinnoita din secunda in secunda.
+            val trecut = ceas() - inceputMasurare
+            if (trecut >= 1000) {
+                val rata = contorRaspunsuri * 1000.0 / trecut
+                depozit.actualizeaza { it.copy(raspunsuriPeSecunda = rata) }
+                contorRaspunsuri = 0
+                inceputMasurare = ceas()
+            }
+
+            if (!amCerutCeva) delay(TURA_MINIMA_MS)
+        }
+    }
+
+    companion object {
+        private const val TAG = "ObdPoller"
+        private const val PAUZA_MINIMA_MS = 1_000L
+        private const val PAUZA_MAXIMA_MS = 30_000L
+        private const val TURA_MINIMA_MS = 20L
+        private const val RATARI_MAXIME = 3
+    }
+}
