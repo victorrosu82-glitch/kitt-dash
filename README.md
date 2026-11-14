@@ -43,6 +43,19 @@ gradlew.bat assembleDebug     # APK în app\build\outputs\apk\debug
 gradlew.bat installDebug      # pe telefonul legat pe USB
 ```
 
+APK mic, semnat cu cheia de depanare, de copiat pe telefon:
+
+```
+gradlew.bat assembleRelease
+```
+
+apoi, din `C:\Users\vix\AppData\Local\Android\Sdk\build-tools\35.0.0`:
+
+```
+zipalign -p 4 app-release-unsigned.apk aliniat.apk
+apksigner sign --ks %USERPROFILE%\.android\debug.keystore --ks-pass pass:android --ks-key-alias androiddebugkey --key-pass pass:android --out KittDash-etapa1.apk aliniat.apk
+```
+
 Pe telefon, butonul **Simulator** pornește bordul pe date inventate, fără mașină și fără
 adaptor — util acasă. **Conectează** caută adaptorul împerecheat (după nume: Viecar, OBD,
 ELM) și se leagă la el.
@@ -72,7 +85,14 @@ Desenătorul KITT (etapa 3) se va așeza lângă `ui/`, ca o singură bucată de
 ## Mediul de build
 
 - JDK 17 (`C:\Users\vix\AppData\Local\Programs\Microsoft\jdk-17.0.10.7-hotspot`), din `JAVA_HOME`.
-- Android SDK: `C:\Users\vix\AppData\Local\Android\Sdk` (în `local.properties`, netrimis în git).
+- Android SDK: `C:\Users\vix\AppData\Local\Android\Sdk`, cu `platforms;android-35`,
+  `build-tools;35.0.0` și `platform-tools` (puse pe 14.11.2026 cu `sdkmanager`).
+- `local.properties` nu merge în git. Trebuie să cuprindă exact, **fără BOM și cu slash
+  înainte** (cu backslash, Java îl mănâncă și AGP nu găsește SDK-ul):
+
+  ```
+  sdk.dir=C:/Users/vix/AppData/Local/Android/Sdk
+  ```
 - Gradle 8.14.3 prin wrapper, AGP 8.7.3, Kotlin 2.0.21, compileSdk 35, minSdk 29.
 - Nu există emulator: proba se face pe telefonul real, pe USB, cu depanarea USB pornită.
 
