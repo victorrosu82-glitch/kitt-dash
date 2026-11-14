@@ -10,6 +10,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBarsPadding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -36,6 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -118,32 +121,46 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
         PanouStare(stare)
 
         Spacer(Modifier.height(12.dp))
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        // Trei butoane nu incap pe un rand de telefon: fiecare primeste o
+        // parte egala din latime si un text scurt.
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
             if (stare.conexiune == StareConexiune.DECONECTAT) {
                 Button(
                     onClick = { vm.adaptorProbabil()?.let(vm::conecteaza) },
                     colors = ButtonDefaults.buttonColors(containerColor = ROSU),
                     enabled = adaptoare.isNotEmpty(),
-                ) { Text("Conecteaza") }
-                OutlinedButton(onClick = vm::conecteazaSimulator) {
-                    Text("Simulator", color = CYAN)
-                }
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Masina", maxLines = 1, fontSize = 13.sp) }
+                OutlinedButton(
+                    onClick = vm::conecteazaSimulator,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Simulator", color = CYAN, maxLines = 1, fontSize = 13.sp) }
             } else {
-                OutlinedButton(onClick = vm::deconecteaza) {
-                    Text("Opreste", color = AMBRA)
-                }
+                OutlinedButton(
+                    onClick = vm::deconecteaza,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.weight(1f),
+                ) { Text("Opreste", color = AMBRA, maxLines = 1, fontSize = 13.sp) }
             }
-            OutlinedButton(onClick = { adaptoare = vm.adaptoare() }) {
-                Text("Caut adaptoare", color = ROSU_STINS)
-            }
+            OutlinedButton(
+                onClick = { adaptoare = vm.adaptoare() },
+                contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                modifier = Modifier.weight(1f),
+            ) { Text("Caut", color = ROSU_STINS, maxLines = 1, fontSize = 13.sp) }
         }
 
         if (stare.conexiune == StareConexiune.DECONECTAT) {
             Spacer(Modifier.height(12.dp))
             Text(
                 text = if (adaptoare.isEmpty()) {
-                    "Niciun aparat imperecheat. Imperecheaza adaptorul din " +
-                        "Setari > Bluetooth (cod 1234), apoi apasa \"Caut adaptoare\"."
+                    "Niciun aparat imperecheat. Porneste Bluetooth-ul si " +
+                        "imperecheaza adaptorul din Setari > Bluetooth (cod 1234), " +
+                        "apoi apasa \"Caut\". Butonul \"Masina\" se aprinde dupa aceea."
                 } else {
                     "Imperecheate: " + adaptoare.joinToString { it.nume }
                 },
@@ -231,19 +248,27 @@ private fun ListaValori(stare: CarState) {
 
 @Composable
 private fun Rand(eticheta: String, valoare: String, culoare: Color) {
-    Row(modifier = Modifier.fillMaxWidth()) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.Top,
+    ) {
+        // Eticheta sta pe o latime fixa, ca valorile lungi (protocolul) sa
+        // aiba loc sa se rupa in randuri, nu sa rupa eticheta in doua.
         Text(
             text = eticheta,
             color = ROSU_STINS,
             fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
-            modifier = Modifier.weight(1f),
+            maxLines = 1,
+            modifier = Modifier.width(118.dp),
         )
         Text(
             text = valoare,
             color = culoare,
             fontSize = 12.sp,
             fontFamily = FontFamily.Monospace,
+            textAlign = TextAlign.End,
+            modifier = Modifier.weight(1f),
         )
     }
 }
