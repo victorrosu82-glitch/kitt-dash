@@ -11,6 +11,7 @@ import androidx.car.app.navigation.model.NavigationTemplate
 import androidx.core.graphics.drawable.IconCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
+import ro.vix.kittdash.BuildConfig
 import ro.vix.kittdash.R
 import ro.vix.kittdash.obd.ObdService
 
@@ -46,6 +47,22 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
                     .setOnClickListener { reconecteaza() }
                     .build(),
             )
+            // In timpul lucrului vrem sa vedem bordul viu si pe emulator,
+            // unde nu exista nici masina, nici adaptor. In varianta de
+            // predat butonul asta nu apare.
+            .apply {
+                if (BuildConfig.DEBUG) {
+                    addAction(
+                        Action.Builder()
+                            .setTitle("Simulator")
+                            .setOnClickListener {
+                                ObdService.pornesteSimulator(carContext)
+                                invalidate()
+                            }
+                            .build(),
+                    )
+                }
+            }
             .addAction(
                 Action.Builder()
                     .setIcon(

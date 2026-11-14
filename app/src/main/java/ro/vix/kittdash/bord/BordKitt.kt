@@ -73,23 +73,36 @@ class BordKitt {
         val stanga = (latime - LATIME * scara) / 2f
         val sus = (inaltime - INALTIME * scara) / 2f
 
+        // Ecranul unei masini e de obicei mai lat decat caietul de 1280x720.
+        // Daca am lasa totul la mijloc, ar ramane benzi negre in stanga si in
+        // dreapta, cum s-a si vazut pe emulator. Ceasul ramane in mijloc, dar
+        // coloanele se duc catre margini, ca bordul sa umple ecranul.
+        val latimeLogica = latime / scara
+        val intindere = ((latimeLogica - LATIME) / 2f).coerceIn(0f, INTINDERE_MAXIMA)
+
         val salvat = canvas.save()
-        canvas.translate(stanga, sus)
+        canvas.translate(stanga - intindere * scara, sus)
         canvas.scale(scara, scara)
 
-        antet(canvas, stare)
-        scaner(canvas, stare)
-        ceasViteza(canvas, stare)
+        antetSiScaner(canvas, stare, intindere)
+        ceasViteza(canvas, stare, intindere)
+
+        val salvatStanga = canvas.save()
+        canvas.translate(0f, 0f)
         coloanaStanga(canvas, stare)
+        canvas.restoreToCount(salvatStanga)
+
+        val salvatDreapta = canvas.save()
+        canvas.translate(2f * intindere, 0f)
         coloanaDreapta(canvas, stare)
-        modulatorVoce(canvas, stare)
+        canvas.restoreToCount(salvatDreapta)
 
         canvas.restoreToCount(salvat)
     }
 
     // --- partile bordului ----------------------------------------------
 
-    private fun antet(canvas: Canvas, stare: StareBord) {
+    private fun antetSiScaner(canvas: Canvas, stare: StareBord, intindere: Float) {
         text(canvas, 60f, 48f, 26f, rosuAprins, "LEXUS NX 300h", Paint.Align.LEFT, 6f)
 
         val culoareMod = when (stare.mod) {
@@ -97,11 +110,16 @@ class BordKitt {
             ModHibrid.REGEN, ModHibrid.EV -> cyan
             else -> rosuSters
         }
-        text(canvas, 1220f, 48f, 26f, culoareMod, stare.mod.eticheta, Paint.Align.RIGHT, 6f)
+        text(
+            canvas, 1220f + 2f * intindere, 48f, 26f, culoareMod,
+            stare.mod.eticheta, Paint.Align.RIGHT, 6f,
+        )
 
         linie.color = liniePanou
         linie.strokeWidth = 2f
-        canvas.drawLine(60f, 62f, 1220f, 62f, linie)
+        canvas.drawLine(60f, 62f, 1220f + 2f * intindere, 62f, linie)
+
+        scaner(canvas, stare, intindere)
     }
 
     /**
@@ -109,7 +127,7 @@ class BordKitt {
      * sta acum e plina, iar cele din urma ei se sting treptat - coada e mai
      * lunga inspre partea din care a venit.
      */
-    private fun scaner(canvas: Canvas, stare: StareBord) {
+    private fun scaner(canvas: Canvas, stare: StareBord, intindere: Float) {
         val pozitie = LogicaBord.pozitiaScanerului(stare.scanerFaza)
         val directie = LogicaBord.directiaScanerului(stare.scanerFaza)
 
@@ -117,13 +135,16 @@ class BordKitt {
             val opacitate = LogicaBord.stralucireScaner(i, pozitie, directie)
             umplere.color = rosu
             umplere.alpha = (opacitate * 255).roundToInt().coerceIn(0, 255)
-            canvas.drawRect(340f + i * 20f, 76f, 340f + i * 20f + 16f, 96f, umplere)
+            val x = 340f + intindere + i * 20f
+            canvas.drawRect(x, 76f, x + 16f, 96f, umplere)
         }
         umplere.alpha = 255
     }
 
     /** Ceasul de viteza: 54 de bare pe un arc de 270 de grade. */
-    private fun ceasViteza(canvas: Canvas, stare: StareBord) {
+    private fun ceasViteza(canvas: Canvas, stare: StareBord, intindere: Float) {
+        val salvat = canvas.save()
+        canvas.translate(intindere, 0f)
         arc(canvas, 252f, liniePanou, 3f)
         arc(canvas, 186f, stins, 2f)
 
@@ -158,15 +179,22 @@ class BordKitt {
             v += 30
         }
 
-        val cuvant = if (stare.areLegatura) "READY" else "FARA LEGATURA"
-        val culoare = if (stare.areLegatura) ambra else rosuSters
-        text(canvas, 640f, 290f, 26f, culoare, cuvant, Paint.Align.CENTER, 8f)
+        // Locul asta e ingust: intre cifrele 60 si 120 ale ceasului incap
+        // vreo cinci litere. "FARA LEGATURA" se incaleca peste ele, cum s-a
+        // vazut pe ecranul masinii, deci cand nu avem legatura o spunem jos,
+        // unde e loc, nu aici.
+        if (stare.areLegatura) {
+            text(canvas, 640f, 290f, 26f, ambra, "READY", Paint.Align.CENTER, 8f)
+        }
 
         text(
             canvas, 640f, 445f, 170f, rosuAprins,
             stare.vitezaKmh.roundToInt().toString(), Paint.Align.CENTER, 0f, gros = true,
         )
         text(canvas, 640f, 488f, 28f, rosuSters, "km/h", Paint.Align.CENTER, 4f)
+
+        modulatorVoce(canvas, stare)
+        canvas.restoreToCount(salvat)
     }
 
     private fun coloanaStanga(canvas: Canvas, stare: StareBord) {
@@ -236,8 +264,18 @@ class BordKitt {
         text(canvas, 1105f, 506f, 24f, eticheta, "kW", Paint.Align.RIGHT, 2f)
     }
 
-    /** Modulatorul de voce: 24 de bare care joaca cu puterea. */
+    /**
+     * Modulatorul de voce: 24 de bare care joaca cu puterea. Cand nu avem
+     * legatura cu masina n-are ce sa joace, asa ca in locul lui scriem de ce.
+     */
     private fun modulatorVoce(canvas: Canvas, stare: StareBord) {
+        if (!stare.areLegatura) {
+            text(
+                canvas, 640f, 648f, 26f, ambra,
+                "FARA LEGATURA CU MASINA", Paint.Align.CENTER, 6f,
+            )
+            return
+        }
         val plin = stare.vocePlin
         val t = stare.timpS
         for (i in 0 until 24) {
@@ -335,5 +373,12 @@ class BordKitt {
 
         /** Ce scriem acolo unde masina nu da valoarea. */
         const val LIPSA = "---"
+
+        /**
+         * Cat lasam bordul sa se intinda in lateral pe ecranele late, in
+         * unitati de caiet. Peste atat, coloanele ar ajunge atat de departe
+         * de ceas incat n-ai mai cuprinde bordul dintr-o privire.
+         */
+        const val INTINDERE_MAXIMA = 220f
     }
 }
