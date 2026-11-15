@@ -15,3 +15,8 @@
 # Car App Library tine sabloanele si le citeste prin reflexie.
 -keep class androidx.car.app.** { *; }
 -dontwarn androidx.car.app.**
+
+# Cutia neagra: numele firului si urma caderii ajung in fisier, deci vrem
+# sa se poata citi. Fara numere de linie, o urma de cadere nu spune mare lucru.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute Sursa

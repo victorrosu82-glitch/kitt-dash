@@ -9,6 +9,9 @@ class KittApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        // Intai cutia neagra: daca pica ceva mai jos, vrem sa se vada.
+        Jurnal.prindeCaderile(this)
+        Jurnal.scrie(this, "Aplicatia porneste")
         val canal = NotificationChannel(
             ObdService.CANAL,
             getString(R.string.obd_channel_name),

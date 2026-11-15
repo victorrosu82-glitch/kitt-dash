@@ -7,6 +7,7 @@ import androidx.car.app.Session
 import androidx.car.app.SessionInfo
 import androidx.car.app.validation.HostValidator
 import ro.vix.kittdash.BuildConfig
+import ro.vix.kittdash.Jurnal
 import ro.vix.kittdash.R
 import java.security.MessageDigest
 
@@ -67,7 +68,7 @@ class KittCarAppService : CarAppService() {
         for (pachet in GAZDE_CUNOSCUTE) {
             for (amprenta in amprentele(pachet)) {
                 val stare = if (amprenta in permise) "in lista" else "NU E IN LISTA"
-                Log.i(TAG, "Gazda $pachet: $amprenta - $stare")
+                Jurnal.scrie(this, "Gazda $pachet: $amprenta - $stare")
             }
         }
     }

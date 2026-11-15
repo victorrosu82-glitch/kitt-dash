@@ -464,6 +464,6 @@ class BordKitt {
          * unitati de caiet. Peste atat, coloanele ar ajunge atat de departe
          * de ceas incat n-ai mai cuprinde bordul dintr-o privire.
          */
-        const val INTINDERE_MAXIMA = 220f
+        const val INTINDERE_MAXIMA = 360f
     }
 }

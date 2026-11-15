@@ -65,17 +65,20 @@ notificari.
 
 Varianta de predat **nu are** butonul Simulator de pe ecranul masinii.
 
-### Lista de gazde: de ce nu e cea oficiala
+### Lista de gazde
 
-Prima varianta de predat a cerut gazdei amprenta din lista oficiala a
-bibliotecii (`hosts_allowlist_sample`, androidx.car.app 1.7.0). Bordul a
-aparut pe ecranul Lexusului cateva secunde si apoi a disparut, si nu a mai
-aparut nici dupa reporniri sau alt cablu. Pe telefon mergea.
+Android Auto-ul din telefonul acesta are **doua** amprente, fiindca si-a
+schimbat cheia pe parcurs: `fdb00c43...` (cea veche) si `1ca8dcc0...` (cea de
+azi). Biblioteca le cere pe toate de la Android si accepta daca **macar una**
+e in lista - iar `fdb00c43` era deja in lista oficiala.
 
-Lista oficiala **a ramas in urma**. Android Auto-ul instalat din Play pe
-telefonul acesta e semnat cu amprenta `1ca8dcc0...`, care nu e printre cele
-trei din biblioteca - deci aplicatia isi respingea propriul telefon.
-Masurat, nu ghicit:
+Asta inseamna ca lista **nu** a fost pricina disparitiei bordului de pe
+ecranul Lexusului, cum am crezut la inceput. Lista noastra din
+`app/src/main/res/values/gazde.xml` ramane fiindca e mai stransa la viitor
+(cand cheia veche o sa iasa din lista oficiala, noi o avem si pe cea noua),
+dar nu ea a reparat nimic.
+
+Amprenta se masoara asa, nu se scrie din memorie:
 
 ```
 adb shell pm path com.google.android.projection.gearhead
@@ -83,16 +86,40 @@ adb pull <calea de mai sus>/base.apk gearhead.apk
 apksigner verify  (cu "print-certs")  gearhead.apk
 ```
 
-Lista noastra e in `app/src/main/res/values/gazde.xml`: cele sase oficiale
-plus amprenta masurata. Si, ca sa nu mai pierdem un drum, serviciul **scrie in
-jurnal**, la fiecare legare, ce amprenta are gazda si daca e in lista:
+### Cutia neagra
+
+Jurnalul telefonului se sterge la repornire. Cand bordul a disparut de pe
+ecranul Lexusului, pana sa ajunga telefonul la calculator trei reporniri
+stersesera tot, si nu mai stim nici azi de ce a disparut.
+
+De aceea aplicatia isi scrie singura un jurnal, care tine peste reporniri:
 
 ```
-adb logcat -s KittCarApp
+adb pull /sdcard/Android/data/ro.vix.kittdash/files/jurnal.txt
 ```
 
-Daca bordul dispare din nou dupa o actualizare de Android Auto, randul acela
-spune de ce intr-o clipa. Inainte respingerea era muta.
+sau, de pe telefon, cu Fisiere: *Android > data > ro.vix.kittdash > files*.
+
+Scrie clipele care conteaza daca bordul nu apare: cand il cheama Android Auto,
+ce amprenta are gazda si daca e in lista, ce suprafata primim si cat din ea ne
+lasa libera masina, cand pierdem suprafata - si **orice cadere, cu urma ei**.
+Urma e citibila si din APK-ul minificat (`proguard-rules.pro` tine numerele de
+linie): asa s-a aflat, intr-o clipa, ca `NavigationTemplate` nu merge fara
+banda de butoane.
+
+### Cat ecran ne da masina
+
+Pe unitatea principala: panza **800x400**, din care liber ne ramane
+**776x300** la (12,88). Fasia de sus e banda de butoane a sablonului, si nu se
+poate lua inapoi - fara `setActionStrip`, `NavigationTemplate` crapa la
+construire. Zona "libera acum" incepe 776x376 si se strange tot la 776x300
+dupa doua secunde, deci nici pe ea nu se castiga nimic, doar o resezare a
+bordului in mers.
+
+In zona primita bordul umple acum toata latimea: intinderea maxima a crescut
+de la 220 la 360 de puncte din caietul de 1280, cat ii trebuie ca sa ajunga la
+margini pe o zona de forma 2,59. Cat ne da ecranul Lexusului **inca nu stim** -
+asta spune jurnalul dupa primul drum.
 
 ### Android Auto
 
