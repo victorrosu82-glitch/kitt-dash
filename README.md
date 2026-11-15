@@ -63,9 +63,36 @@ bordul pur si simplu n-ar aparea pe ecranul masinii. Regulile din
 `app/proguard-rules.pro` il tin pe loc, impreuna cu serviciul OBD si cel de
 notificari.
 
-Varianta de predat **nu are** butonul Simulator de pe ecranul masinii si
-foloseste lista oficiala de gazde Android Auto, nu "oricine" - deci emulatorul
-DHU merge numai cu varianta de lucru.
+Varianta de predat **nu are** butonul Simulator de pe ecranul masinii.
+
+### Lista de gazde: de ce nu e cea oficiala
+
+Prima varianta de predat a cerut gazdei amprenta din lista oficiala a
+bibliotecii (`hosts_allowlist_sample`, androidx.car.app 1.7.0). Bordul a
+aparut pe ecranul Lexusului cateva secunde si apoi a disparut, si nu a mai
+aparut nici dupa reporniri sau alt cablu. Pe telefon mergea.
+
+Lista oficiala **a ramas in urma**. Android Auto-ul instalat din Play pe
+telefonul acesta e semnat cu amprenta `1ca8dcc0...`, care nu e printre cele
+trei din biblioteca - deci aplicatia isi respingea propriul telefon.
+Masurat, nu ghicit:
+
+```
+adb shell pm path com.google.android.projection.gearhead
+adb pull <calea de mai sus>/base.apk gearhead.apk
+apksigner verify  (cu "print-certs")  gearhead.apk
+```
+
+Lista noastra e in `app/src/main/res/values/gazde.xml`: cele sase oficiale
+plus amprenta masurata. Si, ca sa nu mai pierdem un drum, serviciul **scrie in
+jurnal**, la fiecare legare, ce amprenta are gazda si daca e in lista:
+
+```
+adb logcat -s KittCarApp
+```
+
+Daca bordul dispare din nou dupa o actualizare de Android Auto, randul acela
+spune de ce intr-o clipa. Inainte respingerea era muta.
 
 ### Android Auto
 
