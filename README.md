@@ -118,8 +118,69 @@ bordului in mers.
 
 In zona primita bordul umple acum toata latimea: intinderea maxima a crescut
 de la 220 la 360 de puncte din caietul de 1280, cat ii trebuie ca sa ajunga la
-margini pe o zona de forma 2,59. Cat ne da ecranul Lexusului **inca nu stim** -
-asta spune jurnalul dupa primul drum.
+margini pe o zona de forma 2,59.
+
+**Pe Lexus** (jurnalul din 15.11.2026, 17:10): panza **1190x460**, cu bara de
+aplicatii Android Auto in stanga; ecranul e deci cam 1280x480. Fasia de 88 de
+sus e libera cat nu atingi ecranul (Android Auto o raporteaza libera "acum"),
+asa ca din 16.11.2026 bordul o foloseste: deseneaza pe toata inaltimea, cu 12
+puncte margine, si se potriveste dupa partea desenata a caietului
+(`SUS_CONTINUT`..`JOS_CONTINUT`), nu dupa tot caietul - iese cu o treime mai
+mare. Cand atingi ecranul, butoanele sablonului apar o clipa peste coltul din
+dreapta-sus. Scanerul e mai lat (creste cu intinderea), mai inalt si are halou.
+
+Android Auto mai da si alte zone, dupa ce e pe ecran langa noi: **746x360**
+in ecranul impartit (langa Spotify) si **386x412 la (792,24)** cat e deschisa
+lista de aplicatii. Bordul se aseaza in fiecare.
+
+### Emulatorul pe ecranul Lexusului
+
+`C:\Users\vix\Proiecte\dhu\config\lexus_nx.ini` (1280x720 cu 240 margine) da
+exact panza de 1190x460 a Lexusului:
+
+```
+.\desktop-head-unit.exe -c config\lexus_nx.ini
+```
+
+Capcane aflate pe 16.11.2026:
+- emulatorul citeste comenzi din consola; daca intrarea se inchide, iese si
+  lasa Android Auto blocat cu "Already connected". Se porneste cu intrarea
+  tinuta deschisa (`tail -f fisier | desktop-head-unit.exe`), iar prin fisier
+  se pot trimite comenzi ca `tap 40 283`;
+- dupa o iesire urata: `adb shell am force-stop com.google.android.projection.gearhead`
+  si apesi din nou butonul serverului pe telefon;
+- **nu instala APK-ul cat e conectat**: procesul nou nu mai poate desena pe
+  suprafata ("Nu pot desena pe panza" in jurnal) pana la reconectare;
+- in lista de aplicatii de pe *telefon* ("Personalizati lansatorul") KITT nu
+  apare - fara masina, Android Auto nu poate verifica aplicatiile instalate
+  direct. Pe ecranul masinii apare. Instalarea se face cu
+  `adb install -r -i com.android.vending KittDash.apk`.
+
+### Instructiunile de navigatie (Waze, Google Maps)
+
+Cand KITT ia locul lui Waze pe ecranul masinii, Waze merge mai departe pe
+telefon si tine o notificare pe canalul "Waze Navigation Instructions"
+(categoria `navigation`): titlul e distanta ("70 m"), textul e strada, imaginea
+mare e sageata manevrei (36x36). Cat Waze e el insusi pe ecranul masinii,
+notificarea lipseste. Ora sosirii nu e in notificare.
+
+`navigatie/Navigatie.kt` o citeste prin ascultatorul de notificari (acelasi
+acces ca la melodie) si bordul deseneaza un panou in dreapta (bordul se strange
+la 64% din latime): sageata in ambra cu halou, distanta mare, bara de apropiere,
+strada. Sub 50 m sageata clipeste in rosu. In ferestrele aproape patrate ramane
+doar panoul. Aspectul: `docs/macheta-waze.html`.
+
+Google Maps tine si o notificare de navigatie fara distanta ("Condu cu Google
+Maps", ori doar numele strazii); de aceea se iau numai notificarile in care
+titlul sau textul e o distanta. **Notificarile Waze trebuie sa fie pornite** din
+setarile telefonului - erau oprite si atunci nu vine nimic.
+
+### Suprafata noua
+
+Android Auto poate da o suprafata noua fara s-o ia pe cea veche (16.11.2026:
+doua in aceeasi clipa, apoi bordul inghetat pe ultimul cadru). Desenatorul
+opreste acum bucla si o reia pe suprafata noua, iar daca nu poate desena o
+secunda la rand scrie o data in jurnal motivul.
 
 ### Android Auto
 
@@ -164,7 +225,7 @@ Nicio formula nu e scrisa din memorie. Fiecare are o dovada pe masina asta:
 | 1 | Conexiunea, datele standard, ecran de test | **gata, probata pe masina** |
 | 2 | Datele hibride (baterie HV, kW, mod) | **gata, probata pe masina** |
 | 3 | Bordul KITT pe telefon | **gata** |
-| 4 | Android Auto | **merge pe emulator**, de probat pe Lexus |
+| 4 | Android Auto | **merge pe Lexus** (15.11.2026) si pe emulatorul cu ecranul Lexusului |
 | 5 | Finisaje | **gata** |
 
 ## Sonda de pe laptop (etapa 0)
@@ -228,6 +289,8 @@ app/src/main/java/ro/vix/kittdash/
   bord/LogicaBord.kt         deciziile desenului (câte bare, ce culoare), probate
   bord/StareBord.kt          ce se desenează acum + netezirea între citiri
   bord/EcranBord.kt          bordul pe telefon: pe lat, fără barele Android
+  navigatie/InstructiuneNav.kt manevra urmatoare: distanta, strada, sageata, apropierea
+  navigatie/Navigatie.kt     citeste notificarea de navigatie (Waze, Google Maps)
   ui/MainActivity.kt         ecranul de test al etapei 1 (valorile brute)
 tools/sonda_elm327.py        sonda de pe laptop (etapa 0)
 tools/serial_win.py          port serial pe Windows, fără pyserial

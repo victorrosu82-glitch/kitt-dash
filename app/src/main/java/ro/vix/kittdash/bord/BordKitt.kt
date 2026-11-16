@@ -3,8 +3,12 @@ package ro.vix.kittdash.bord
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Paint
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.graphics.RectF
 import android.graphics.Typeface
+import ro.vix.kittdash.navigatie.Distanta
+import ro.vix.kittdash.navigatie.InstructiuneNav
 import ro.vix.kittdash.obd.ModHibrid
 import kotlin.math.abs
 import kotlin.math.cos
@@ -58,6 +62,7 @@ class BordKitt {
         typeface = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
     }
     private val oval = RectF()
+    private val imagine = Paint(Paint.ANTI_ALIAS_FLAG or Paint.FILTER_BITMAP_FLAG)
 
 
     /**
@@ -66,13 +71,46 @@ class BordKitt {
      * [latime] si [inaltime] sunt in pixelii suprafetei; bordul se aseaza in
      * mijloc, pastrandu-si proportia, ca sa nu se lateasca pe ecrane late.
      */
-    fun deseneaza(canvas: Canvas, latime: Float, inaltime: Float, stare: StareBord) {
+    fun deseneaza(
+        canvas: Canvas,
+        latime: Float,
+        inaltime: Float,
+        stare: StareBord,
+        nav: InstructiuneNav? = null,
+    ) {
         canvas.drawColor(fundal)
         if (latime <= 0f || inaltime <= 0f) return
 
-        val scara = min(latime / LATIME, inaltime / INALTIME)
+        if (nav == null) {
+            bord(canvas, latime, inaltime, stare)
+        } else if (latime / inaltime < FORMA_DOAR_PANOU) {
+            // Fereastra aproape patrata (Android Auto ne-a lasat doar un colt,
+            // de pilda cat e deschisa lista de aplicatii): bordul si panoul
+            // n-ar mai incapea amandoua lizibil. Ramane manevra, pe tot locul.
+            panouNavigatie(canvas, 0f, latime, inaltime, nav, stare, sus = 12f)
+        } else {
+            // Cat merge navigatia, bordul se strange in stanga si lasa loc
+            // panoului cu manevra. Fara navigatie, panoul nu exista deloc.
+            val latimeBord = latime * FRACTIE_BORD
+            bord(canvas, latimeBord, inaltime, stare)
+            panouNavigatie(canvas, latimeBord, latime, inaltime, nav, stare)
+        }
+
+        // Noaptea tragem o perdea subtire peste tot. E mai bine decat sa
+        // stingem fiecare culoare in parte: asa raman aceleasi culori, doar
+        // cu mai putina lumina, si nu se poate uita vreuna.
+        if (stare.noapte) canvas.drawColor(PERDEA_NOAPTE)
+    }
+
+    private fun bord(canvas: Canvas, latime: Float, inaltime: Float, stare: StareBord) {
+        // Caietul are 720 de randuri, dar desenul ocupa doar fasia dintre
+        // SUS_CONTINUT si JOS_CONTINUT; restul e margine goala. Pe ecranele
+        // late si joase ale masinii inaltimea hotaraste marimea, deci
+        // potrivim dupa desen, nu dupa caiet - bordul iese cu o treime mai mare.
+        val inaltimeDesen = JOS_CONTINUT - SUS_CONTINUT
+        val scara = min(latime / LATIME, inaltime / inaltimeDesen)
         val stanga = (latime - LATIME * scara) / 2f
-        val sus = (inaltime - INALTIME * scara) / 2f
+        val sus = (inaltime - inaltimeDesen * scara) / 2f - SUS_CONTINUT * scara
 
         // Ecranul unei masini e de obicei mai lat decat caietul de 1280x720.
         // Daca am lasa totul la mijloc, ar ramane benzi negre in stanga si in
@@ -99,11 +137,144 @@ class BordKitt {
         canvas.restoreToCount(salvatDreapta)
 
         canvas.restoreToCount(salvat)
+    }
 
-        // Noaptea tragem o perdea subtire peste tot. E mai bine decat sa
-        // stingem fiecare culoare in parte: asa raman aceleasi culori, doar
-        // cu mai putina lumina, si nu se poate uita vreuna.
-        if (stare.noapte) canvas.drawColor(PERDEA_NOAPTE)
+    // --- panoul de navigatie --------------------------------------------
+
+    /**
+     * Manevra urmatoare, in dreapta bordului: sageata, distanta mare, bara de
+     * apropiere si strada. Aspectul e cel din `docs/macheta-waze.html`.
+     *
+     * Se deseneaza direct in pixelii ecranului, nu in caietul de 1280x720:
+     * panoul are alta forma decat bordul si trebuie sa umple exact locul ramas.
+     */
+    private fun panouNavigatie(
+        canvas: Canvas,
+        stanga: Float,
+        dreapta: Float,
+        inaltime: Float,
+        nav: InstructiuneNav,
+        stare: StareBord,
+        sus: Float = 70f,
+    ) {
+        val u = inaltime / 460f
+        val x0 = stanga + 8f * u
+        val x1 = dreapta - 10f * u
+        val y0 = sus * u
+        val y1 = inaltime - 14f * u
+        val l = x1 - x0
+        val h = y1 - y0
+        if (l < 80f * u || h < 120f * u) return
+
+        // rama, cu colturile aprinse ca o consola KITT
+        umplere.color = Color.parseColor("#0a0302")
+        oval.set(x0, y0, x1, y1)
+        canvas.drawRoundRect(oval, 6f * u, 6f * u, umplere)
+        linie.color = Color.parseColor("#5a1610")
+        linie.strokeWidth = 1.5f * u
+        canvas.drawRoundRect(oval, 6f * u, 6f * u, linie)
+        linie.color = rosu
+        linie.strokeWidth = 3f * u
+        val c = 18f * u
+        for ((x, y, dx, dy) in listOf(
+            listOf(x0, y0, 1f, 1f), listOf(x1, y0, -1f, 1f),
+            listOf(x0, y1, 1f, -1f), listOf(x1, y1, -1f, -1f),
+        )) {
+            canvas.drawLine(x, y, x + dx * c, y, linie)
+            canvas.drawLine(x, y, x, y + dy * c, linie)
+        }
+
+        val margine = 22f * u
+        text(canvas, x0 + margine, y0 + 30f * u, 13f * u, eticheta, "NAVIGATION", Paint.Align.LEFT, 3f * u)
+        // Numele aplicatiei doar daca incape langa "NAVIGATION", nu peste el.
+        if (l > 300f * u) {
+            text(canvas, x1 - margine, y0 + 30f * u, 13f * u, rosuSters, nav.sursa, Paint.Align.RIGHT, 3f * u)
+        }
+
+        val metri = nav.metri
+        val iminenta = metri != null && metri < InstructiuneNav.APROAPE_METRI
+        val clipeste = iminenta && (stare.timpS * 4f).toInt() % 2 == 0
+        val culoareSageata = if (clipeste) rosu else ambra
+
+        // sageata, in stanga panoului
+        val sageata = nav.sageata
+        val latura = minOf(l * 0.40f, h * 0.42f)
+        val sx = x0 + margine
+        val sy = y0 + h * 0.40f - latura / 2f
+        if (sageata != null && !sageata.isRecycled) {
+            val tinta = RectF(sx, sy, sx + latura, sy + latura)
+            // haloul rosu, putin mai mare, apoi sageata plina
+            imagine.colorFilter = PorterDuffColorFilter(rosu, PorterDuff.Mode.SRC_IN)
+            imagine.alpha = 70
+            val halou = RectF(tinta).apply { inset(-6f * u, -6f * u) }
+            canvas.drawBitmap(sageata, null, halou, imagine)
+            imagine.colorFilter = PorterDuffColorFilter(culoareSageata, PorterDuff.Mode.SRC_IN)
+            imagine.alpha = 255
+            canvas.drawBitmap(sageata, null, tinta, imagine)
+        }
+
+        // distanta, mare, in dreapta
+        val (cifra, unitate) = Distanta.desparte(nav.distanta)
+        var marime = h * 0.26f
+        scrisGros.textSize = marime
+        val loc = l - latura - margine * 3f
+        val lat = scrisGros.measureText(cifra)
+        if (lat > loc && lat > 0f) marime *= loc / lat
+        val yCifra = y0 + h * 0.46f
+        text(canvas, x1 - margine, yCifra, marime, rosuAprins, cifra, Paint.Align.RIGHT, 0f, gros = true)
+        val numeUnitate = when (unitate) {
+            "M" -> "METRI"
+            else -> unitate
+        }
+        if (numeUnitate.isNotEmpty()) {
+            text(canvas, x1 - margine, yCifra + h * 0.10f, h * 0.065f, rosuSters, numeUnitate, Paint.Align.RIGHT, 4f * u)
+        }
+
+        // bara de apropiere: se umple pe masura ce te apropii de manevra
+        val apropiere = nav.apropiere
+        if (apropiere != null) {
+            val segmente = 12
+            val bx1 = x1 - margine
+            val bx0 = maxOf(sx + latura + margine, bx1 - 230f * u)
+            val pas = (bx1 - bx0) / segmente
+            val by = y0 + h * 0.64f
+            for (i in 0 until segmente) {
+                val aprins = i < apropiere * segmente
+                umplere.color = when {
+                    !aprins -> stins
+                    i > 8 -> rosu
+                    else -> ambra
+                }
+                canvas.drawRect(bx0 + i * pas, by, bx0 + i * pas + pas * 0.75f, by + 10f * u, umplere)
+            }
+        }
+
+        // strada, jos
+        val strada = nav.strada
+        if (strada != null) {
+            text(canvas, x0 + margine, y0 + h * 0.78f, 13f * u, eticheta, "URMEAZA", Paint.Align.LEFT, 2.5f * u)
+            var m = h * 0.085f
+            val maxim = l - 2f * margine
+            scris.textSize = m
+            val ls = 2f * u / m
+            scris.letterSpacing = ls
+            val w = scris.measureText(strada.uppercase())
+            scris.letterSpacing = 0f
+            if (w > maxim && w > 0f) m = maxOf(m * maxim / w, h * 0.05f)
+            text(
+                canvas, x0 + margine, y0 + h * 0.90f, m, valoare,
+                taie(strada.uppercase(), m, maxim), Paint.Align.LEFT, 2f * u,
+            )
+        }
+    }
+
+    /** Taie textul cu "..." daca tot nu incape la marimea data. */
+    private fun taie(text: String, marime: Float, maxim: Float): String {
+        scris.textSize = marime
+        if (scris.measureText(text) <= maxim) return text
+        var t = text
+        while (t.length > 1 && scris.measureText("$t…") > maxim) t = t.dropLast(1)
+        return "$t…"
     }
 
     // --- partile bordului ----------------------------------------------
@@ -137,12 +308,29 @@ class BordKitt {
         val pozitie = LogicaBord.pozitiaScanerului(stare.scanerFaza)
         val directie = LogicaBord.directiaScanerului(stare.scanerFaza)
 
-        for (i in 0 until 30) {
+        // Scanerul se lateste odata cu bordul, ca sa ramana semnul lui KITT
+        // si pe ecranul lat al masinii, nu o dunga mica in mijloc.
+        val latimeScaner = SCANER_LATIME + SCANER_INTINDERE * intindere
+        val pas = latimeScaner / SCANER_CASUTE
+        val casuta = pas - SCANER_GOL
+        val start = CX + intindere - latimeScaner / 2f
+
+        for (i in 0 until SCANER_CASUTE) {
             val opacitate = LogicaBord.stralucireScaner(i, pozitie, directie)
+            val x = start + i * pas
+            // Haloul din jurul casutelor aprinse: lumina rosie care se varsa
+            // putin in jur, ca la lampile adevarate.
+            if (opacitate > 0.3f) {
+                umplere.color = rosu
+                umplere.alpha = (opacitate * 70).roundToInt().coerceIn(0, 255)
+                canvas.drawRect(
+                    x - SCANER_HALOU, SCANER_SUS - SCANER_HALOU,
+                    x + casuta + SCANER_HALOU, SCANER_JOS + SCANER_HALOU, umplere,
+                )
+            }
             umplere.color = rosu
             umplere.alpha = (opacitate * 255).roundToInt().coerceIn(0, 255)
-            val x = 340f + intindere + i * 20f
-            canvas.drawRect(x, 76f, x + 16f, 96f, umplere)
+            canvas.drawRect(x, SCANER_SUS, x + casuta, SCANER_JOS, umplere)
         }
         umplere.alpha = 255
     }
@@ -431,6 +619,37 @@ class BordKitt {
         private const val CX = 640f
         private const val CY = 400f
         private const val BARE = 54
+
+        /**
+         * Fasia din caiet pe care chiar se deseneaza: de la numele masinii
+         * pana sub modulatorul de voce. Dupa ea se potriveste bordul pe ecran.
+         */
+        /** Cat din latime ramane bordului cand apare panoul de navigatie. */
+        const val FRACTIE_BORD = 0.64f
+
+        /**
+         * Sub forma asta (latime / inaltime) fereastra e prea ingusta pentru
+         * bord si panou impreuna; atunci ramane doar panoul. Zona de 386x412
+         * pe care o da Android Auto cand deschizi lista de aplicatii are 0,94.
+         */
+        const val FORMA_DOAR_PANOU = 1.6f
+
+        const val SUS_CONTINUT = 16f
+        const val JOS_CONTINUT = 690f
+
+        /**
+         * Scanerul. In macheta avea 600 x 20; aici e mai lat si de peste doua
+         * ori mai inalt, iar pe ecranele late creste odata cu intinderea.
+         * Sta intre linia de sub antet (62) si etichetele coloanelor (~100);
+         * arcul ceasului incepe abia la 148.
+         */
+        private const val SCANER_CASUTE = 30
+        private const val SCANER_LATIME = 720f
+        private const val SCANER_INTINDERE = 1.2f
+        private const val SCANER_GOL = 5f
+        private const val SCANER_SUS = 72f
+        private const val SCANER_JOS = 116f
+        private const val SCANER_HALOU = 4f
 
         /** Capatul ceasului de viteza. */
         const val VITEZA_MAXIMA = 180f

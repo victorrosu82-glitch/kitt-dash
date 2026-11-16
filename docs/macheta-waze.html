@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<title>KITT Dash - macheta cu instructiuni Waze (ecran Lexus 1280x480)</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden}
+svg{display:block;width:100vw;height:100vh}
+</style>
+</head>
+<body>
+<!-- Ecranul Lexusului: 1280x480. Bara Android Auto in stanga (80 px), apoi panza KITT 1190x460. -->
+<svg id="k" viewBox="0 0 1280 480" preserveAspectRatio="xMidYMid meet"></svg>
+<script>
+const S=document.getElementById('k'),NS='http://www.w3.org/2000/svg',F='Roboto, Arial, Helvetica, sans-serif';
+const DIM='#2b0c0a',RED='#ff2d1c',ORG='#ff7a1a',AMB='#ffb21c',CY='#35d0ff',LAB='#9a2f26',VAL='#ff5a2a',LINE='#3a0f0c';
+function mk(t,a,txt,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(txt!==undefined&&txt!==null)e.textContent=txt;(p||S).appendChild(e);return e}
+function tx(x,y,s,fill,txt,anc,ls,w){return mk('text',{x:x,y:y,'font-size':s,fill:fill,'font-family':F,'text-anchor':anc||'start','letter-spacing':ls||0,'font-weight':w||400},txt)}
+
+// --- bara Android Auto (stanga) -------------------------------------------
+mk('rect',{x:0,y:0,width:1280,height:480,fill:'#000'});
+tx(40,74,22,'#fff','23:41','middle',0,500);
+[[163,'#e8e8e8'],[231,'#1ed760'],[299,'#25d366']].forEach(([y,c])=>{mk('rect',{x:14,y:y-26,width:52,height:52,rx:14,fill:'#2a2a2a'});mk('circle',{cx:40,cy:y,r:18,fill:c,opacity:0.9})});
+mk('rect',{x:30,y:350,width:20,height:30,rx:10,fill:'none',stroke:'#fff','stroke-width':3});
+mk('rect',{x:26,y:420,width:28,height:28,rx:3,fill:'none',stroke:'#fff','stroke-width':3});
+
+// --- panza KITT ----------------------------------------------------------
+const G=mk('g',{transform:'translate(80,10)'});
+mk('rect',{x:0,y:0,width:1190,height:460,rx:18,fill:'#050505'},null,G);
+function t(x,y,s,fill,txt,anc,ls,w){return mk('text',{x:x,y:y,'font-size':s,fill:fill,'font-family':F,'text-anchor':anc||'start','letter-spacing':ls||0,'font-weight':w||400},txt,G)}
+function r(x,y,w,h,fill,extra){return mk('rect',Object.assign({x:x,y:y,width:w,height:h,fill:fill},extra||{}),null,G)}
+
+// Antet + scaner pe toata latimea (semnul lui KITT ramane intreg)
+t(40,32,17,'#ff3b2a','LEXUS NX 300h','start',4);
+const modeT=t(1150,32,17,AMB,'HYBRID','end',4);
+mk('line',{x1:40,y1:42,x2:1150,y2:42,stroke:LINE,'stroke-width':1.5},null,G);
+const scan=[];const N=34,SX=200,SW=790,pas=SW/N;
+for(let i=0;i<N;i++){scan.push([r(SX+i*pas-3,49,pas-3+6,34,RED,{opacity:0}),r(SX+i*pas,52,pas-4,28,DIM)])}
+
+// Coloana stanga
+t(40,108,13,LAB,'COOLANT','start',2);t(40,134,26,VAL,'88°C');
+t(40,164,13,LAB,'OUTSIDE','start',2);t(40,190,26,VAL,'7°C');
+t(40,220,13,LAB,'HV BATTERY','start',2);
+const bat=[];for(let i=0;i<14;i++)bat.push(r(40,230+(13-i)*15.5,56,11.5,DIM));
+const socT=t(112,345,42,AMB,'61%');t(112,368,13,LAB,'SOC','start',2);
+
+// Ceasul de viteza, mutat spre stanga
+const cx=395,cy=262,Nb=54,tk=[];
+function arc(rr){const a=135*Math.PI/180,b=45*Math.PI/180;return 'M'+(cx+rr*Math.cos(a))+' '+(cy+rr*Math.sin(a))+' A'+rr+' '+rr+' 0 1 1 '+(cx+rr*Math.cos(b))+' '+(cy+rr*Math.sin(b))}
+mk('path',{d:arc(163),fill:'none',stroke:LINE,'stroke-width':2},null,G);
+for(let i=0;i<Nb;i++){const a=(135+i*270/(Nb-1))*Math.PI/180,c=Math.cos(a),s=Math.sin(a);
+tk.push(mk('line',{x1:cx+129*c,y1:cy+129*s,x2:cx+151*c,y2:cy+151*s,stroke:DIM,'stroke-width':5.5},null,G))}
+for(let v=0;v<=180;v+=30){const a=(135+v/180*270)*Math.PI/180;
+mk('text',{x:cx+105*Math.cos(a),y:cy+105*Math.sin(a),'font-size':15,fill:'#8a2a22','font-family':F,'text-anchor':'middle','dominant-baseline':'central'},v,G)}
+t(cx,197,16,AMB,'READY','middle',5);
+const spdT=t(cx,290,110,'#ff3b2a','52','middle',0,500);
+t(cx,318,17,'#8a2a22','km/h','middle',3);
+
+// Puterea, intre ceas si panou
+t(640,108,13,LAB,'ENGINE','end',2);const rpmT=t(640,134,26,VAL,'1450 rpm','end');
+t(640,164,13,LAB,'POWER','end',2);
+const pwT=t(608,190,26,AMB,'+8','end');t(640,190,14,LAB,'kW','end',1);
+const up=[],dn=[];
+for(let j=0;j<7;j++){up.push(r(586,322-3-10.5-j*14,54,10.5,DIM));dn.push(r(586,322+3+j*14,54,10.5,DIM))}
+
+// Modulatorul de voce sub ceas
+const vb=[];for(let i=0;i<24;i++)vb.push(r(cx-144+i*12,418,8,4,'#4a120e'));
+
+// --- panoul de navigatie (Waze) -----------------------------------------
+const PX=690,PY=96,PW=460,PH=346;
+r(PX,PY,PW,PH,'#0a0302',{rx:6,stroke:'#5a1610','stroke-width':1.5});
+// colturi aprinse, stil consola KITT
+[[PX,PY,1,1],[PX+PW,PY,-1,1],[PX,PY+PH,1,-1],[PX+PW,PY+PH,-1,-1]].forEach(([x,y,dx,dy])=>{
+ mk('path',{d:`M${x} ${y+dy*18} L${x} ${y} L${x+dx*18} ${y}`,fill:'none',stroke:RED,'stroke-width':3},null,G)});
+t(PX+22,PY+30,13,LAB,'NAVIGATION','start',3);
+t(PX+PW-22,PY+30,13,'#8a2a22','WAZE','end',3);
+
+// Sageata manevrei: viraj la dreapta, desenata din linii groase, ambra cu halou rosu
+const AX=PX+110,AY=PY+190;
+const arrow=`M${AX-40} ${AY+80} L${AX-40} ${AY-5} Q${AX-40} ${AY-45} ${AX} ${AY-45} L${AX+50} ${AY-45}`;
+mk('path',{d:arrow,fill:'none',stroke:RED,'stroke-width':30,'stroke-linecap':'round','stroke-linejoin':'round',opacity:0.18},null,G);
+const arrowP=mk('path',{d:arrow,fill:'none',stroke:AMB,'stroke-width':18,'stroke-linecap':'round','stroke-linejoin':'round'},null,G);
+const head=mk('path',{d:`M${AX+38} ${AY-80} L${AX+88} ${AY-45} L${AX+38} ${AY-10} Z`,fill:AMB,stroke:AMB,'stroke-width':6,'stroke-linejoin':'round'},null,G);
+
+// Distanta mare + bara care se umple pe masura ce te apropii
+const distT=t(PX+PW-30,PY+160,84,'#ff3b2a','300','end',0,500);
+t(PX+PW-30,PY+196,24,'#8a2a22','METRI','end',4);
+const dseg=[];for(let i=0;i<12;i++)dseg.push(r(PX+215+i*18.5,PY+222,14,10,DIM));
+
+// Strada si sosirea
+t(PX+22,PY+282,13,LAB,'VIREAZA DREAPTA PE','start',2.5);
+t(PX+22,PY+312,28,VAL,'CALEA BUCURESTI','start',2,500);
+r(PX+22,PY+325,PW-44,1,LINE);
+t(PX+22,PY+340,14,'#b8861c','SOSIRE 23:58','start',2);
+t(PX+PW-22,PY+340,14,'#b8861c','12 KM  ·  17 MIN','end',2);
+
+// --- animatie: scaner, ceas, apropierea de viraj ------------------------
+let t0=performance.now(),dist=300;
+function tick(now){const T=(now-t0)/1000;
+ const sp=52+6*Math.sin(T*0.6),pw=8+6*Math.sin(T*0.9);
+ spdT.textContent=Math.round(sp);
+ const lit=Math.round(sp/180*(Nb-1));
+ for(let i=0;i<Nb;i++)tk[i].setAttribute('stroke',i>lit?DIM:(i===lit?'#ffd6cc':(i>43?ORG:RED)));
+ const ph=(T*26)%(2*(N-1)),pos=ph<N-1?ph:2*(N-1)-ph,dir=ph<N-1?1:-1;
+ for(let i=0;i<N;i++){const d=i-pos,ad=Math.abs(d),op=d*dir<0?Math.max(0,1-ad/7):Math.max(0,1-ad/2.5);
+  scan[i][1].setAttribute('fill',op>0.08?RED:DIM);scan[i][1].setAttribute('opacity',op>0.08?Math.max(0.12,op).toFixed(2):1);
+  scan[i][0].setAttribute('opacity',(op*0.28).toFixed(2))}
+ for(let i=0;i<14;i++)bat[i].setAttribute('fill',i<61/100*14?(i<3?RED:AMB):DIM);
+ const nu=pw/22*7;for(let j=0;j<7;j++){up[j].setAttribute('fill',j<nu?(j>4?RED:(j>2?ORG:AMB)):DIM);dn[j].setAttribute('fill',DIM)}
+ pwT.textContent='+'+Math.round(pw);
+ for(let i=0;i<24;i++){const h=4+30*Math.abs(Math.sin(T*9+i*1.7)*Math.cos(T*4.3+i*0.6));vb[i].setAttribute('y',420-h/2);vb[i].setAttribute('height',h);vb[i].setAttribute('fill',RED)}
+ // distanta scade de la 300 la 0, apoi o ia de la capat
+ dist=300-((T*22)%300);const m=Math.round(dist/10)*10;distT.textContent=m;
+ const f=1-dist/300;for(let i=0;i<12;i++)dseg[i].setAttribute('fill',i<f*12?(i>8?RED:AMB):DIM);
+ // sub 50 m sageata pulseaza in rosu
+ const aproape=dist<50,puls=aproape&&Math.floor(T*4)%2===0;
+ arrowP.setAttribute('stroke',puls?RED:AMB);head.setAttribute('fill',puls?RED:AMB);head.setAttribute('stroke',puls?RED:AMB);
+ requestAnimationFrame(tick)}
+requestAnimationFrame(tick);
+</script>
+</body>
+</html>
