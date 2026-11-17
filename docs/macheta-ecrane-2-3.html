@@ -142,6 +142,85 @@ if(ECRAN==='3'){
  t(595,425,15,st.cm,st.txt,'middle',4);
  puncte(3);
 }
+
+// =======================================================================
+// ECRAN 4 - MODULATORUL: tot ecranul e cutia vocii lui KITT. Trei coloane
+// de bare: stanga = viteza, mijloc = puterea, dreapta = bateria. Cifrele
+// stau mici, sub ele; ochiul citeste inaltimea, nu numarul.
+if(ECRAN==='4'){
+ antet('EV',CY,'MODULATOR');
+ const col=[{x:300,v:0.48,txt:'52',u:'KM/H',c:RED},{x:595,v:0.72,txt:'+11',u:'KW',c:AMB},{x:890,v:0.61,txt:'61%',u:'HV',c:CY}];
+ const W=190,N=15,Y0=100,Y1=388,h=(Y1-Y0)/N;
+ col.forEach((k,ci)=>{
+  // ca la KITT: coloana din mijloc creste din centru, cele laterale din centru dar mai scurte
+  const mij=(Y0+Y1)/2,aprinse=Math.round(k.v*N);
+  for(let i=0;i<N;i++){
+   const d=Math.abs(i-(N-1)/2),lit=d<=aprinse/2;
+   const w=ci===1?W:W*0.78;
+   r(k.x-w/2,Y0+i*h+2,w,h-5,lit?k.c:DIM,{opacity:lit?(1-d/(N/2)*0.55).toFixed(2):1,rx:2});
+   if(lit&&d<1)r(k.x-w/2-6,Y0+i*h-2,w+12,h+3,k.c,{opacity:0.15,rx:3});
+  }
+  t(k.x,418,22,k.c,k.txt,'middle',2,500);t(k.x,436,11,LAB,k.u,'middle',4);
+ });
+ // ramele cutiei de voce, ca in serial
+ [[300,0.78],[595,1],[890,0.78]].forEach(([x,f])=>{const w=W*f+24;r(x-w/2,92,w,304,'none',{stroke:LINE,'stroke-width':1.5,rx:6})});
+}
+
+// =======================================================================
+// ECRAN 5 - DRUMUL: o sosea in perspectiva, ca in anii '80. Liniile vin spre
+// tine cu viteza masinii; orizontul isi schimba culoarea dupa mod (albastru
+// pe baterie, ambra cu motorul, rosu la frana). Viteza e singura cifra.
+if(ECRAN==='5'){
+ antet('HYBRID',AMB,'DRUM');
+ const HX=595,HY=170,Yb=450,cul=AMB;
+ // soarele/orizontul
+ const def=mk('defs',{},null,G);
+ const lg=mk('linearGradient',{id:'cer',x1:0,y1:0,x2:0,y2:1},null,def);
+ mk('stop',{offset:'0',['stop-color']:'#050505'},null,lg);mk('stop',{offset:'1',['stop-color']:cul,['stop-opacity']:'0.35'},null,lg);
+ r(20,96,1150,HY-96,'url(#cer)');
+ for(let i=0;i<7;i++){const y=HY-12-i*9,w=180-i*18;r(HX-w/2,y,w,5-i*0.5,cul,{opacity:(0.9-i*0.11).toFixed(2)})}
+ ln(20,HY,1170,HY,cul,2);
+ // liniile care fug spre orizont
+ const cp=mk('clipPath',{id:'taie'},null,def);mk('rect',{x:20,y:HY,width:1150,height:Yb-HY},null,cp);
+ const C=mk('g',{'clip-path':'url(#taie)'},null,G);
+ for(let k=-9;k<=9;k++){mk('line',{x1:HX+k*14,y1:HY,x2:HX+k*150,y2:Yb,stroke:RED,'stroke-width':1.5,opacity:(1-Math.abs(k)/11).toFixed(2)},null,C)}
+ // liniile orizontale, tot mai dese spre orizont
+ for(let i=1;i<=9;i++){const f=Math.pow(i/9,2.2),y=HY+(Yb-HY)*f;ln(20,y,1170,y,RED,1+f*2,{opacity:(0.2+f*0.8).toFixed(2)})}
+ // banda din mijloc a soselei: liniile intrerupte
+ for(let i=0;i<6;i++){const a=Math.pow(i/6,2),b=Math.pow((i+0.45)/6,2),y1=HY+(Yb-HY)*a,y2=HY+(Yb-HY)*b;
+  mk('path',{d:`M${HX-2-a*10} ${y1} L${HX+2+a*10} ${y1} L${HX+2+b*10} ${y2} L${HX-2-b*10} ${y2} Z`,fill:AMB,opacity:0.9},null,G)}
+ // viteza, plutind deasupra orizontului
+ t(1150,150,64,'#ff3b2a','87','end',0,500);t(1150,168,12,'#ffd0a0','KM/H','end',4);
+ t(40,140,22,CY,'61%','start',1,500);t(40,158,11,'#ffd0a0','HV','start',4);t(160,140,22,AMB,'+14','start',1,500);t(160,158,11,'#ffd0a0','KW','start',4);
+}
+
+// =======================================================================
+// ECRAN 6 - ORBITELE: trei inele in jurul unui punct. Exterior = viteza,
+// mijloc = turatia motorului, interior = bateria. Punctul din centru
+// respira cu puterea: mare cand trage, mic si albastru cand incarca.
+if(ECRAN==='6'){
+ antet('REGEN',CY,'ORBITE');
+ const cx=595,cy=262;
+ function inel(rr,f,c,gros,seg){
+  const n=seg;for(let i=0;i<n;i++){const a0=-90+i*360/n+1.2,a1=-90+(i+1)*360/n-1.2,on=i/n<f;
+   const p=(a)=>[cx+rr*Math.cos(a*Math.PI/180),cy+rr*Math.sin(a*Math.PI/180)],[x0,y0]=p(a0),[x1,y1]=p(a1);
+   mk('path',{d:`M${x0} ${y0} A${rr} ${rr} 0 0 1 ${x1} ${y1}`,fill:'none',stroke:on?c:DIM,'stroke-width':gros,opacity:on?(0.45+0.55*i/(n*f+0.001)).toFixed(2):1},null,G)}
+ }
+ inel(160,46/180,RED,14,60);
+ inel(122,0,AMB,10,40);
+ inel(88,0.63,CY,10,30);
+ // punctul care respira
+ mk('circle',{cx,cy,r:44,fill:CY,opacity:0.12},null,G);
+ mk('circle',{cx,cy,r:26,fill:CY,opacity:0.9},null,G);
+ // etichete, ca pe o harta stelara, legate cu linii fine
+ function eticheta(rr,ung,x,y,c,val,nume,anc){const a=ung*Math.PI/180,px=cx+rr*Math.cos(a),py=cy+rr*Math.sin(a);
+  ln(px,py,x,y-8,c,1,{opacity:0.5});mk('circle',{cx:px,cy:py,r:3,fill:c},null,G);
+  t(x,y+18,34,c,val,anc,0,500);t(x,y-14,12,LAB,nume,anc,3)}
+ eticheta(160,-30,880,140,RED,'46 km/h','VITEZA','start');
+ eticheta(122,200,250,200,DIM,'0 rpm','MOTOR OPRIT','end');
+ eticheta(88,40,860,370,CY,'63%','BATERIE','start');
+ t(250,370,12,LAB,'INCARCA','end',3);t(250,402,34,CY,'-21 kW','end',0,500);
+}
 </script>
 </body>
 </html>
