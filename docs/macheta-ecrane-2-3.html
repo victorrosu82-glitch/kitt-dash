@@ -165,7 +165,6 @@ if(ECRAN==='3'){
  t(CX+190,256,13,LAB,'CURENT','start',2);t(CX+190,290,30,VAL,st.a+' A');
  t(CX,334,13,LAB,'VITEZA','start',2);t(CX,368,30,VAL,st.viteza+' km/h');
  t(CX+190,334,13,LAB,'MOTOR','start',2);t(CX+190,368,30,VAL,'88°C');
- t(595,432,15,st.cm,st.txt,'middle',4);
  puncte(3);
 }
 
@@ -247,6 +246,73 @@ if(ECRAN==='6'){
  eticheta(88,40,860,370,CY,'63%','BATERIE','start');
  t(250,370,12,LAB,'INCARCA','end',3);t(250,402,34,CY,'-21 kW','end',0,500);
 }
+// =======================================================================
+// ECRAN CONSOLA - pupitrul lui KITT, cu ceasuri de bare verzi-galbene-rosii,
+// cifre de sapte segmente si lampi galbene de avertizare. Fiecare ceas e o
+// marime pe care masina chiar o da.
+if(ECRAN==='consola'){
+ const VE='#2fd34a',GA='#ffd21c',RO='#ff2d1c',VEs='#0c2a12',GAs='#2e2706',ROs='#2b0c0a',LAMP='#ffd21c',LAMPs='#2a2306',ALB='#d8d8d8';
+ const stins=c=>c===VE?VEs:(c===GA?GAs:ROs);
+ t(40,32,17,'#ff3b2a','LEXUS NX 300h','start',4);
+ t(1150,32,17,AMB,'HYBRID','end',4);
+ ln(40,42,1150,42,LINE,1.5);
+
+ // cifre de sapte segmente
+ function cifra(x,y,w,h,ch,c){
+  const g=w*0.16,on={'0':'abcdef','1':'bc','2':'abged','3':'abgcd','4':'fgbc','5':'afgcd','6':'afgedc','7':'abc','8':'abcdefg','9':'abcdfg','-':'g',' ':''}[ch]||'';
+  const H=h/2,segs={a:[x+g,y,w-2*g,g],d:[x+g,y+h-g,w-2*g,g],g:[x+g,y+H-g/2,w-2*g,g],
+   f:[x,y+g,g,H-1.5*g],b:[x+w-g,y+g,g,H-1.5*g],e:[x,y+H+g/2,g,H-1.5*g],c:[x+w-g,y+H+g/2,g,H-1.5*g]};
+  for(const k in segs){const [sx,sy,sw,sh]=segs[k];r(sx+1,sy+1,sw-2,sh-2,on.includes(k)?c:'#1a0404',{rx:2})}
+ }
+ function afisaj(x,y,text,n,cw,ch,c){
+  r(x-10,y-10,n*(cw+12)+8,ch+20,'#120303',{rx:3,stroke:'#2a0606','stroke-width':1.5});
+  text.padStart(n,' ').split('').forEach((d,i)=>cifra(x+i*(cw+12),y,cw,ch,d,c));
+ }
+ function lampa(x,y,aprins){r(x,y,26,13,aprins?LAMP:LAMPs,{rx:1});if(aprins)r(x-3,y-3,32,19,LAMP,{opacity:0.18,rx:2})}
+ // ceas orizontal de bare: culori pe praguri, aprinse pana la valoare
+ function bare(x,y,n,f,culori,lat){const w=lat/n;for(let i=0;i<n;i++){const c=culori(i/n);r(x+i*w,y,w-3,16,i<Math.round(f*n)?c:stins(c),{rx:1})}}
+ const verdeApoiRosu=p=>p<0.65?VE:(p<0.85?GA:RO), rosuApoiVerde=p=>p<0.2?RO:(p<0.35?GA:VE), totVerde=()=>VE;
+ function ceas(x,y,lamp,eticheta,f,culori,val){
+  lampa(x,y-26,lamp);t(x+270,y-12,12,ALB,eticheta,'end',1.5,500);bare(x,y,7,f,culori,270);
+  t(x+270,y+34,11,lamp?LAMP:'#6a6a6a',val,'end',1)}
+
+ // --- turatia: arcul care urca din stanga-jos -------------------------
+ const N=44,rpm=2100,max=6000;
+ const yArc=p=>200-Math.sin(p*Math.PI*0.62)*118+p*p*40;
+ for(let i=0;i<N;i++){const p=i/(N-1),x=60+p*490,y=yArc(p),e=0.01,ang=Math.atan2(yArc(p+e)-yArc(p-e),2*e*490)*180/Math.PI;
+  const c=p<0.45?VE:(p<0.72?GA:RO),aprins=p<=rpm/max;
+  mk('rect',{x:x-5,y:y-11,width:10,height:22,fill:aprins?c:stins(c),rx:2,transform:`rotate(${ang} ${x} ${y})`},null,G)}
+ [[0,'0'],[2000/6000,'2000'],[4000/6000,'4000'],[1,'6000']].forEach(([p,l])=>{const x=60+p*490,y=200-Math.sin(p*Math.PI*0.62)*118+p*p*40;t(x,y+30,11,ALB,l,'middle',1)});
+ lampa(60,92,false);
+ afisaj(250,146,String(rpm),4,26,44,RO);
+ r(412,170,46,20,RO,{rx:2});t(435,185,12,'#000','RPM','middle',1,700);
+
+ // --- sase ceasuri de bare, in doua coloane ---------------------------
+ ceas(40,268,false,'AER ADMISIE °C',18/80,verdeApoiRosu,'18');
+ ceas(330,268,false,'EXTERIOR °C',(7+20)/60,()=>VE,'7');
+ ceas(40,338,false,'CATALIZATOR °C',540/900,verdeApoiRosu,'540');
+ ceas(330,338,false,'BORD 12 V',(14.1-10)/5,rosuApoiVerde,'14,1');
+ ceas(40,408,false,'LICHID RACIRE °C',88/120,verdeApoiRosu,'88');
+ ceas(330,408,false,'CONSUM L/H',3.4/20,verdeApoiRosu,'3,4');
+
+ // --- bateria HV: VDC, AMP, AUX POWER ---------------------------------
+ const BX=650;
+ [['TENSIUNE HV',96,(243-200)/80,rosuApoiVerde,'243 V'],['CURENT HV',156,74/150,verdeApoiRosu,'+74 A'],['PUTERE',216,18/30,verdeApoiRosu,'+18 kW']].forEach(([e,y,f,cu,v])=>{
+  lampa(BX,y,false);t(BX+170,y+11,11,ALB,e,'end',1,500);bare(BX,y+20,4,f,cu,170);t(BX+176,y+34,11,'#6a6a6a',v,'start',1)});
+
+ // --- viteza in afisajul mare din dreapta -----------------------------
+ afisaj(910,84,'74',4,28,50,RO);t(1150,160,11,ALB,'KM/H','end',2,500);
+ // modurile: patru perechi de lampi, verde sus = activ
+ [['EV',0],['HYBRID',1],['REGEN',0],['READY',0]].forEach(([m,a],i)=>{const x=880+i*70;
+  t(x+20,186,10,ALB,m,'middle',0.5,500);r(x+4,194,32,14,a?VE:VEs,{rx:1});r(x+4,210,32,14,a?RO:ROs,{rx:1})});
+
+ // --- patru coloane verticale: baterie, clapeta, sarcina, regenerare ---
+ [['BATERIE',58,VE,false],['CLAPETA',31,VE,false],['SARCINA',38,GA,false],['REGEN',0,RO,false]].forEach(([e,v,c,l],i)=>{const x=860+i*80;
+  lampa(x,262,l);t(x+13,296,11,ALB,e,'middle',0.5,500);
+  const H=130,Y=306,umplut=H*v/100;r(x,Y,26,H,stins(c),{rx:1});r(x,Y+H-umplut,26,umplut,c,{rx:1});
+  t(x+13,Y+H+16,11,'#6a6a6a',v+'%','middle',1)});
+}
+
 </script>
 </body>
 </html>
