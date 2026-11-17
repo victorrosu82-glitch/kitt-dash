@@ -105,7 +105,11 @@ class MainActivity : ComponentActivity() {
     private fun pornesteDinIntent(intent: Intent?) {
         val adresa = intent?.getStringExtra("adresa")
         if (adresa != null) {
-            ObdService.porneste(this, adresa, intent.getBooleanExtra("sonda", false))
+            ObdService.porneste(
+                this, adresa,
+                intent.getBooleanExtra("sonda", false),
+                intent.getBooleanExtra("explorare", false),
+            )
             return
         }
         // Fara nimic anume cerut: ne legam singuri la adaptorul de data
@@ -139,7 +143,9 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
 
     // Cat suntem legati la masina, bordul e ce vrea Victor sa vada. Ecranul
     // cu cifre ramane la o atingere distanta, pentru cand ceva nu merge.
-    if (stare.conectat && aratBordul) {
+    // Cat ruleaza explorarea, bordul sta deoparte: valorile ar sta pe loc,
+    // iar aici se vede cat a mai ramas.
+    if (stare.conectat && aratBordul && stare.explorare == null) {
         EcranBord(masina = stare, laAtingere = { aratBordul = false })
         return
     }
@@ -277,12 +283,71 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
                 ListaAdaptoare(adaptoare, vm, cuSonda)
             }
         } else {
+            Spacer(Modifier.height(12.dp))
+            Explorare(stare)
             if (stare.sonda.isNotEmpty()) {
                 Spacer(Modifier.height(12.dp))
                 RezultatSonda(stare.sonda)
             }
             Spacer(Modifier.height(16.dp))
             ListaValori(stare)
+        }
+    }
+}
+
+/**
+ * Explorarea completa a masinii: butonul, cat s-a facut si unde e raportul.
+ * Doar citeste din masina; se face cu masina pe loc, in READY.
+ */
+@Composable
+private fun Explorare(stare: CarState) {
+    val context = LocalContext.current
+    val ruleaza = stare.explorare != null
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(PANOU, RoundedCornerShape(6.dp))
+            .padding(12.dp),
+    ) {
+        when {
+            ruleaza -> {
+                Text(
+                    text = "Explorez masina: ${(stare.explorareProgres * 100).toInt()}%",
+                    color = CYAN, fontSize = 14.sp, fontFamily = FontFamily.Monospace,
+                )
+                Text(
+                    text = stare.explorare ?: "",
+                    color = ROSU_STINS, fontSize = 12.sp, fontFamily = FontFamily.Monospace,
+                )
+                Text(
+                    text = "Lasa masina pe loc, in READY, cateva minute.",
+                    color = AMBRA, fontSize = 12.sp, fontFamily = FontFamily.Monospace,
+                )
+            }
+            else -> {
+                if (stare.fisierExplorare != null) {
+                    Text(
+                        text = "Raportul e in ${stare.fisierExplorare}",
+                        color = CYAN, fontSize = 12.sp, fontFamily = FontFamily.Monospace,
+                    )
+                    Spacer(Modifier.height(6.dp))
+                }
+                OutlinedButton(
+                    onClick = {
+                        val adresa = AdaptorTinutMinte.citeste(context)
+                        if (adresa != null) ObdService.porneste(context, adresa, explorare = true)
+                    },
+                    enabled = stare.conectat && !stare.simulator,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Exploreaza masina", color = CYAN, maxLines = 1, fontSize = 13.sp) }
+                Text(
+                    text = "Intreaba toate calculatoarele ce date au. Numai citire, " +
+                        "nimic nu se schimba in masina. Masina pe loc, in READY; " +
+                        "dureaza cateva minute.",
+                    color = ROSU_STINS, fontSize = 11.sp, fontFamily = FontFamily.Monospace,
+                )
+            }
         }
     }
 }

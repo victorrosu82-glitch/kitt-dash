@@ -43,6 +43,12 @@ data class CarState(
     val simulator: Boolean = false,
     /** Raspunsurile brute ale sondei hibride, daca a rulat. */
     val sonda: List<RandSonda> = emptyList(),
+    /** Ce face explorarea acum, sau null daca nu ruleaza. */
+    val explorare: String? = null,
+    /** Cat din explorare s-a facut, 0..1. */
+    val explorareProgres: Float = 0f,
+    /** Unde s-a scris raportul ultimei explorari. */
+    val fisierExplorare: String? = null,
 ) {
     fun valoare(marime: Marime): Double? = valori[marime]?.valoare
 

@@ -25,6 +25,13 @@ interface ObdLink : Closeable {
      * cu spatiile si sfarsiturile de linie pastrate.
      */
     fun comanda(comanda: String, timeoutMs: Long = 2000L): String
+
+    /**
+     * Asculta [durataMs] ce isi spun calculatoarele intre ele (ATMA), apoi
+     * opreste ascultarea si asteapta promptul. Intoarce ce s-a auzit.
+     * Legaturile care nu stiu asta intorc un text gol.
+     */
+    fun asculta(durataMs: Long): String = ""
 }
 
 class ObdException(mesaj: String, cauza: Throwable? = null) : Exception(mesaj, cauza)

@@ -26,7 +26,13 @@ class ObdPoller(
     private val faceSondaHibrida: Boolean = false,
     /** Unde se scriu raspunsurile brute ale sondei, ca sa nu se piarda. */
     private val scrieSonda: (List<RandSonda>) -> Unit = {},
+    /** Daca da, dupa initializare exploreaza toata masina, o singura data. */
+    faceExplorare: Boolean = false,
+    /** Scrie raportul explorarii si spune unde (sau null daca n-a putut). */
+    private val scrieExplorare: (String) -> String? = { null },
 ) {
+
+    private var deExplorat = faceExplorare
 
     /** Ruleaza pana la anularea corutinei. */
     suspend fun ruleaza() = withContext(Dispatchers.IO) {
@@ -73,6 +79,11 @@ class ObdPoller(
                         "raspunsuri cu date din ${randuri.size} cereri")
                 }
 
+                if (deExplorat) {
+                    exploreaza(link)
+                    elm.uitaAntetul()
+                }
+
                 pauzaMs = PAUZA_MINIMA_MS
                 interogheazaLaNesfarsit(elm, suportate)
             } catch (e: CancellationException) {
@@ -97,6 +108,18 @@ class ObdPoller(
             delay(pauzaMs)
             pauzaMs = (pauzaMs * 2).coerceAtMost(PAUZA_MAXIMA_MS)
         }
+    }
+
+    private fun exploreaza(link: ObdLink) {
+        val raport = ExploratorMasina(
+            link,
+            progres = { text, f -> depozit.actualizeaza { it.copy(explorare = text, explorareProgres = f) } },
+        ).ruleaza()
+        // O singura data: daca legatura cade si se reface, nu o luam de la capat.
+        deExplorat = false
+        val unde = scrieExplorare(raport)
+        depozit.actualizeaza { it.copy(explorare = null, explorareProgres = 1f, fisierExplorare = unde) }
+        Log.i(TAG, "Explorare terminata, raport in $unde")
     }
 
     /**

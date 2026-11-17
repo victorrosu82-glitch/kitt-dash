@@ -41,11 +41,11 @@ class MainViewModel(app: Application) : AndroidViewModel(app) {
     fun pareAdaptorObd(adaptor: Adaptor): Boolean =
         NUME_CUNOSCUTE.any { adaptor.nume.contains(it, ignoreCase = true) }
 
-    fun conecteaza(adaptor: Adaptor, sondaHibrida: Boolean = false) {
+    fun conecteaza(adaptor: Adaptor, sondaHibrida: Boolean = false, explorare: Boolean = false) {
         // Tinem minte alegerea: pe ecranul masinii nu exista lista de
         // adaptoare, acolo bordul trebuie sa porneasca singur.
         AdaptorTinutMinte.scrie(getApplication(), adaptor.adresa, adaptor.nume)
-        ObdService.porneste(getApplication(), adaptor.adresa, sondaHibrida)
+        ObdService.porneste(getApplication(), adaptor.adresa, sondaHibrida, explorare)
     }
 
     fun conecteazaSimulator() =

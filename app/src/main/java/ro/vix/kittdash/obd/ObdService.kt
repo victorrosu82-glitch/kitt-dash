@@ -40,6 +40,7 @@ class ObdService : LifecycleService() {
         val adresa = intent?.getStringExtra(EXTRA_ADRESA)
         val simulator = intent?.getBooleanExtra(EXTRA_SIMULATOR, false) ?: false
         val sonda = intent?.getBooleanExtra(EXTRA_SONDA, false) ?: false
+        val explorare = intent?.getBooleanExtra(EXTRA_EXPLORARE, false) ?: false
 
         bucla?.cancel()
         bucla = lifecycleScope.launch {
@@ -48,6 +49,8 @@ class ObdService : LifecycleService() {
                 faLegatura = { construiesteLegatura(adresa, simulator) },
                 faceSondaHibrida = sonda,
                 scrieSonda = ::scrieJurnalSonda,
+                faceExplorare = explorare,
+                scrieExplorare = ::scrieRaportExplorare,
             )
             poller.ruleaza()
         }
@@ -73,6 +76,34 @@ class ObdService : LifecycleService() {
             Log.i(TAG, "Sonda scrisa in ${fisier.absolutePath}")
         } catch (e: Exception) {
             Log.w(TAG, "Nu pot scrie jurnalul sondei: ${e.message}")
+        }
+    }
+
+    /**
+     * Raportul explorarii merge in Download, langa APK, ca sa-l poti trimite
+     * direct din telefon. O copie ramane si in fisierele aplicatiei.
+     */
+    private fun scrieRaportExplorare(text: String): String? {
+        val acum = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
+        val nume = "KittDash-explorare-$acum.txt"
+        try {
+            File(getExternalFilesDir(null) ?: filesDir, nume).writeText(text)
+        } catch (e: Exception) {
+            Log.w(TAG, "Nu pot scrie copia explorarii: ${e.message}")
+        }
+        return try {
+            val valori = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.Downloads.DISPLAY_NAME, nume)
+                put(android.provider.MediaStore.Downloads.MIME_TYPE, "text/plain")
+                put(android.provider.MediaStore.Downloads.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+            }
+            val uri = contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, valori)
+                ?: return null
+            contentResolver.openOutputStream(uri)?.use { it.write(text.toByteArray(Charsets.UTF_8)) }
+            "Download/$nume"
+        } catch (e: Exception) {
+            Log.w(TAG, "Nu pot scrie explorarea in Download: ${e.message}")
+            null
         }
     }
 
@@ -125,15 +156,22 @@ class ObdService : LifecycleService() {
         private const val EXTRA_ADRESA = "adresa"
         private const val EXTRA_SIMULATOR = "simulator"
         private const val EXTRA_SONDA = "sonda"
+        private const val EXTRA_EXPLORARE = "explorare"
 
         /**
          * Porneste serviciul pe adaptorul cu adresa data. Cu [sondaHibrida],
          * intreaba o data calculatoarele hibride si pastreaza raspunsurile brute.
          */
-        fun porneste(context: Context, adresa: String, sondaHibrida: Boolean = false) {
+        fun porneste(
+            context: Context,
+            adresa: String,
+            sondaHibrida: Boolean = false,
+            explorare: Boolean = false,
+        ) {
             val intent = Intent(context, ObdService::class.java)
                 .putExtra(EXTRA_ADRESA, adresa)
                 .putExtra(EXTRA_SONDA, sondaHibrida)
+                .putExtra(EXTRA_EXPLORARE, explorare)
             context.startForegroundService(intent)
         }
 
