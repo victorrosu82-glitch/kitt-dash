@@ -151,10 +151,37 @@ Capcane aflate pe 16.11.2026:
   si apesi din nou butonul serverului pe telefon;
 - **nu instala APK-ul cat e conectat**: procesul nou nu mai poate desena pe
   suprafata ("Nu pot desena pe panza" in jurnal) pana la reconectare;
-- in lista de aplicatii de pe *telefon* ("Personalizati lansatorul") KITT nu
-  apare - fara masina, Android Auto nu poate verifica aplicatiile instalate
-  direct. Pe ecranul masinii apare. Instalarea se face cu
-  `adb install -r -i com.android.vending KittDash.apk`.
+- **emulatorul sare peste verificarea sursei instalarii**, deci ce merge pe el
+  nu dovedeste ca merge in masina (vezi mai jos).
+
+### Instalarea pe telefon: numai prin KingInstaller
+
+Pe 17.11.2026, in Lexus, KITT a pornit (Android Auto a redeschis ultima
+aplicatie de navigatie), dar dupa Waze n-a mai aparut nici in prim-plan, nici
+in lista. Cauza: Android Auto 17.x lasa aplicatiile cu sabloane (Car App
+Library) numai daca **cine a pornit instalarea** e instalatorul de sistem si
+**sursa** e Magazin Play. "Surse necunoscute" nu se aplica acestor aplicatii.
+
+| Cum am instalat | installer / initiator | In masina |
+|---|---|---|
+| `adb install -i com.android.vending` | vending / **com.android.shell** | respins |
+| instalatorul de sistem pornit cu `am start` | **packageinstaller** / packageinstaller | respins |
+| **KingInstaller**, metoda simpla (fara Shizuku) | **vending / packageinstaller** | acceptat |
+
+Asadar orice versiune noua: `adb push KittDash.apk /sdcard/Download/`, apoi pe
+telefon KingInstaller (github.com/fcaronte/KingInstaller, 2.6.1) -> alegi
+fisierul -> comutatoarele oprite -> Install -> Actualizeaza. Verificare:
+
+```
+adb shell dumpsys package ro.vix.kittdash | findstr "installerPackageName initiatingPackageName"
+```
+
+trebuie sa dea `com.android.vending` si `com.google.android.packageinstaller`.
+**O instalare prin cablu strica din nou inregistrarea.** Jurnalul verificarii:
+`adb shell setprop log.tag.CAR.VALIDATOR VERBOSE`, apoi
+`Package DENIED; failed all other checks [ro.vix.kittdash]` inseamna respins.
+Sursele: github.com/AndreyPavlenko/Fermata/issues/846,
+github.com/mdc159/sierra-auto/issues/36.
 
 ### Instructiunile de navigatie (Waze, Google Maps)
 
