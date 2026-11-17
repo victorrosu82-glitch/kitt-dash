@@ -32,11 +32,17 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
     }
 
     override fun onStart(owner: LifecycleOwner) {
+        ro.vix.kittdash.Jurnal.scrie(carContext, "Ecranul KITT e iar pe masina")
         desenator.porneste()
     }
 
     override fun onStop(owner: LifecycleOwner) {
+        ro.vix.kittdash.Jurnal.scrie(carContext, "Ecranul KITT a trecut in spate")
         desenator.opreste()
+    }
+
+    override fun onDestroy(owner: LifecycleOwner) {
+        desenator.inchide()
     }
 
     override fun onGetTemplate(): Template {
