@@ -325,7 +325,9 @@ class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
                 zonaDesenata = zona?.let { Rect(it) }
                 Jurnal.scrie(carContext, "Desenez in ${zona ?: "toata panza"}")
             }
-            val nav = Navigatie.acum
+            // Cu panoul ascuns de la butonul de pe masina, bordul ia tot
+            // ecranul chiar daca navigatia merge.
+            val nav = if (PreferinteMasina.panouNavAscuns) null else Navigatie.acum
             if (zona == null) {
                 bord.deseneaza(panza, latime.toFloat(), inaltime.toFloat(), stare, nav)
             } else {

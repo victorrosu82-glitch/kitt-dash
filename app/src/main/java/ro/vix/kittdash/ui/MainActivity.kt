@@ -28,6 +28,8 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -49,6 +51,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.compose.ui.platform.LocalContext
 import ro.vix.kittdash.bord.EcranBord
 import ro.vix.kittdash.masina.AdaptorTinutMinte
+import ro.vix.kittdash.masina.PreferinteMasina
 import ro.vix.kittdash.obd.CarStateRepository
 import ro.vix.kittdash.muzica.Muzica
 import ro.vix.kittdash.obd.CarState
@@ -192,6 +195,9 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
             }
         }
 
+        Spacer(Modifier.height(8.dp))
+        AdresaAcasa()
+
         Spacer(Modifier.height(12.dp))
         // Trei butoane nu incap pe un rand de telefon: fiecare primeste o
         // parte egala din latime si un text scurt.
@@ -278,6 +284,47 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
             Spacer(Modifier.height(16.dp))
             ListaValori(stare)
         }
+    }
+}
+
+/**
+ * Adresa pentru butonul "Acasa" de pe ecranul masinii. Se scrie aici, o
+ * data; in masina nu se tasteaza. Ramane numai pe telefon.
+ */
+@Composable
+private fun AdresaAcasa() {
+    val context = LocalContext.current
+    var adresa by remember { mutableStateOf(PreferinteMasina.acasa(context) ?: "") }
+    var salvata by remember { mutableStateOf(adresa) }
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        OutlinedTextField(
+            value = adresa,
+            onValueChange = { adresa = it },
+            label = { Text("Adresa de acasa", fontSize = 12.sp) },
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = AMBRA,
+                unfocusedTextColor = AMBRA,
+                focusedBorderColor = CYAN,
+                unfocusedBorderColor = ROSU_STINS,
+                focusedLabelColor = CYAN,
+                unfocusedLabelColor = ROSU_STINS,
+                cursorColor = CYAN,
+            ),
+            modifier = Modifier.weight(1f),
+        )
+        OutlinedButton(
+            onClick = {
+                PreferinteMasina.scrieAcasa(context, adresa)
+                salvata = adresa.trim()
+            },
+            enabled = adresa.trim() != salvata,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+        ) { Text("Salveaza", color = CYAN, maxLines = 1, fontSize = 13.sp) }
     }
 }
 
