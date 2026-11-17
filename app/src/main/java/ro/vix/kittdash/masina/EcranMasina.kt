@@ -52,12 +52,19 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
     }
 
     override fun onGetTemplate(): Template {
-        // Banda de sus, cu text: cel mult patru butoane.
+        // Banda de sus, cu text: cel mult patru butoane. Oprirea a coborat
+        // in banda de jos, ca sa incapa butonul "Ecran".
         val banda = ActionStrip.Builder()
             .addAction(
                 Action.Builder()
                     .setTitle("Acasa")
                     .setOnClickListener { mergiAcasa() }
+                    .build(),
+            )
+            .addAction(
+                Action.Builder()
+                    .setTitle("Ecran")
+                    .setOnClickListener { schimbaEcranul() }
                     .build(),
             )
             .addAction(
@@ -82,25 +89,16 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
                     )
                 }
             }
-            .addAction(
-                Action.Builder()
-                    .setIcon(
-                        CarIcon.Builder(
-                            IconCompat.createWithResource(
-                                carContext,
-                                android.R.drawable.ic_menu_close_clear_cancel,
-                            ),
-                        ).setTint(CarColor.RED).build(),
-                    )
-                    .setOnClickListener { opreste() }
-                    .build(),
-            )
+            // Fara banda de jos (masini foarte vechi), oprirea ramane aici.
+            .apply {
+                if (!areBandaDeJos() && !BuildConfig.DEBUG) addAction(butonOprire())
+            }
             .build()
 
         val sablon = NavigationTemplate.Builder().setActionStrip(banda)
         // Banda de jos, langa harta: numai iconite. Masinile foarte vechi
         // (nivelul 1 de Android Auto) n-o au; acolo raman doar cele de sus.
-        if (carContext.carAppApiLevel >= 2) {
+        if (areBandaDeJos()) {
             sablon.setMapActionStrip(
                 ActionStrip.Builder()
                     .addAction(
@@ -115,10 +113,30 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
                             .setOnClickListener { vorbeste() }
                             .build(),
                     )
+                    .addAction(butonOprire())
                     .build(),
             )
         }
         return sablon.build()
+    }
+
+    private fun areBandaDeJos(): Boolean = carContext.carAppApiLevel >= 2
+
+    /** Oprirea legaturii cu masina: iconita rosie. */
+    private fun butonOprire(): Action =
+        Action.Builder()
+            .setIcon(
+                CarIcon.Builder(
+                    IconCompat.createWithResource(carContext, android.R.drawable.ic_menu_close_clear_cancel),
+                ).setTint(CarColor.RED).build(),
+            )
+            .setOnClickListener { opreste() }
+            .build()
+
+    /** Bord, viteza, energie, consola - si iar de la capat. */
+    private fun schimbaEcranul() {
+        val nou = PreferinteMasina.urmatorulEcran(carContext)
+        anunta(nou.titlu)
     }
 
     private fun iconita(resursa: Int): CarIcon =

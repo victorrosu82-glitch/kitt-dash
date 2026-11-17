@@ -96,6 +96,17 @@ class SimulatorObdLink(
         ObdPid.TEMP_LICHID -> intArrayOf((drum.tempLichid + 40).roundToInt().coerceIn(0, 255))
         ObdPid.TEMP_AER_ADMISIE -> intArrayOf((18.0 + 40).roundToInt())
         ObdPid.TEMP_EXTERIOARA -> intArrayOf((11.0 + 40).roundToInt())
+        // Catalizatorul e cald cat merge motorul si se raceste incet dupa.
+        ObdPid.TEMP_CATALIZATOR -> {
+            val v = ((if (drum.turatie > 0) 520.0 + drum.sarcina * 2.0 else 380.0) + 40.0) * 10.0
+            intArrayOf(v.roundToInt() / 256, v.roundToInt() % 256)
+        }
+        // Aerul creste cu turatia si cu sarcina; motorul oprit nu trage nimic.
+        ObdPid.DEBIT_AER -> {
+            val gs = if (drum.turatie > 0) drum.turatie / 1000.0 * (2.0 + drum.sarcina / 10.0) else 0.0
+            val v = (gs * 100.0).roundToInt().coerceIn(0, 0xFFFF)
+            intArrayOf(v / 256, v % 256)
+        }
         ObdPid.TENSIUNE_MODUL -> {
             val mv = (drum.tensiune * 1000).roundToInt().coerceIn(0, 65535)
             intArrayOf(mv / 256, mv % 256)

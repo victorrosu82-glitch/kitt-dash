@@ -26,6 +26,7 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import ro.vix.kittdash.masina.PreferinteMasina
 import ro.vix.kittdash.muzica.Muzica
 import ro.vix.kittdash.obd.CarState
 
@@ -54,7 +55,8 @@ fun EcranBord(
     laAtingere: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
-    val bord = remember { BordKitt() }
+    // Acelasi ecran ca pe masina: cel ales ultima data cu butonul "Ecran".
+    val ecrane = remember { Ecrane() }
     val muzica = remember { Muzica(context) }
     var stare by remember { mutableStateOf(StareBord()) }
 
@@ -117,7 +119,10 @@ fun EcranBord(
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             drawIntoCanvas { panza ->
-                bord.deseneaza(panza.nativeCanvas, size.width, size.height, stare)
+                ecrane.deseneaza(
+                    panza.nativeCanvas, size.width, size.height, stare, null,
+                    PreferinteMasina.ecran(context),
+                )
             }
         }
     }

@@ -29,6 +29,9 @@ Fiecare se confirmă la mașină înainte de a ajunge pe bord.
 | `1F` | motor | timpul de la pornire |
 | `5B` | hibrid | cât a mai rămas din bateria HV |
 | `9A` | hibrid | tensiunea, curentul și starea bateriei HV |
+| `46` | motor | temperatura exterioară (consola) |
+| `3C` | motor | temperatura catalizatorului (consola, în locul EGT) |
+| `10` | motor | debitul de aer, din care se socotește consumul în l/h (consola) |
 
 ## Ce am putea mai pune
 

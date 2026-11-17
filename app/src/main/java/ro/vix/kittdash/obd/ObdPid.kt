@@ -13,6 +13,8 @@ enum class Marime(val eticheta: String, val unitate: String) {
     TEMP_LICHID("Temp. lichid racire", "°C"),
     TEMP_AER_ADMISIE("Temp. aer admisie", "°C"),
     TEMP_EXTERIOARA("Temp. exterioara", "°C"),
+    TEMP_CATALIZATOR("Temp. catalizator", "°C"),
+    DEBIT_AER("Debit aer", "g/s"),
     TENSIUNE_MODUL("Tensiune modul", "V"),
     NIVEL_COMBUSTIBIL("Combustibil", "%"),
     TIMP_FUNCTIONARE("Timp de la pornire", "s"),
@@ -73,6 +75,19 @@ enum class ObdPid(
     TEMP_EXTERIOARA(
         0x46, 1, null, 5000L,
         listOf(Marime.TEMP_EXTERIOARA to { b: IntArray -> b[0] - 40.0 }),
+    ),
+    /**
+     * Temperatura catalizatorului, banc 1 senzor 1. Pe pupitrul KITT tine
+     * locul temperaturii gazelor de evacuare: sta chiar pe evacuare.
+     */
+    TEMP_CATALIZATOR(
+        0x3C, 2, null, 2000L,
+        listOf(Marime.TEMP_CATALIZATOR to { b: IntArray -> (b[0] * 256 + b[1]) / 10.0 - 40.0 }),
+    ),
+    /** Aerul care intra in motor. Din el iese consumul, vezi [Consum]. */
+    DEBIT_AER(
+        0x10, 2, null, 500L,
+        listOf(Marime.DEBIT_AER to { b: IntArray -> (b[0] * 256 + b[1]) / 100.0 }),
     ),
     TENSIUNE_MODUL(
         0x42, 2, null, 2000L,

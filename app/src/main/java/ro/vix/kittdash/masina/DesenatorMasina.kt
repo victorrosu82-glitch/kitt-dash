@@ -14,7 +14,7 @@ import androidx.car.app.CarContext
 import androidx.car.app.SurfaceCallback
 import androidx.car.app.SurfaceContainer
 import ro.vix.kittdash.Jurnal
-import ro.vix.kittdash.bord.BordKitt
+import ro.vix.kittdash.bord.Ecrane
 import ro.vix.kittdash.bord.Netezitor
 import ro.vix.kittdash.muzica.Muzica
 import ro.vix.kittdash.navigatie.Navigatie
@@ -35,7 +35,7 @@ import java.util.concurrent.TimeUnit
  */
 class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
 
-    private val bord = BordKitt()
+    private val ecrane = Ecrane()
     private val muzica = Muzica(carContext)
     private val netezitor = Netezitor(
         melodiaAcum = { muzica.melodia()?.text },
@@ -328,15 +328,16 @@ class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
             // Cu panoul ascuns de la butonul de pe masina, bordul ia tot
             // ecranul chiar daca navigatia merge.
             val nav = if (PreferinteMasina.panouNavAscuns) null else Navigatie.acum
+            val fel = PreferinteMasina.ecran(carContext)
             if (zona == null) {
-                bord.deseneaza(panza, latime.toFloat(), inaltime.toFloat(), stare, nav)
+                ecrane.deseneaza(panza, latime.toFloat(), inaltime.toFloat(), stare, nav, fel)
             } else {
                 // Fundalul acopera toata suprafata, ca marginile sa nu
                 // ramana cu ce a desenat altcineva inainte.
                 panza.drawColor(android.graphics.Color.parseColor("#050505"))
                 val salvat = panza.save()
                 panza.translate(zona.left.toFloat(), zona.top.toFloat())
-                bord.deseneaza(panza, zona.width().toFloat(), zona.height().toFloat(), stare, nav)
+                ecrane.deseneaza(panza, zona.width().toFloat(), zona.height().toFloat(), stare, nav, fel)
                 panza.restoreToCount(salvat)
             }
         } finally {

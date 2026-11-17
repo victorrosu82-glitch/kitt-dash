@@ -38,6 +38,11 @@ android {
         compose = true
         buildConfig = true
     }
+    // Robolectric deseneaza ecranele bordului pe calculator, ca imagini,
+    // ca sa le vedem fara masina (vezi DesenEcraneTest).
+    testOptions {
+        unitTests.isIncludeAndroidResources = true
+    }
 }
 
 dependencies {
@@ -58,5 +63,6 @@ dependencies {
     debugImplementation(libs.androidx.compose.ui.tooling)
 
     testImplementation(libs.junit)
+    testImplementation("org.robolectric:robolectric:4.14.1")
     testImplementation(libs.kotlinx.coroutines.test)
 }

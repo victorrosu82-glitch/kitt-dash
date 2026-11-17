@@ -1,6 +1,7 @@
 package ro.vix.kittdash.bord
 
 import ro.vix.kittdash.obd.CarState
+import ro.vix.kittdash.obd.Consum
 import ro.vix.kittdash.obd.Marime
 import ro.vix.kittdash.obd.ModHibrid
 import kotlin.math.abs
@@ -23,6 +24,16 @@ data class StareBord(
     val tempAer: Float? = null,
     val tempExterioara: Float? = null,
     val tempBaterie: Float? = null,
+    /** Tensiunea bateriei mici, de 12 V. */
+    val tensiune12: Float? = null,
+    /** Tensiunea si curentul bateriei HV; curentul e plus cand da, minus cand primeste. */
+    val hvTensiune: Float? = null,
+    val hvCurent: Float? = null,
+    val clapeta: Float? = null,
+    val sarcina: Float? = null,
+    val tempCatalizator: Float? = null,
+    /** Consumul socotit din debitul de aer, litri pe ora. */
+    val consumLh: Float? = null,
     val mod: ModHibrid = ModHibrid.NECUNOSCUT,
     val areLegatura: Boolean = false,
     val peSimulator: Boolean = false,
@@ -118,6 +129,13 @@ class Netezitor(
             tempAer = masina.valoare(Marime.TEMP_AER_ADMISIE)?.toFloat(),
             tempExterioara = masina.valoare(Marime.TEMP_EXTERIOARA)?.toFloat(),
             tempBaterie = null,
+            tensiune12 = masina.valoare(Marime.TENSIUNE_MODUL)?.toFloat(),
+            hvTensiune = masina.valoare(Marime.HV_TENSIUNE)?.toFloat(),
+            hvCurent = masina.valoare(Marime.HV_CURENT)?.toFloat(),
+            clapeta = masina.valoare(Marime.CLAPETA)?.toFloat(),
+            sarcina = masina.valoare(Marime.SARCINA_MOTOR)?.toFloat(),
+            tempCatalizator = masina.valoare(Marime.TEMP_CATALIZATOR)?.toFloat(),
+            consumLh = masina.valoare(Marime.DEBIT_AER)?.let { Consum.litriPeOra(it).toFloat() },
             mod = ModHibrid.din(masina),
             areLegatura = masina.conectat,
             peSimulator = masina.simulator,
