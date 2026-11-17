@@ -80,66 +80,92 @@ if(ECRAN==='2'){
 
 // =======================================================================
 if(ECRAN==='3'){
+ // NX 300h E-Four, hibrid serie-paralel:
+ //  - fata: motorul termic si transmisia hibrida cu doua masini electrice
+ //    (generatorul MG1 si motorul MG2), legate prin angrenajul planetar;
+ //    motorul termic poate trage rotile si, in acelasi timp, incarca bateria;
+ //  - spate: al treilea motor electric (MGR), numai pe rotile din spate;
+ //  - bateria HV sub bancheta din spate.
  const st={
-  accel:{mod:'HYBRID',cm:AMB,motor:true,bat:'da',kw:'+18',a:'+74',v:'243',soc:58,txt:'MOTORUL SI BATERIA IMPING ROTILE',rpm:'2100'},
-  regen:{mod:'REGEN',cm:CY,motor:false,bat:'primeste',kw:'-21',a:'-81',v:'259',soc:63,txt:'FRANAREA INCARCA BATERIA',rpm:'0'},
-  ev:{mod:'EV',cm:CY,motor:false,bat:'da',kw:'+9',a:'+37',v:'246',soc:61,txt:'NUMAI PE BATERIE',rpm:'0'},
+  accel:{mod:'HYBRID',cm:AMB,motor:true,inBat:false,fata:true,spate:true,kw:'+18',a:'+74',v:'243',soc:58,viteza:'74',rpm:'2100',
+         txt:'MOTORUL SI BATERIA TRAG PE TOATE ROTILE'},
+  ev:{mod:'EV',cm:CY,motor:false,inBat:false,fata:true,spate:false,kw:'+9',a:'+37',v:'246',soc:61,viteza:'28',rpm:'0',
+         txt:'NUMAI PE BATERIE'},
+  incarca:{mod:'HYBRID',cm:AMB,motor:true,inBat:true,gen:true,fata:false,spate:false,kw:'-6',a:'-24',v:'252',soc:47,viteza:'62',rpm:'1600',
+         txt:'MOTORUL TRAGE SI INCARCA BATERIA'},
+  regen:{mod:'REGEN',cm:CY,motor:false,inBat:true,fata:true,spate:true,kw:'-21',a:'-81',v:'259',soc:63,viteza:'46',rpm:'0',
+         txt:'FRANAREA INCARCA BATERIA'},
  }[STARE];
  antet(st.mod,st.cm,'ENERGIE');
 
- // Noduri: motorul termic sus-stanga, bateria jos-stanga, rotile in dreapta
- const ME=[170,170],BA=[170,350],MG=[440,260],RO=[690,260];
- function nod([x,y],w,h,titlu,aprins,cul){
-  r(x-w/2,y-h/2,w,h,'#0a0302',{rx:6,stroke:aprins?cul:'#3a0f0c','stroke-width':aprins?2.5:1.5});
-  [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([dx,dy])=>{const cx=x+dx*w/2,cy=y+dy*h/2;
-   mk('path',{d:`M${cx} ${cy-dy*14} L${cx} ${cy} L${cx-dx*14} ${cy}`,fill:'none',stroke:aprins?cul:DIM,'stroke-width':3},null,G)});
-  t(x,y+h/2-12,12,aprins?cul:LAB,titlu,'middle',3);
- }
- // Fluxul: sir de sageti mici (chevroane). Pe masina se misca in sensul curentului.
- function flux(a,b,cul,activ){
-  const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy),ux=dx/L,uy=dy/L,n=Math.floor(L/26);
-  ln(a[0],a[1],b[0],b[1],activ?cul:DIM,activ?3:2,{opacity:activ?0.25:1});
+ // Masina vazuta de sus, fata in stanga. Contur de sarma, ca la KITT.
+ const X0=70,X1=740,Y0=118,Y1=402,YM=(Y0+Y1)/2;
+ mk('path',{d:`M${X0+60} ${Y0} L${X1-40} ${Y0} Q${X1} ${Y0} ${X1} ${Y0+40} L${X1} ${Y1-40} Q${X1} ${Y1} ${X1-40} ${Y1} L${X0+60} ${Y1} Q${X0} ${Y1} ${X0} ${Y1-60} L${X0} ${Y0+60} Q${X0} ${Y0} ${X0+60} ${Y0} Z`,
+  fill:'#070202',stroke:LINE,'stroke-width':2},null,G);
+ ln(330,Y0+14,330,Y1-14,'#2a0b09',1.5);ln(680,Y0+14,680,Y1-14,'#2a0b09',1.5);
+ const FA=190,SA=610;
+ function roata(x,y,aprins,c){r(x-34,y-14,68,28,aprins?c:'#120403',{rx:6,stroke:aprins?c:LINE,'stroke-width':2,opacity:aprins?0.9:1})}
+ function flux(pts,c,activ){
+  const d='M'+pts.map(p=>p.join(' ')).join(' L');
+  mk('path',{d,fill:'none',stroke:activ?c:'#1c0806','stroke-width':activ?3:2,opacity:activ?0.3:1},null,G);
   if(!activ)return;
-  for(let i=1;i<n;i++){const x=a[0]+ux*i*26,y=a[1]+uy*i*26,px=-uy,py=ux,op=0.35+0.65*((i%4)/3);
-   mk('path',{d:`M${x-ux*7+px*8} ${y-uy*7+py*8} L${x+ux*5} ${y+uy*5} L${x-ux*7-px*8} ${y-uy*7-py*8}`,fill:'none',stroke:cul,'stroke-width':4,'stroke-linecap':'round','stroke-linejoin':'round',opacity:op.toFixed(2)},null,G)}
+  for(let k=0;k<pts.length-1;k++){const [ax,ay]=pts[k],[bx,by]=pts[k+1],L=Math.hypot(bx-ax,by-ay),ux=(bx-ax)/L,uy=(by-ay)/L,n=Math.max(2,Math.round(L/24)),pas=L/n;
+   for(let i=1;i<n;i++){const x=ax+ux*i*pas,y=ay+uy*i*pas,px=-uy,py=ux,op=0.35+0.65*(((i+k)%4)/3);
+    mk('path',{d:`M${x-ux*6+px*7} ${y-uy*6+py*7} L${x+ux*5} ${y+uy*5} L${x-ux*6-px*7} ${y-uy*6-py*7}`,fill:'none',stroke:c,'stroke-width':3.5,'stroke-linecap':'round','stroke-linejoin':'round',opacity:op.toFixed(2)},null,G)}}
  }
- const moteActiv=st.motor;
- // margini: din nod in nod, scurtate ca sa nu intre in casete
- function scurt(a,b,da,db){const dx=b[0]-a[0],dy=b[1]-a[1],L=Math.hypot(dx,dy);return [[a[0]+dx/L*da,a[1]+dy/L*da],[b[0]-dx/L*db,b[1]-dy/L*db]]}
- let [p,q]=scurt(ME,MG,90,70);flux(p,q,AMB,moteActiv);
- if(st.bat==='primeste'){[p,q]=scurt(MG,BA,70,90);flux(p,q,CY,true)}else{[p,q]=scurt(BA,MG,90,70);flux(p,q,CY,true)}
- if(st.bat==='primeste'){[p,q]=scurt(RO,MG,80,70);flux(p,q,CY,true)}else{[p,q]=scurt(MG,RO,70,80);flux(p,q,moteActiv?AMB:CY,true)}
+ function rev(p){return p.slice().reverse()}
+ function caseta(x,y,w,h,titlu,aprins,c,sub){
+  r(x-w/2,y-h/2,w,h,'#0a0302',{rx:5,stroke:aprins?c:LINE,'stroke-width':aprins?2.5:1.5});
+  t(x,y-h/2-8,11,aprins?c:LAB,titlu,'middle',3);
+  if(sub)t(x,y+7,18,aprins?c:DIM,sub,'middle',0,500);
+ }
+ const ENG=[120,YM],TR=[250,YM],BAT=[470,YM],MGR=[SA,YM];
+ const motorLaTr=[[ENG[0]+40,YM],[TR[0]-48,YM]];
+ const trLaFata=[[TR[0]-20,YM-38],[TR[0]-20,YM-70],[FA,YM-70],[FA,Y0+40]];
+ const trLaFata2=[[TR[0]-20,YM+38],[TR[0]-20,YM+70],[FA,YM+70],[FA,Y1-40]];
+ const batLaTr=[[BAT[0]-58,YM],[TR[0]+48,YM]];
+ const batLaSpate=[[BAT[0]+58,YM],[MGR[0]-28,YM]];
+ const mgrSus=[[MGR[0],YM-30],[MGR[0],Y0+40]],mgrJos=[[MGR[0],YM+30],[MGR[0],Y1-40]];
 
- // Motorul termic: piston stilizat
- nod(ME,160,110,'MOTOR',moteActiv,AMB);
- t(ME[0],ME[1]+6,30,moteActiv?AMB:DIM,st.rpm,'middle',0,500);t(ME[0],ME[1]+26,11,moteActiv?ambra2():DIM,'RPM','middle',2);
- function ambra2(){return '#b8861c'}
- // Bateria: bare de incarcare
- nod(BA,160,110,'BATERIE HV',true,CY);
- for(let i=0;i<10;i++)r(BA[0]-62+i*12.6,BA[1]-34,9,26,i<st.soc/10?(i<2?RED:CY):DIM);
- t(BA[0],BA[1]+20,22,CY,st.soc+'%','middle',0,500);
- // Unitatea hibrida (motoarele electrice), in mijloc
- mk('circle',{cx:MG[0],cy:MG[1],r:52,fill:'#0a0302',stroke:CY,'stroke-width':2.5},null,G);
- mk('circle',{cx:MG[0],cy:MG[1],r:38,fill:'none',stroke:CY,'stroke-width':1,opacity:0.4},null,G);
- t(MG[0],MG[1]+6,18,CY,'MG','middle',3,500);t(MG[0],MG[1]+72,11,LAB,'MOTOARE ELECTRICE','middle',2);
- // Rotile
- nod(RO,130,110,'ROTI',true,st.bat==='primeste'?CY:(moteActiv?AMB:CY));
- [[-26],[26]].forEach(([dx])=>{mk('circle',{cx:RO[0]+dx,cy:RO[1]-6,r:20,fill:'none',stroke:st.bat==='primeste'?CY:(moteActiv?AMB:CY),'stroke-width':5},null,G);mk('circle',{cx:RO[0]+dx,cy:RO[1]-6,r:6,fill:RS},null,G)});
+ const fataActiva=st.motor||st.fata;
+ const regen=st.inBat&&!st.motor;
+ const cRotiFata=regen?CY:(st.motor?AMB:CY);
+ flux(motorLaTr,AMB,st.motor);
+ flux(regen?rev(trLaFata):trLaFata,cRotiFata,fataActiva);
+ flux(regen?rev(trLaFata2):trLaFata2,cRotiFata,fataActiva);
+ const batTrActiv=st.fata||st.gen;
+ flux(st.inBat?rev(batLaTr):batLaTr,st.gen?AMB:CY,batTrActiv);
+ flux(st.inBat?rev(batLaSpate):batLaSpate,CY,st.spate);
+ flux(st.inBat?rev(mgrSus):mgrSus,CY,st.spate);flux(st.inBat?rev(mgrJos):mgrJos,CY,st.spate);
 
- // Coloana din dreapta: cifrele bateriei
+ roata(FA,Y0+22,fataActiva,cRotiFata);roata(FA,Y1-22,fataActiva,cRotiFata);
+ roata(SA,Y0+22,st.spate,CY);roata(SA,Y1-22,st.spate,CY);
+ caseta(ENG[0],ENG[1],80,64,'MOTOR',st.motor,AMB,st.rpm);
+ t(ENG[0],ENG[1]+24,9,st.motor?'#b8861c':DIM,'RPM','middle',2);
+ caseta(TR[0],TR[1],96,76,'',fataActiva||st.gen,st.motor?AMB:CY);t(TR[0],TR[1]+31,9,(fataActiva||st.gen)?(st.motor?AMB:CY):LAB,'MG1 · MG2','middle',2);
+ const cG=st.gen?AMB:(st.motor?AMB:DIM),cM=st.fata?CY:DIM;
+ mk('circle',{cx:TR[0]-20,cy:TR[1]-6,r:16,fill:'none',stroke:cG,'stroke-width':2},null,G);
+ mk('circle',{cx:TR[0]+20,cy:TR[1]-6,r:16,fill:'none',stroke:cM,'stroke-width':2},null,G);
+ t(TR[0]-20,TR[1]-2,10,cG===DIM?LAB:cG,'G','middle',0,500);t(TR[0]+20,TR[1]-2,10,cM===DIM?LAB:cM,'M','middle',0,500);
+ caseta(BAT[0],BAT[1],116,64,'BATERIE HV',true,CY);
+ for(let i=0;i<10;i++)r(BAT[0]-50+i*10.2,BAT[1]-18,7.5,20,i<st.soc/10?(i<2?RED:CY):DIM);
+ t(BAT[0],BAT[1]+22,13,CY,st.soc+'%','middle',1,500);
+ caseta(MGR[0],MGR[1],56,60,'MGR',st.spate,CY);
+ t(MGR[0],MGR[1]+5,13,st.spate?CY:DIM,'M','middle',0,500);
+ t(X0+6,Y0-6,11,LAB,'FATA','start',3);t(X1-6,Y0-6,11,LAB,'SPATE','end',3);
+
  const CX=800;ln(CX-20,96,CX-20,420,LINE,1.5);
  t(CX,112,13,LAB,'PUTERE BATERIE','start',2);
  t(CX,160,52,st.kw[0]==='-'?CY:AMB,st.kw,'start',0,500);t(CX+st.kw.length*29+6,160,18,LAB,'kW','start',2);
- // bara centrala: stanga = incarca, dreapta = consuma
  const BX=CX,BW=350,mij=BX+BW/2,val=parseFloat(st.kw);
- for(let i=0;i<14;i++){const x=BX+i*(BW/14),centruSeg=x+BW/28,aprins=val>0?(centruSeg>mij&&centruSeg<mij+val/30*BW/2):(centruSeg<mij&&centruSeg>mij+val/30*BW/2);
+ for(let i=0;i<14;i++){const x=BX+i*(BW/14),cs=x+BW/28,aprins=val>0?(cs>mij&&cs<mij+val/30*BW/2):(cs<mij&&cs>mij+val/30*BW/2);
   r(x,178,BW/14-4,14,aprins?(val>0?AMB:CY):DIM)}
  t(BX,210,11,LAB,'INCARCA','start',2);t(BX+BW,210,11,LAB,'CONSUMA','end',2);
  t(CX,256,13,LAB,'TENSIUNE','start',2);t(CX,290,30,VAL,st.v+' V');
  t(CX+190,256,13,LAB,'CURENT','start',2);t(CX+190,290,30,VAL,st.a+' A');
- t(CX,334,13,LAB,'VITEZA','start',2);t(CX,368,30,VAL,(STARE==='regen'?'46':(STARE==='ev'?'28':'74'))+' km/h');
+ t(CX,334,13,LAB,'VITEZA','start',2);t(CX,368,30,VAL,st.viteza+' km/h');
  t(CX+190,334,13,LAB,'MOTOR','start',2);t(CX+190,368,30,VAL,'88°C');
- t(595,425,15,st.cm,st.txt,'middle',4);
+ t(595,432,15,st.cm,st.txt,'middle',4);
  puncte(3);
 }
 
