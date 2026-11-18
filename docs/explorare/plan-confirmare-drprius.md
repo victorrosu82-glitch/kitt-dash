@@ -45,3 +45,20 @@ Totul durează cam 10 minute.
   capetele barei de putere.
 
 Ce nu trece rămâne pe ecran marcat „de confirmat” sau nu apare deloc.
+
+## Rezultatul, 18.11.2026
+
+Proba KITT 15:56–15:58 (60 de tururi), apoi Dr Prius 15:58–16:01 (148 de rânduri),
+cu mașina parțial în mers. Fișierele: `KittDash-proba-baterie-20261118-155802.txt` și
+`BatteryMonitorLog-20261118-1601.csv`; comparația: `python tools/compara_drprius.py <kitt> <csv>`.
+
+| Ce | Rezultat |
+|---|---|
+| tensiunile blocurilor (2181) | **confirmat.** Forma (cât se abate fiecare bloc de medie) se potrivește 99,4%; cel mai tare e blocul 10 la amândouă; cel mai slab 3/4 (la 1 mV unul de altul). Suma blocurilor = tensiunea bateriei din 019A (262 vs 263 V). Nivelul absolut diferă cu ±0,1 V după sarcina din clipa citirii, nu din formulă. |
+| rezistențele (2195) | **confirmat: octetul e direct mΩ.** Amândouă se mișcă în timp la fel (KITT 17–21, Dr Prius 18–22). Pe 14.11 „22–23” era doar altă clipă. |
+| temperaturile (2187) | **confirmat:** senzorii KITT 2, 3, 4 = Dr Prius #1, #2, #3 (la sfârșit 34,76/37,30/33,86 față de 34,75/37,29/33,85). Senzorul 1 (~23 °C) pare aerul de răcire; 5–7 neidentificați. |
+| SOC (015B) | **confirmat**, aceeași formulă (× 100 / 255). |
+| limitele de putere | **negăsite** în 2101, 2146, 214C, 2161–2170. Dr Prius: încărcare 36,18 CP (27 kW), descărcare 34,17 CP (25,5 kW), constante. Scara barei de putere (25 kW) rămâne. |
+| rezervorul (7C0 2129) | 29 l (A/2), de comparat cu acul. |
+
+Observație: Dr Prius a văzut blocuri de **13,2 V** la 120 A (accelerare); scara 15–18 V le arată atunci goale.

@@ -122,6 +122,13 @@ class EcranHibrid(private val p: Pensula) {
             p.dreptunghi(c, x, 282f - inalt, 40f, inalt, if (v > 45f) ROSU else if (v > 35f) AMBRA else VERDE, 3f)
             p.text(c, x + 20f, 300f, 12f, ALB, "${v.roundToInt()}°", Paint.Align.CENTER, gros = true)
         }
+        // senzorii 2-4 sunt cei trei ai Dr Prius (confirmat pe 18.11.2026, la 0,01 °C);
+        // primul pare aerul de racire, ultimii trei nu stim inca ce sunt
+        for (i in 0 until 7) {
+            val confirmat = i in 1..3
+            p.text(c, cx + i * 62f + 20f, 316f, 10f, if (confirmat) ETICHETA else ROSU_STERS,
+                ETICHETE_TERMOMETRE[i], Paint.Align.CENTER, 1f, gros = confirmat)
+        }
         p.text(c, cx, 330f, 13f, ETICHETA, "MOTOARE SI INVERTOR", spatiere = 2f)
         p.text(c, cx + 440f, 330f, 10f, ROSU_STERS, "(DE CONFIRMAT)", Paint.Align.RIGHT, 1f)
         h?.temperaturiSistem.orEmpty().take(4).forEachIndexed { i, (eticheta, v) ->
@@ -151,5 +158,6 @@ class EcranHibrid(private val p: Pensula) {
         const val SCARA_JOS = 15f
         const val SCARA_SUS = 18f
         private val REZISTENTA = android.graphics.Color.parseColor("#7a3a30")
+        private val ETICHETE_TERMOMETRE = listOf("AER?", "BAT 1", "BAT 2", "BAT 3", "", "", "")
     }
 }
