@@ -61,7 +61,9 @@ Fiecare se confirmă la mașină înainte de a ajunge pe bord.
   din MAF.
 - **Blocurile Toyota `2102`–`2105`** la `7E2` răspund „nu știu" (`7F 21 12`).
   Merg doar `2101` (24 de octeți) și `2106`.
-- **Bateria la `7E3`** (`2181`–`2183`) — `NO DATA`.
+- **Bateria la `7E3`** (`2181`–`2183`) — `NO DATA`. Bateria răspunde însă la **calculatorul hibrid, adresa `724`**:
+  `2181` tensiunile celor 17 blocuri, `2187` temperaturile, `2192` min/max, `2195`
+  rezistențele interne. Vezi `docs/explorare/ce-a-gasit.md` (explorarea din 17.11.2026).
 
 ## Temperaturile bateriei: de lămurit
 

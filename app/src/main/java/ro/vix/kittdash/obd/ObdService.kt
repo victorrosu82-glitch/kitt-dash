@@ -32,6 +32,9 @@ class ObdService : LifecycleService() {
 
     private var bucla: Job? = null
 
+    /** Adaptorul la care lucreaza bucla acum. */
+    private var adresaCurenta: String? = null
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         super.onStartCommand(intent, flags, startId)
 
@@ -41,6 +44,15 @@ class ObdService : LifecycleService() {
         val simulator = intent?.getBooleanExtra(EXTRA_SIMULATOR, false) ?: false
         val sonda = intent?.getBooleanExtra(EXTRA_SONDA, false) ?: false
         val explorare = intent?.getBooleanExtra(EXTRA_EXPLORARE, false) ?: false
+        val doarDacaNuMerge = intent?.getBooleanExtra(EXTRA_DOAR_DACA_NU_MERGE, false) ?: false
+
+        // Ecranul masinii cere legatura de fiecare data cand revine. Daca deja
+        // lucram cu acelasi adaptor, nu rupem nimic: pe 17.11.2026 o asemenea
+        // cerere a taiat explorarea masinii la jumatate.
+        if (doarDacaNuMerge && bucla?.isActive == true && adresa == adresaCurenta) {
+            return START_STICKY
+        }
+        adresaCurenta = if (simulator) null else adresa
 
         bucla?.cancel()
         bucla = lifecycleScope.launch {
@@ -157,6 +169,7 @@ class ObdService : LifecycleService() {
         private const val EXTRA_SIMULATOR = "simulator"
         private const val EXTRA_SONDA = "sonda"
         private const val EXTRA_EXPLORARE = "explorare"
+        private const val EXTRA_DOAR_DACA_NU_MERGE = "doar_daca_nu_merge"
 
         /**
          * Porneste serviciul pe adaptorul cu adresa data. Cu [sondaHibrida],
@@ -172,6 +185,17 @@ class ObdService : LifecycleService() {
                 .putExtra(EXTRA_ADRESA, adresa)
                 .putExtra(EXTRA_SONDA, sondaHibrida)
                 .putExtra(EXTRA_EXPLORARE, explorare)
+            context.startForegroundService(intent)
+        }
+
+        /**
+         * Porneste legatura numai daca nu merge deja cu acelasi adaptor. Pentru
+         * ecranul masinii, care o cere la fiecare intoarcere.
+         */
+        fun pornesteDacaNuMerge(context: Context, adresa: String) {
+            val intent = Intent(context, ObdService::class.java)
+                .putExtra(EXTRA_ADRESA, adresa)
+                .putExtra(EXTRA_DOAR_DACA_NU_MERGE, true)
             context.startForegroundService(intent)
         }
 

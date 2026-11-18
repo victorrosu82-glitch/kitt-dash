@@ -23,11 +23,19 @@ class ModHibridTest {
     }
 
     @Test
-    fun `bateria care primeste curent inseamna REGEN`() {
-        // -11,9 A la 284 V = -3,4 kW: exact ce s-a masurat cand a pornit
-        // motorul termic ca sa incarce bateria.
+    fun `bateria care primeste curent in mers inseamna REGEN`() {
         assertEquals(
             ModHibrid.REGEN,
+            ModHibrid.din(turatie = 0.0, putereKw = -3.38, vitezaKmh = 35.0),
+        )
+    }
+
+    @Test
+    fun `pe loc, motorul care incarca bateria e HYBRID, nu REGEN`() {
+        // -11,9 A la 284 V = -3,4 kW: masurat cand a pornit motorul termic ca
+        // sa incarce bateria, cu masina pe loc. Asta nu e recuperare.
+        assertEquals(
+            ModHibrid.HYBRID,
             ModHibrid.din(turatie = 1248.0, putereKw = -3.38, vitezaKmh = 0.0),
         )
     }
@@ -65,5 +73,11 @@ class ModHibridTest {
             ),
         )
         assertEquals(ModHibrid.REGEN, ModHibrid.din(stare))
+    }
+
+    @Test
+    fun `pe loc motorul care incarca bateria nu e REGEN`() {
+        // 18.11.2026, in Lexus: 0 km/h, 1200 rot/min, -3 kW
+        assertEquals(ModHibrid.HYBRID, ModHibrid.din(turatie = 1200.0, putereKw = -3.0, vitezaKmh = 0.0))
     }
 }

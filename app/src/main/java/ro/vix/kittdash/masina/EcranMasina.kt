@@ -157,6 +157,10 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
             return
         }
         val intent = Intent(CarContext.ACTION_NAVIGATE, Uri.parse("geo:0,0?q=" + Uri.encode(adresa)))
+        // KITT e si el aplicatie de navigatie, asa ca o cerere fara adresant
+        // se poate intoarce la el (s-a vazut pe 17.11.2026). Daca e Waze pe
+        // telefon, i-o trimitem lui direct.
+        if (areWaze()) intent.component = WAZE
         try {
             carContext.startCarApp(intent)
             ro.vix.kittdash.Jurnal.scrie(carContext, "Am cerut navigatie spre casa")
@@ -164,6 +168,13 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
             ro.vix.kittdash.Jurnal.scrie(carContext, "Navigatia spre casa n-a pornit: ${e.message}")
             anunta("Nu pot porni navigatia")
         }
+    }
+
+    private fun areWaze(): Boolean = try {
+        carContext.packageManager.getPackageInfo(WAZE.packageName, 0)
+        true
+    } catch (_: Exception) {
+        false
     }
 
     private fun comutaPanoul() {
@@ -200,5 +211,10 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
     private fun opreste() {
         ObdService.opreste(carContext)
         invalidate()
+    }
+
+    companion object {
+        /** Waze pentru Android Auto, citit de pe telefonul lui Victor pe 18.11.2026. */
+        private val WAZE = android.content.ComponentName("com.waze", "com.waze.car_lib.WazeCarAppService")
     }
 }

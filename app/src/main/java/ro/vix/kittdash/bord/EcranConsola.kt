@@ -83,7 +83,7 @@ class EcranConsola(private val p: Pensula) {
         val randuri = listOf(
             Triple("TENSIUNE HV", s.hvTensiune?.let { (it - 200f) / 80f }, s.hvTensiune?.let { "${it.roundToInt()} V" }),
             Triple("CURENT HV", s.hvCurent?.let { kotlin.math.abs(it) / 150f }, s.hvCurent?.let { "%+.0f A".format(it) }),
-            Triple("PUTERE", if (s.areLegatura) kotlin.math.abs(s.putereKw) / 30f else null,
+            Triple("PUTERE", if (s.areLegatura) ScaraPutere.fractie(s.putereKw) else null,
                 if (s.areLegatura) "%+.0f kW".format(s.putereKw) else null),
         )
         // Tensiunea HV are o banda normala lata (~200-280 V), deci ramane verde.
@@ -113,7 +113,7 @@ class EcranConsola(private val p: Pensula) {
     /** Coloanele mari din dreapta - POWER, NORMAL, AUTO, PURSUIT in serial. */
     private fun coloane(c: Canvas, s: StareBord) {
         val bateriaScazuta = s.socProcent != null && s.socProcent <= Avertizare.PRAG_BATERIE
-        val recuperare = if (s.putereKw < 0f) -s.putereKw / 30f * 100f else 0f
+        val recuperare = if (s.putereKw < 0f) ScaraPutere.fractie(s.putereKw) * 100f else 0f
         val lista = listOf(
             Coloana("BATERIE", s.socProcent, if (bateriaScazuta) ROSU else VERDE, bateriaScazuta),
             Coloana("CLAPETA", s.clapeta, VERDE, false),

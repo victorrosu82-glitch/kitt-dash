@@ -144,18 +144,51 @@ class Pensula {
      */
     fun cifra7(c: Canvas, x: Float, y: Float, w: Float, h: Float, ch: Char, culoare: Int) {
         val aprinse = SEGMENTE[ch] ?: ""
-        val g = w * 0.22f
+        // Segmente groase, cu capetele ascutite, ca la afisajele adevarate:
+        // se ating aproape in colturi, cu un mic gol intre ele.
+        val t = w * GROSIME_SEGMENT
         val jum = h / 2f
-        fun seg(cod: Char, sx: Float, sy: Float, sw: Float, sh: Float) {
-            dreptunghi(c, sx + 1f, sy + 1f, sw - 2f, sh - 2f, if (cod in aprinse) culoare else SEGMENT_STINS, 2f)
+        val gol = 1.6f
+        fun orizontal(cod: Char, yc: Float) {
+            val x0 = x + t / 2f + gol
+            val x1 = x + w - t / 2f - gol
+            drum.reset()
+            drum.moveTo(x0, yc)
+            drum.lineTo(x0 + t / 2f, yc - t / 2f)
+            drum.lineTo(x1 - t / 2f, yc - t / 2f)
+            drum.lineTo(x1, yc)
+            drum.lineTo(x1 - t / 2f, yc + t / 2f)
+            drum.lineTo(x0 + t / 2f, yc + t / 2f)
+            drum.close()
+            umplere.color = if (cod in aprinse) culoare else SEGMENT_STINS
+            c.drawPath(drum, umplere)
         }
-        seg('a', x + g, y, w - 2 * g, g)
-        seg('d', x + g, y + h - g, w - 2 * g, g)
-        seg('g', x + g, y + jum - g / 2, w - 2 * g, g)
-        seg('f', x, y + g, g, jum - 1.5f * g)
-        seg('b', x + w - g, y + g, g, jum - 1.5f * g)
-        seg('e', x, y + jum + g / 2, g, jum - 1.5f * g)
-        seg('c', x + w - g, y + jum + g / 2, g, jum - 1.5f * g)
+        fun vertical(cod: Char, xc: Float, y0: Float, y1: Float) {
+            val a = y0 + gol
+            val b = y1 - gol
+            drum.reset()
+            drum.moveTo(xc, a)
+            drum.lineTo(xc + t / 2f, a + t / 2f)
+            drum.lineTo(xc + t / 2f, b - t / 2f)
+            drum.lineTo(xc, b)
+            drum.lineTo(xc - t / 2f, b - t / 2f)
+            drum.lineTo(xc - t / 2f, a + t / 2f)
+            drum.close()
+            umplere.color = if (cod in aprinse) culoare else SEGMENT_STINS
+            c.drawPath(drum, umplere)
+        }
+        val sus = y + t / 2f
+        val mij = y + jum
+        val jos = y + h - t / 2f
+        val stanga = x + t / 2f
+        val dreapta = x + w - t / 2f
+        orizontal('a', sus)
+        orizontal('g', mij)
+        orizontal('d', jos)
+        vertical('f', stanga, sus, mij)
+        vertical('b', dreapta, sus, mij)
+        vertical('e', stanga, mij, jos)
+        vertical('c', dreapta, mij, jos)
     }
 
     /** Un afisaj intreg: rama inchisa si [n] cifre, aliniate la dreapta. */
@@ -179,6 +212,9 @@ class Pensula {
         const val INALTIME = 460f
 
         private const val SCANER_LATIME = 790f
+
+        /** Grosimea unui segment, din latimea cifrei. */
+        private const val GROSIME_SEGMENT = 0.26f
 
         val STINS = Color.parseColor("#2b0c0a")
         val ROSU = Color.parseColor("#ff2d1c")

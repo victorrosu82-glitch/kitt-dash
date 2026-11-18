@@ -21,6 +21,11 @@
 
     <uses-feature android:name="android.hardware.bluetooth" android:required="false" />
 
+    <!-- Ca butonul "Acasa" sa poata vedea daca e Waze pe telefon. -->
+    <queries>
+        <package android:name="com.waze" />
+    </queries>
+
     <application
         android:name=".KittApp"
         android:allowBackup="false"

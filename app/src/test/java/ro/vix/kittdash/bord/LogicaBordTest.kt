@@ -299,6 +299,7 @@ class LogicaBordTest {
                 valori = mapOf(
                     Marime.TURATIE to Citire(1400.0, 0L),
                     Marime.HV_PUTERE to Citire(-8.0, 0L),
+                    Marime.VITEZA to Citire(60.0, 0L),
                 ),
             ),
         )

@@ -42,8 +42,12 @@ enum class ModHibrid(val eticheta: String) {
          */
         fun din(turatie: Double?, putereKw: Double?, vitezaKmh: Double?): ModHibrid {
             if (turatie == null && putereKw == null) return NECUNOSCUT
-            if (putereKw != null && putereKw <= -PRAG_REGEN_KW) return REGEN
             val motorPornit = (turatie ?: 0.0) >= PRAG_TURATIE
+            // Pe loc nu ai ce recupera: daca bateria primeste curent cu masina
+            // oprita, o incarca motorul termic prin generator (vazut pe
+            // 18.11.2026: 0 km/h, 1200 rot/min, -3 kW, iar bordul scria REGEN).
+            val pePloc = (vitezaKmh ?: 0.0) < 1.0
+            if (putereKw != null && putereKw <= -PRAG_REGEN_KW && !(pePloc && motorPornit)) return REGEN
             if (motorPornit) return HYBRID
             val staPeLoc = (vitezaKmh ?: 0.0) < 1.0 &&
                 (putereKw == null || kotlin.math.abs(putereKw) < PRAG_REGEN_KW)

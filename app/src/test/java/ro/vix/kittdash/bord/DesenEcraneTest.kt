@@ -53,6 +53,8 @@ class DesenEcraneTest {
         deseneaza("energie-ev", FelEcran.ENERGIE, stare(28f, 0f, 9f, 61f, ModHibrid.EV))
         deseneaza("energie-incarca", FelEcran.ENERGIE, stare(62f, 1600f, -6f, 47f, ModHibrid.HYBRID))
         deseneaza("energie-regen", FelEcran.ENERGIE, stare(46f, 0f, -21f, 63f, ModHibrid.REGEN))
+        // ca in poza din 18.11.2026: pe loc, motorul incarca bateria
+        deseneaza("energie-pe-loc", FelEcran.ENERGIE, stare(0f, 1200f, -3f, 52f, ModHibrid.HYBRID))
     }
 
     @Test

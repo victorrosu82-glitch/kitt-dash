@@ -22,6 +22,12 @@ class KittSession : Session() {
     }
 
     override fun onNewIntent(intent: Intent) {
+        // O cerere de navigatie nu e treaba noastra si nu e motiv sa reluam
+        // legatura cu masina.
+        if (intent.action == androidx.car.app.CarContext.ACTION_NAVIGATE) {
+            Jurnal.scrie(carContext, "Am primit o cerere de navigatie; nu e pentru KITT")
+            return
+        }
         porneste()
     }
 
@@ -32,6 +38,6 @@ class KittSession : Session() {
             return
         }
         Jurnal.scrie(carContext, "Cer legatura cu adaptorul")
-        ObdService.porneste(carContext, adresa)
+        ObdService.pornesteDacaNuMerge(carContext, adresa)
     }
 }
