@@ -327,9 +327,10 @@ if(ECRAN==='hibrid'){
  // --- stanga: cele 17 blocuri ale bateriei -------------------------------
  t(40,112,13,LAB,'BATERIE HV · 17 BLOCURI','start',2);
  t(640,112,13,RS,'V / BLOC','end',2);
- const X0=40,X1=640,YB=330,H=190,pas=(X1-X0)/17,jos=vmin-0.15,sus=vmax+0.05;
+ // scara fixa 15-18 V: un bloc slabit (sub 16 V) trebuie sa se vada cazut, nu intins
+ const X0=40,X1=640,YB=330,H=190,pas=(X1-X0)/17,jos=15,sus=18;
  // liniile de reper
- for(const v of [17.2,17.3,17.4,17.5]){const y=YB-(v-jos)/(sus-jos)*H;if(y>YB-H-5&&y<YB){ln(X0,y,X1,y,LINE,1);t(X1+4,y+4,10,RS,v.toFixed(1).replace('.',','),'start')}}
+ for(const v of [15,15.5,16,16.5,17,17.5,18]){const y=YB-(v-jos)/(sus-jos)*H;if(y>=YB-H-1&&y<=YB+1){ln(X0,y,X1,y,LINE,1);t(X1+4,y+4,10,v<=16?RED:RS,v.toFixed(1).replace('.',','),'start')}}
  V.forEach((v,i)=>{
   const h=(v-jos)/(sus-jos)*H,x=X0+i*pas+4,w=pas-8;
   const c=i===imin?RED:(i===imax?AMB:CY);
