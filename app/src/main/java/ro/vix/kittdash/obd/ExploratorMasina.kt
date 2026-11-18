@@ -32,10 +32,18 @@ class ExploratorMasina(
     private val ceas: () -> Long = { System.currentTimeMillis() },
     /** Cate tururi de citiri repetate facem la pasul 5. */
     private val tururi: Int = TURURI_REPETATE,
+    /** Pauza dinaintea repornirii adaptorului; in teste nu asteptam. */
+    private val asteapta: (Long) -> Unit = { Thread.sleep(it) },
 ) {
 
     private val raport = StringBuilder()
     private var taceriLaRand = 0
+    private var reporniri = 0
+
+    // Ce era pus in adaptor, ca sa-l punem la loc dupa o repornire.
+    private var antet: String? = null
+    private var extins: String? = null
+    private var filtru: String? = null
 
     /** Un calculator gasit: adresa la care il intrebam si de unde a raspuns. */
     data class Calculator(val adresa: String, val raspundeDe: String, val extins: String? = null) {
@@ -97,7 +105,7 @@ class ExploratorMasina(
         scrie("=".repeat(72))
         // Antete si spatii pornite: asa se vede CINE a raspuns si unde se
         // despart octetii. Temporizare scurta, ca adresele mute sa nu tina mult.
-        for (c in listOf("ATE0", "ATL0", "ATS1", "ATH1", "ATAT0", "ATST19", "ATCAF1")) cere(c)
+        for (c in SETARI) cere(c)
         cere("ATI")
         cere("ATDP")
         cere("ATRV")
@@ -281,17 +289,70 @@ class ExploratorMasina(
      */
     private fun cere(comanda: String, tacut: Boolean = false): String {
         require(esteDoarCitire(comanda)) { "Cerere refuzata, nu e doar citire: $comanda" }
+        tine(comanda)
         val r = try {
             val raspuns = legatura.comanda(comanda, TIMEOUT_MS)
             taceriLaRand = 0
             raspuns
         } catch (e: ObdException) {
             taceriLaRand++
-            if (taceriLaRand >= TACERI_MAXIME) throw ObdException("adaptorul a tacut de $taceriLaRand ori la rand", e)
-            "(tacere)"
+            if (taceriLaRand < TACERI_INAINTE_DE_REPORNIRE) {
+                "(tacere)"
+            } else if (reporneste()) {
+                // dupa repornire mai incercam o data aceeasi cerere
+                try {
+                    legatura.comanda(comanda, TIMEOUT_MS).also { taceriLaRand = 0 }
+                } catch (_: ObdException) {
+                    "(tacere)"
+                }
+            } else {
+                throw ObdException("adaptorul a tacut de $taceriLaRand ori la rand si nu si-a revenit", e)
+            }
         }
         if (!tacut) scrie("$comanda -> ${r.peUnRand()}")
         return r
+    }
+
+    /** Tine minte adresa, octetul suplimentar si filtrul puse in adaptor. */
+    private fun tine(comanda: String) {
+        val c = comanda.uppercase(Locale.US)
+        when {
+            c.startsWith("ATSH") -> antet = c.removePrefix("ATSH")
+            c == "ATCEA" -> extins = null
+            c.startsWith("ATCEA") -> extins = c.removePrefix("ATCEA")
+            c.startsWith("ATCRA") -> filtru = c.removePrefix("ATCRA")
+            c == "ATAR" -> filtru = null
+        }
+    }
+
+    /**
+     * Clona ELM327 amuteste din cand in cand si nu mai raspunde la nimic
+     * (s-a vazut de doua ori pe 18.11.2026, la calculatorul de airbag si
+     * chiar la inceput). Atunci inchidem legatura, o deschidem iar, punem
+     * adaptorul la loc cum era si mergem mai departe de unde am ramas.
+     */
+    private fun reporneste(): Boolean {
+        if (reporniri >= REPORNIRI_MAXIME) return false
+        reporniri++
+        scrie("!! adaptorul a amutit; il repornesc (a $reporniri-a oara) si continui")
+        progres("Adaptorul a amutit, il repornesc", -1f)
+        return try {
+            legatura.close()
+            asteapta(PAUZA_REPORNIRE_MS)
+            legatura.deschide()
+            legatura.comanda("ATZ", 6_000L)
+            for (c in SETARI) legatura.comanda(c, TIMEOUT_MS)
+            // prima cerere catre masina alege din nou protocolul
+            legatura.comanda("0100", 8_000L)
+            antet?.let { legatura.comanda("ATSH$it", TIMEOUT_MS) }
+            extins?.let { legatura.comanda("ATCEA$it", TIMEOUT_MS) }
+            legatura.comanda(filtru?.let { "ATCRA$it" } ?: "ATAR", TIMEOUT_MS)
+            taceriLaRand = 0
+            true
+        } catch (e: ObdException) {
+            scrie("!! repornirea n-a mers: ${e.message}")
+            false
+        }
     }
 
     private fun scrie(linie: String) {
@@ -305,7 +366,12 @@ class ExploratorMasina(
 
     companion object {
         private const val TIMEOUT_MS = 1_500L
-        private const val TACERI_MAXIME = 8
+        private const val TACERI_INAINTE_DE_REPORNIRE = 3
+        private const val REPORNIRI_MAXIME = 4
+        private const val PAUZA_REPORNIRE_MS = 1_500L
+
+        /** Cum vrem adaptorul pe toata explorarea. */
+        private val SETARI = listOf("ATE0", "ATL0", "ATS1", "ATH1", "ATAT0", "ATST19", "ATCAF1")
         const val TURURI_REPETATE = 15
         const val ASCULTARE_MS = 5_000L
 

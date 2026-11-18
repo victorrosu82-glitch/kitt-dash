@@ -113,7 +113,11 @@ class ObdPoller(
     private fun exploreaza(link: ObdLink) {
         val raport = ExploratorMasina(
             link,
-            progres = { text, f -> depozit.actualizeaza { it.copy(explorare = text, explorareProgres = f) } },
+            progres = { text, f ->
+                depozit.actualizeaza {
+                    it.copy(explorare = text, explorareProgres = if (f < 0f) it.explorareProgres else f)
+                }
+            },
         ).ruleaza()
         // O singura data: daca legatura cade si se reface, nu o luam de la capat.
         deExplorat = false

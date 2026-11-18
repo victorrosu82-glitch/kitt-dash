@@ -1,0 +1,25 @@
+Explorare KITT Dash - raspunsuri brute, nedecodate
+Numai cereri de citire: servicii 01, 09, 21, 22, 1A si comenzi AT.
+========================================================================
+ATE0 -> OK
+ATL0 -> OK
+ATS1 -> OK
+ATH1 -> OK
+ATAT0 -> OK
+ATST19 -> OK
+ATCAF1 -> OK
+ATI -> ELM327 v1.5
+ATDP -> AUTO, ISO 15765-4 (CAN 11/500)
+ATRV -> 14.6V
+
+== 1. Calculatoarele care tin standardul OBD (intrebare catre toti, 7DF)
+ATAR -> OK
+ATSH7DF -> OK
+0100 -> 7E8 06 41 00 BE 3F A8 13 7EA 06 41 00 98 3A 80 13
+0900 -> 7E8 06 49 00 55 40 00 00 7EA 06 49 00 14 40 00 00
+
+== 2. Cautare pe adrese, 700-7F7 (cerere 2101; orice raspuns = calculator)
+ATSH724 2101 -> 72C 10 18 61 01 00 63 48 36 72C 21 62 5A 00 00 00 02 43 72C 22 2D 28 51 B1 10 E8 23 72C 23 8F 37 D8 75 00 00 00
+!! Explorarea s-a oprit: adaptorul a tacut de 8 ori la rand
+
+Gata in 0 min 26 s.

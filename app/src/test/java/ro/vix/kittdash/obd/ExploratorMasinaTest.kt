@@ -14,16 +14,30 @@ class ExploratorMasinaTest {
      * dar numai blocul 03), un calculator care nu stie serviciul 21 (7C4) si
      * unul de caroserie la 750/40. Raspunde cu antete, ca un ELM327 cu ATH1.
      */
-    private class AdaptorFals : ObdLink {
+    private class AdaptorFals(
+        /** Dupa atatea comenzi amuteste, pana e redeschis. */
+        private val amutesteDupa: Int = Int.MAX_VALUE,
+    ) : ObdLink {
         override val nume = "fals"
         val trimise = mutableListOf<String>()
+        var deschideri = 0
         private var antet = "7E0"
         private var extins: String? = null
+        private var mut = false
+        private var amutit = false
 
-        override fun deschide() {}
+        override fun deschide() {
+            deschideri++
+            mut = false
+        }
         override fun close() {}
 
         override fun comanda(comanda: String, timeoutMs: Long): String {
+            if (!amutit && trimise.size >= amutesteDupa) {
+                amutit = true
+                mut = true
+            }
+            if (mut) throw ObdException("Adaptorul nu a raspuns in $timeoutMs ms")
             trimise += comanda
             val c = comanda.uppercase()
             when {
@@ -100,5 +114,16 @@ class ExploratorMasinaTest {
         assertEquals(0x98180013L, ExploratorMasina.masca("7E8 06 41 00 98 18 00 13", "4100"))
         assertTrue(ExploratorMasina.refuzaServiciul("7CC 03 7F 21 11", "21"))
         assertFalse(ExploratorMasina.refuzaServiciul("7B8 03 7F 21 12", "21"))
+    }
+
+    @Test
+    fun candAdaptorulAmutesteIlRepornesteSiMergeMaiDeparte() {
+        // amuteste in mijlocul cautarii pe adrese
+        val fals = AdaptorFals(amutesteDupa = 300)
+        val raport = ExploratorMasina(fals, ceas = { 0L }, tururi = 1, asteapta = {}).ruleaza()
+        assertEquals(1, fals.deschideri)
+        assertTrue(raport, raport.contains("il repornesc (a 1-a oara)"))
+        assertTrue(raport, raport.contains("Rezumat: 5 calculatoare gasite"))
+        assertFalse(raport.contains("Explorarea s-a oprit"))
     }
 }

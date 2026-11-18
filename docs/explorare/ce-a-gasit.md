@@ -63,3 +63,23 @@ sumă și de min/max; la 2187 sunt doar plauzibile până la comparația cu Dr P
 2. Pe bord, din ce e deja sigur: **tensiunile celor 17 blocuri** și **diferența dintre
    cel mai slab și cel mai tare** (sănătatea bateriei), plus temperaturile bateriei după
    confirmare.
+
+## Explorările din 18.11.2026
+
+- **10:07–10:11** (`KittDash-explorare-20261118-101111.txt`): aceleași 12 calculatoare.
+  A citit tot calculatorul hibrid (724) și airbagul (780), apoi adaptorul a amuțit
+  (8 tăceri la rând, fără prompt) la blocurile 216x ale airbagului.
+- **10:16** (`KittDash-explorare-20261118-101637.txt`): adaptorul a amuțit după prima adresă.
+
+Noutăți:
+- 724 nu știe serviciul 22 (`7F 22 11`); la 1A80 răspunde `5A 01`.
+- Airbagul (780) nu știe modurile 01 și 09 (`7F 01 10`), dar are blocurile
+  2101, 2103 (text: `780400006800068000…`), 2104, 2105, 2106, 210A, 210B, 2120, 2140, 2160.
+
+Reparat după asta:
+- când adaptorul amuțește de 3 ori la rând, exploratorul închide legătura, o
+  redeschide, pune adaptorul la loc (adresă, filtru) și continuă; de cel mult 4 ori;
+- „Acasă”: Android Auto refuză o cerere de navigație cu componentă
+  („Navigation intent cannot have a component”). Acum se încearcă pe rând:
+  cererea de navigație cu pachetul Waze, Waze pornit direct cu adresa, apoi
+  cererea fără adresant. Jurnalul spune care a mers.

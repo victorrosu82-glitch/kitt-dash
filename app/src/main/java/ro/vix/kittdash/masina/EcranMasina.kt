@@ -156,18 +156,29 @@ class EcranMasina(carContext: CarContext) : Screen(carContext), DefaultLifecycle
             anunta("Scrie adresa de acasa in KITT, pe telefon")
             return
         }
-        val intent = Intent(CarContext.ACTION_NAVIGATE, Uri.parse("geo:0,0?q=" + Uri.encode(adresa)))
+        val geo = Uri.parse("geo:0,0?q=" + Uri.encode(adresa))
         // KITT e si el aplicatie de navigatie, asa ca o cerere fara adresant
-        // se poate intoarce la el (s-a vazut pe 17.11.2026). Daca e Waze pe
-        // telefon, i-o trimitem lui direct.
-        if (areWaze()) intent.component = WAZE
-        try {
-            carContext.startCarApp(intent)
-            ro.vix.kittdash.Jurnal.scrie(carContext, "Am cerut navigatie spre casa")
-        } catch (e: Exception) {
-            ro.vix.kittdash.Jurnal.scrie(carContext, "Navigatia spre casa n-a pornit: ${e.message}")
-            anunta("Nu pot porni navigatia")
+        // se poate intoarce la el (s-a vazut pe 17.11.2026). Android Auto nu
+        // primeste o cerere de navigatie cu componenta ("Navigation intent
+        // cannot have a component", 18.11.2026), asa ca incercam pe rand:
+        // cu pachetul Waze, apoi pornind Waze direct cu adresa, apoi fara adresant.
+        val incercari = buildList {
+            if (areWaze()) {
+                add("cerere de navigatie catre Waze" to Intent(CarContext.ACTION_NAVIGATE, geo).setPackage(WAZE.packageName))
+                add("Waze pornit direct" to Intent(Intent.ACTION_VIEW, geo).setComponent(WAZE))
+            }
+            add("cerere de navigatie fara adresant" to Intent(CarContext.ACTION_NAVIGATE, geo))
         }
+        for ((fel, intent) in incercari) {
+            try {
+                carContext.startCarApp(intent)
+                ro.vix.kittdash.Jurnal.scrie(carContext, "Navigatie spre casa: $fel")
+                return
+            } catch (e: Exception) {
+                ro.vix.kittdash.Jurnal.scrie(carContext, "Navigatie spre casa, $fel n-a mers: ${e.message}")
+            }
+        }
+        anunta("Nu pot porni navigatia")
     }
 
     private fun areWaze(): Boolean = try {
