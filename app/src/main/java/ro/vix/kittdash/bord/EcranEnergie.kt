@@ -36,34 +36,7 @@ class EcranEnergie(private val p: Pensula) {
     }
 
     private fun schema(c: Canvas, s: StareBord, f: FluxEnergie, faza: Float) {
-        // conturul masinii, de sarma
-        p.drum.reset()
-        p.drum.moveTo(X0 + 60f, Y0)
-        p.drum.lineTo(X1 - 40f, Y0)
-        p.drum.quadTo(X1, Y0, X1, Y0 + 40f)
-        p.drum.lineTo(X1, Y1 - 40f)
-        p.drum.quadTo(X1, Y1, X1 - 40f, Y1)
-        p.drum.lineTo(X0 + 60f, Y1)
-        p.drum.quadTo(X0, Y1, X0, Y1 - 60f)
-        p.drum.lineTo(X0, Y0 + 60f)
-        p.drum.quadTo(X0, Y0, X0 + 60f, Y0)
-        p.drum.close()
-        p.umplere.color = Color.parseColor("#0c0303")
-        c.drawPath(p.drum, p.umplere)
-        // conturul, cu halou, ca sa se vada si ziua pe ecranul masinii
-        p.linie.color = ROSU
-        p.linie.alpha = 50
-        p.linie.strokeWidth = 9f
-        c.drawPath(p.drum, p.linie)
-        p.linie.alpha = 255
-        p.linie.color = CONTUR
-        p.linie.strokeWidth = 3f
-        c.drawPath(p.drum, p.linie)
-        // parbrizul si luneta, plus osiile
-        p.linie(c, X0 + 330f, Y0 + 16f, X0 + 330f, Y1 - 16f, PARBRIZ, 2f)
-        p.linie(c, X1 - 50f, Y0 + 16f, X1 - 50f, Y1 - 16f, PARBRIZ, 2f)
-        p.linie(c, FA, Y0 + 40f, FA, Y1 - 40f, OSIE, 2f)
-        p.linie(c, SA, Y0 + 40f, SA, Y1 - 40f, OSIE, 2f)
+        caroseria(c, s.timpS)
 
         val cRotiFata = if (f.recuperare || !f.motorLaRoti) CYAN else AMBRA
         val inapoi = f.recuperare
@@ -81,32 +54,28 @@ class EcranEnergie(private val p: Pensula) {
         flux(c, if (f.inBaterie) MGR_SUS.reversed() else MGR_SUS, CYAN, f.spate, faza)
         flux(c, if (f.inBaterie) MGR_JOS.reversed() else MGR_JOS, CYAN, f.spate, faza)
 
-        roata(c, FA, Y0 + 24f, f.rotiFata, cRotiFata)
-        roata(c, FA, Y1 - 24f, f.rotiFata, cRotiFata)
-        roata(c, SA, Y0 + 24f, f.spate, CYAN)
-        roata(c, SA, Y1 - 24f, f.spate, CYAN)
+        roata(c, FA, Y0 + 24f, f.rotiFata, cRotiFata, s.timpS)
+        roata(c, FA, Y1 - 24f, f.rotiFata, cRotiFata, s.timpS)
+        roata(c, SA, Y0 + 24f, f.spate, CYAN, s.timpS)
+        roata(c, SA, Y1 - 24f, f.spate, CYAN, s.timpS)
 
-        // motorul termic, cu turatia
-        caseta(c, ENG_X, YM, 100f, 78f, "MOTOR", f.motor, AMBRA)
+        // motorul termic, cu turatia mare
+        caseta(c, ENG_X, YM, 124f, 104f, "MOTOR", f.motor, AMBRA)
         val rpm = if (s.areLegatura) s.turatie.roundToInt().toString() else BordKitt.LIPSA
-        p.text(c, ENG_X, YM + 9f, 24f, if (f.motor) AMBRA else ETICHETA, rpm, Paint.Align.CENTER, gros = true)
-        p.text(c, ENG_X, YM + 29f, 10f, if (f.motor) AMBRA_STINSA else ETICHETA, "RPM", Paint.Align.CENTER, 2f)
+        p.text(c, ENG_X, YM + 12f, 34f, if (f.motor) AMBRA else ETICHETA, rpm, Paint.Align.CENTER, gros = true)
+        p.text(c, ENG_X, YM + 36f, 11f, if (f.motor) AMBRA_STINSA else ETICHETA, "RPM", Paint.Align.CENTER, 3f)
 
-        // transmisia hibrida: generatorul si motorul din fata
+        // transmisia hibrida: generatorul (G) si motorul din fata (M), fiecare cu turatia lui
         val trAprinsa = f.rotiFata || f.generator
         val cTr = if (f.motor) AMBRA else CYAN
-        caseta(c, TR_X, YM, 120f, 92f, "", trAprinsa, cTr)
-        p.text(c, TR_X, YM + 41f, 11f, if (trAprinsa) cTr else ETICHETA, "MG1 · MG2", Paint.Align.CENTER, 2f, gros = true)
+        caseta(c, TR_X, YM, 152f, 144f, "", trAprinsa, cTr)
+        p.linie(c, TR_X, YM - 58f, TR_X, YM + 38f, LINIE_PANOU, 1.5f)
+        val rot = s.hibrid?.turatiiProaspete().orEmpty()
         val cG = if (f.motor) AMBRA else ETICHETA
         val cM = if (f.fata) CYAN else ETICHETA
-        p.cerc(c, TR_X - 25f, YM - 8f, 20f, cG, plin = false, grosime = 3f)
-        p.cerc(c, TR_X + 25f, YM - 8f, 20f, cM, plin = false, grosime = 3f)
-        p.text(c, TR_X - 25f, YM - 3f, 13f, cG, "G", Paint.Align.CENTER, gros = true)
-        p.text(c, TR_X + 25f, YM - 3f, 13f, cM, "M", Paint.Align.CENTER, gros = true)
-        // turatiile motoarelor electrice, cand le avem proaspete
-        val rot = s.hibrid?.turatiiProaspete().orEmpty()
-        rot["MG1"]?.let { p.text(c, TR_X - 25f, YM + 26f, 12f, cG, it.toString(), Paint.Align.CENTER, gros = true) }
-        rot["MG2"]?.let { p.text(c, TR_X + 25f, YM + 26f, 12f, cM, it.toString(), Paint.Align.CENTER, gros = true) }
+        motorElectric(c, TR_X - 38f, YM - 36f, "G", rot["MG1"], cG)
+        motorElectric(c, TR_X + 38f, YM - 36f, "M", rot["MG2"], cM)
+        p.text(c, TR_X, YM + 58f, 12f, if (trAprinsa) cTr else ETICHETA, "MG1 · MG2", Paint.Align.CENTER, 3f, gros = true)
 
         // bateria HV, cu treptele de incarcare
         caseta(c, BAT_X, YM, 140f, 80f, "BATERIE HV", true, CYAN)
@@ -117,13 +86,114 @@ class EcranEnergie(private val p: Pensula) {
         }
         p.text(c, BAT_X, YM + 28f, 17f, CYAN, soc?.let { "${it.roundToInt()}%" } ?: BordKitt.LIPSA, Paint.Align.CENTER, 1f, gros = true)
 
-        // motorul din spate
-        caseta(c, SA, YM, 70f, 72f, "MGR", f.spate, CYAN)
-        p.text(c, SA, YM + 2f, 17f, if (f.spate) CYAN else ETICHETA, "M", Paint.Align.CENTER, gros = true)
-        rot["MGR"]?.let { p.text(c, SA, YM + 24f, 12f, if (f.spate) CYAN else ETICHETA, it.toString(), Paint.Align.CENTER, gros = true) }
+        // motorul din spate, cu turatia mare
+        caseta(c, SA, YM, 108f, 124f, "MGR", f.spate, CYAN)
+        motorElectric(c, SA, YM - 30f, "M", rot["MGR"], if (f.spate) CYAN else ETICHETA)
 
         p.text(c, X0 + 6f, Y0 - 8f, 12f, ETICHETA, "FATA", spatiere = 3f)
         p.text(c, X1 - 6f, Y0 - 8f, 12f, ETICHETA, "SPATE", Paint.Align.RIGHT, 3f)
+    }
+
+    /** Un motor electric: cercul cu litera, iar dedesubt turatia, mare, si RPM. */
+    private fun motorElectric(c: Canvas, x: Float, y: Float, litera: String, rpm: Int?, culoare: Int) {
+        p.cerc(c, x, y, 20f, culoare, plin = false, grosime = 3f)
+        p.text(c, x, y + 5f, 14f, culoare, litera, Paint.Align.CENTER, gros = true)
+        p.text(c, x, y + 50f, 24f, culoare, rpm?.toString() ?: BordKitt.LIPSA, Paint.Align.CENTER, gros = true)
+        p.text(c, x, y + 67f, 10f, culoare, "RPM", Paint.Align.CENTER, 2f, alfa = 0.75f)
+    }
+
+    /**
+     * Masina vazuta de sus, cu fata in stanga: bot ascutit, talie, oglinzi,
+     * parbriz si luneta de sticla fumurie (schema se vede prin ele), faruri,
+     * stopuri si bara scanerului rosu in varful botului.
+     */
+    private fun caroseria(c: Canvas, timpS: Float) {
+        val d = p.drum
+        d.reset()
+        d.moveTo(70f, 112f)
+        d.cubicTo(160f, 104f, 300f, 104f, 420f, 108f)
+        d.lineTo(700f, 110f)
+        d.cubicTo(760f, 112f, 800f, 120f, 812f, 150f)
+        d.lineTo(816f, 382f)
+        d.cubicTo(804f, 412f, 760f, 420f, 700f, 422f)
+        d.lineTo(420f, 424f)
+        d.cubicTo(300f, 428f, 160f, 428f, 70f, 420f)
+        d.cubicTo(42f, 414f, 24f, 384f, 14f, 334f)
+        d.quadTo(6f, 296f, 6f, 266f)
+        d.quadTo(6f, 236f, 14f, 198f)
+        d.cubicTo(24f, 148f, 42f, 118f, 70f, 112f)
+        d.close()
+        p.umplere.color = Color.parseColor("#0c0303")
+        c.drawPath(d, p.umplere)
+        p.linie.color = ROSU
+        p.linie.alpha = 50
+        p.linie.strokeWidth = 10f
+        c.drawPath(d, p.linie)
+        p.linie.alpha = 255
+        p.linie.color = CONTUR
+        p.linie.strokeWidth = 2.5f
+        c.drawPath(d, p.linie)
+
+        // oglinzile
+        for ((y0, y1) in listOf(108f to 92f, 424f to 440f)) {
+            d.reset(); d.moveTo(338f, y0); d.lineTo(350f, y1); d.lineTo(372f, y1); d.lineTo(370f, y0); d.close()
+            p.umplere.color = Color.parseColor("#140504"); c.drawPath(d, p.umplere)
+            p.linie.color = CONTUR; p.linie.strokeWidth = 1.8f; c.drawPath(d, p.linie)
+        }
+        // parbrizul, acoperisul si luneta
+        d.reset(); d.moveTo(336f, 132f); d.cubicTo(360f, 126f, 388f, 124f, 412f, 124f); d.lineTo(412f, 408f)
+        d.cubicTo(388f, 408f, 360f, 406f, 336f, 400f); d.cubicTo(326f, 330f, 326f, 202f, 336f, 132f); d.close()
+        sticla(c, d)
+        p.dreptunghi(c, 412f, 126f, 234f, 280f, Color.parseColor("#0a0202"), 0f, 0.55f)
+        p.rama(c, 412f, 126f, 234f, 280f, Color.parseColor("#3a0e0a"), 1.2f)
+        d.reset(); d.moveTo(646f, 126f); d.cubicTo(690f, 128f, 716f, 134f, 728f, 150f); d.lineTo(728f, 382f)
+        d.cubicTo(716f, 398f, 690f, 404f, 646f, 406f); d.close()
+        sticla(c, d)
+        // liniile capotei si osiile
+        p.linie.color = PARBRIZ; p.linie.strokeWidth = 1.5f
+        d.reset(); d.moveTo(90f, 150f); d.cubicTo(180f, 142f, 260f, 140f, 322f, 140f); c.drawPath(d, p.linie)
+        d.reset(); d.moveTo(90f, 382f); d.cubicTo(180f, 390f, 260f, 392f, 322f, 392f); c.drawPath(d, p.linie)
+        p.linie(c, FA, 150f, FA, 382f, OSIE, 2f)
+        p.linie(c, SA, 150f, SA, 382f, OSIE, 2f)
+        // farurile, albe, si stopurile, rosii
+        d.reset(); d.moveTo(28f, 168f); d.cubicTo(42f, 136f, 70f, 122f, 104f, 118f); lumina(c, d, FAR)
+        d.reset(); d.moveTo(28f, 364f); d.cubicTo(42f, 396f, 70f, 410f, 104f, 414f); lumina(c, d, FAR)
+        d.reset(); d.moveTo(800f, 136f); d.lineTo(812f, 160f); d.lineTo(812f, 372f); d.lineTo(800f, 396f); lumina(c, d, ROSU)
+        // bara scanerului, in varful botului: un punct rosu care merge sus-jos
+        val f2 = (timpS / 0.65f) % 2f
+        val poz = (if (f2 < 1f) f2 else 2f - f2) * (SCANER_BOT - 1)
+        for (i in 0 until SCANER_BOT) {
+            val dist = kotlin.math.abs(i - poz)
+            val cul = when {
+                dist < 1f -> Color.parseColor("#ff3020")
+                dist < 2.5f -> Color.parseColor("#a01810")
+                else -> Color.parseColor("#3a0806")
+            }
+            if (dist < 1.2f) p.dreptunghi(c, 7f, 225f + i * 7.2f, 11f, 11f, cul, 3f, 0.35f)
+            p.dreptunghi(c, 10f, 228f + i * 7.2f, 5f, 5f, cul, 1f)
+        }
+    }
+
+    private fun sticla(c: Canvas, d: android.graphics.Path) {
+        p.umplere.color = Color.parseColor("#2a0c0a")
+        p.umplere.alpha = 170
+        c.drawPath(d, p.umplere)
+        p.umplere.alpha = 255
+        p.linie.color = Color.parseColor("#5a1a14")
+        p.linie.strokeWidth = 1.5f
+        c.drawPath(d, p.linie)
+    }
+
+    /** O linie luminoasa: halou larg si stins, apoi miezul. */
+    private fun lumina(c: Canvas, d: android.graphics.Path, culoare: Int) {
+        p.linie.color = culoare
+        p.linie.alpha = 60
+        p.linie.strokeWidth = 10f
+        c.drawPath(d, p.linie)
+        p.linie.alpha = 220
+        p.linie.strokeWidth = 4f
+        c.drawPath(d, p.linie)
+        p.linie.alpha = 255
     }
 
     private fun coloanaBaterie(c: Canvas, s: StareBord) {
@@ -165,17 +235,22 @@ class EcranEnergie(private val p: Pensula) {
         p.text(c, x, y + 34f, 30f, VALOARE, v ?: BordKitt.LIPSA)
     }
 
-    private fun roata(c: Canvas, x: Float, y: Float, aprinsa: Boolean, culoare: Int) {
+    private fun roata(c: Canvas, x: Float, y: Float, aprinsa: Boolean, culoare: Int, timpS: Float) {
         val w = 96f
         val h = 36f
         if (aprinsa) p.dreptunghi(c, x - w / 2f - 5f, y - h / 2f - 5f, w + 10f, h + 10f, culoare, 9f, 0.22f)
         p.dreptunghi(c, x - w / 2f, y - h / 2f, w, h, if (aprinsa) culoare else ROATA_STINSA, 7f)
         p.rama(c, x - w / 2f, y - h / 2f, w, h, if (aprinsa) culoare else CONTUR, 2.5f, 7f)
-        // brazdele anvelopei
-        for (k in 1..5) {
-            val bx = x - w / 2f + k * w / 6f
-            p.linie(c, bx, y - h / 2f + 6f, bx, y + h / 2f - 6f, if (aprinsa) Color.argb(90, 0, 0, 0) else OSIE, 2f)
+        // brazdele anvelopei: alearga cand roata trage
+        val pas = w / 7f
+        val dx = if (aprinsa) (timpS * 60f) % pas else 0f
+        val salvat = c.save()
+        c.clipRect(x - w / 2f + 3f, y - h / 2f, x + w / 2f - 3f, y + h / 2f)
+        for (k in -1..7) {
+            val bx = x - w / 2f + k * pas + dx
+            p.linie(c, bx, y - h / 2f + 6f, bx, y + h / 2f - 6f, if (aprinsa) Color.argb(90, 0, 0, 0) else OSIE, 2.5f)
         }
+        c.restoreToCount(salvat)
     }
 
     private fun caseta(c: Canvas, x: Float, y: Float, w: Float, h: Float, titlu: String, aprinsa: Boolean, culoare: Int) {
@@ -272,7 +347,7 @@ class EcranEnergie(private val p: Pensula) {
         private const val FA = 170f
         private const val SA = 668f
 
-        private const val ENG_X = 96f
+        private const val ENG_X = 104f
         private const val TR_X = 258f
         private const val BAT_X = 486f
 
@@ -293,13 +368,15 @@ class EcranEnergie(private val p: Pensula) {
         private val OSIE = Color.parseColor("#2e0d0a")
         private val DRUM_STINS = Color.parseColor("#1c0806")
         private val ROATA_STINSA = Color.parseColor("#1e0806")
+        private val FAR = Color.parseColor("#d8e8ff")
+        private const val SCANER_BOT = 11
 
-        private val MOTOR_LA_TR = listOf(ENG_X + 50f to YM, TR_X - 60f to YM)
-        private val TR_LA_FATA_SUS = listOf(TR_X - 25f to YM - 46f, TR_X - 25f to YM - 84f, FA to YM - 84f, FA to Y0 + 44f)
-        private val TR_LA_FATA_JOS = listOf(TR_X - 25f to YM + 46f, TR_X - 25f to YM + 84f, FA to YM + 84f, FA to Y1 - 44f)
-        private val BAT_LA_TR = listOf(BAT_X - 70f to YM, TR_X + 60f to YM)
-        private val BAT_LA_SPATE = listOf(BAT_X + 70f to YM, SA - 35f to YM)
-        private val MGR_SUS = listOf(SA to YM - 36f, SA to Y0 + 44f)
-        private val MGR_JOS = listOf(SA to YM + 36f, SA to Y1 - 44f)
+        private val MOTOR_LA_TR = listOf(ENG_X + 62f to YM, TR_X - 76f to YM)
+        private val TR_LA_FATA_SUS = listOf(TR_X - 25f to YM - 72f, TR_X - 25f to YM - 84f, FA to YM - 84f, FA to Y0 + 44f)
+        private val TR_LA_FATA_JOS = listOf(TR_X - 25f to YM + 72f, TR_X - 25f to YM + 84f, FA to YM + 84f, FA to Y1 - 44f)
+        private val BAT_LA_TR = listOf(BAT_X - 70f to YM, TR_X + 76f to YM)
+        private val BAT_LA_SPATE = listOf(BAT_X + 70f to YM, SA - 54f to YM)
+        private val MGR_SUS = listOf(SA to YM - 62f, SA to Y0 + 44f)
+        private val MGR_JOS = listOf(SA to YM + 62f, SA to Y1 - 44f)
     }
 }

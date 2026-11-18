@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KITT Dash - ENERGIE 2D</title>
+<style>
+body{margin:0;background:#050505;color:#e8e0d0;font-family:system-ui,sans-serif}
+.cadru{max-width:1190px;margin:0 auto;padding:10px}
+svg{width:100%;display:block;background:#000;border:2px solid #2a0a08;border-radius:14px;box-shadow:0 0 30px #ff2a1a22}
+h1{font-size:14px;letter-spacing:4px;color:#ff3b2a;font-weight:500;margin:6px 4px 10px}
+.rand{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.rand button{background:#140606;color:#c86;border:1px solid #3a1410;border-radius:6px;padding:9px 14px;font-size:14px}
+.rand button.activ{background:#ffb02e;color:#000;border-color:#ffb02e}
+text{font-family:system-ui,sans-serif}
+</style></head><body><div class="cadru">
+<h1>ENERGIE · MASINA IN PROFIL (2D) · MACHETA</h1>
+<svg id="s" viewBox="0 0 1190 460">
+<defs>
+ <linearGradient id="caro" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#4a5262"/><stop offset=".18" stop-color="#1c212b"/>
+  <stop offset=".55" stop-color="#0b0e13"/><stop offset="1" stop-color="#030405"/></linearGradient>
+ <linearGradient id="luciu" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".35" stop-color="#cfe0ff" stop-opacity=".55"/>
+  <stop offset=".6" stop-color="#fff" stop-opacity=".15"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+ <linearGradient id="geam" x1="0" y1="0" x2="1" y2="1">
+  <stop offset="0" stop-color="#3a4a66" stop-opacity=".9"/><stop offset=".5" stop-color="#0c1220" stop-opacity=".95"/>
+  <stop offset="1" stop-color="#1a2234" stop-opacity=".9"/></linearGradient>
+ <radialGradient id="podea" cx=".5" cy=".5" r=".5">
+  <stop offset="0" stop-color="#ff2a1a" stop-opacity=".35"/><stop offset="1" stop-color="#ff2a1a" stop-opacity="0"/></radialGradient>
+ <radialGradient id="janta" cx=".4" cy=".35" r=".7">
+  <stop offset="0" stop-color="#e8eef8"/><stop offset=".5" stop-color="#8a94a6"/><stop offset="1" stop-color="#2a3040"/></radialGradient>
+ <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4" result="b"/>
+  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="glowMare" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>
+ <clipPath id="interior"><path id="contur2"/></clipPath>
+</defs>
+
+<!-- antetul, ca in aplicatie -->
+<text x="70" y="30" fill="#ff3b2a" font-size="16" letter-spacing="4">LEXUS NX 300h</text>
+<text x="595" y="30" fill="#6a2a20" font-size="12" text-anchor="middle" letter-spacing="4">ENERGIE</text>
+<text id="mod" x="1122" y="30" fill="#ffb02e" font-size="16" text-anchor="end" letter-spacing="4">HYBRID</text>
+<g id="scaner"></g>
+
+<!-- podeaua -->
+<ellipse cx="430" cy="410" rx="420" ry="34" fill="url(#podea)"/>
+<line x1="20" y1="408" x2="830" y2="408" stroke="#2a0a08" stroke-width="1"/>
+
+<g id="masina">
+ <!-- caroseria -->
+ <path id="contur" fill="url(#caro)" stroke="#59627a" stroke-width="1.2"
+  d="M64 366 L50 350 L56 338 C120 318 220 304 330 290 L352 287 C392 254 432 234 484 228 L566 226
+     C618 228 662 244 712 268 L782 276 L800 284 L804 326 L790 366 L703 366
+     A62 62 0 0 0 579 366 L279 366 A62 62 0 0 0 155 366 Z"/>
+ <!-- geamurile -->
+ <path fill="url(#geam)" stroke="#6a7690" stroke-width="1"
+  d="M372 286 C404 258 440 240 486 235 L560 233 C604 235 644 250 684 270 L640 276 L372 290 Z"/>
+ <line x1="520" y1="234" x2="512" y2="282" stroke="#1a1e28" stroke-width="5"/>
+ <!-- linia de luciu de pe umar si cea de pe prag -->
+ <path d="M70 336 C200 312 330 300 470 294 L790 282" fill="none" stroke="url(#luciu)" stroke-width="2.5"/>
+ <path d="M300 352 L560 350" fill="none" stroke="#7a8498" stroke-width="1.2" opacity=".5"/>
+ <!-- priza laterala -->
+ <path d="M600 300 L680 296 L664 338 L596 340 Z" fill="#05060a" stroke="#3a4050"/>
+ <g stroke="#2a303c" stroke-width="2"><line x1="612" y1="306" x2="604" y2="334"/><line x1="626" y1="305" x2="618" y2="334"/>
+  <line x1="640" y1="304" x2="632" y2="334"/><line x1="654" y1="303" x2="646" y2="334"/><line x1="668" y1="302" x2="660" y2="334"/></g>
+ <!-- eleronul -->
+ <path d="M722 252 L812 246 L812 256 L726 262 Z" fill="#14181f" stroke="#6a7488"/>
+ <line x1="760" y1="258" x2="770" y2="276" stroke="#3a4050" stroke-width="5"/>
+ <!-- oglinda -->
+ <path d="M440 268 L468 262 L472 272 L446 276 Z" fill="#0b0e13" stroke="#59627a"/>
+ <!-- bara scanerului, in bot -->
+ <g id="bara"></g>
+ <!-- semnalizarea -->
+ <rect x="236" y="320" width="14" height="5" fill="#ff8a1a" opacity=".85"/>
+</g>
+
+<!-- interiorul vazut prin caroserie: componentele si drumurile energiei -->
+<g id="raze"></g>
+<g id="comp"></g>
+<g id="pulsuri"></g>
+<g id="roti"></g>
+
+<!-- coloana din dreapta -->
+<line x1="844" y1="96" x2="844" y2="420" stroke="#3a0e0a"/>
+<text x="868" y="112" fill="#8a3a30" font-size="13" letter-spacing="2">PUTERE BATERIE</text>
+<text id="kw" x="868" y="160" font-size="52" font-weight="300">+18</text>
+<text id="kwu" x="960" y="160" font-size="18" fill="#ffb02e">kW</text>
+<g id="barakw"></g>
+<text x="868" y="214" fill="#8a3a30" font-size="11" letter-spacing="2">INCARCA</text>
+<text x="1150" y="214" fill="#8a3a30" font-size="11" letter-spacing="2" text-anchor="end">CONSUMA</text>
+<g font-size="13" fill="#8a3a30" letter-spacing="2"><text x="868" y="256">TENSIUNE</text><text x="1028" y="256">CURENT</text>
+ <text x="868" y="334">VITEZA</text><text x="1028" y="334">MOTOR</text></g>
+<g font-size="28" fill="#ff6a4a"><text x="868" y="290">243 V</text><text id="amp" x="1028" y="290">+72 A</text>
+ <text id="vit" x="868" y="368">62 km/h</text><text x="1028" y="368">88°C</text></g>
+</svg>
+<div class="rand" id="stari"></div>
+</div>
+<script>
+const NS='http://www.w3.org/2000/svg',AMBRA='#ffb02e',CYAN='#33d4ff';
+const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+const ROTI={fata:[217,366],spate:[641,366]};
+// drumurile energiei, prin interiorul masinii (fata in stanga)
+const DRUM={
+ motor:'M150 344 L250 336',
+ fataSus:'M252 342 L224 362',
+ batTr:'M400 344 L330 344 L314 336',
+ spate:'M496 344 L560 344',
+ spateRoata:'M606 350 L632 362',
+};
+const STARI=[
+ {nume:'Accelerare',mod:'HYBRID',kw:18,amp:'+72 A',vit:'62 km/h',cai:{motor:AMBRA,fataSus:AMBRA,batTr:CYAN,spate:CYAN,spateRoata:CYAN},roti:{fata:AMBRA,spate:CYAN}},
+ {nume:'Pe baterie (EV)',mod:'EV',kw:9,amp:'+37 A',vit:'28 km/h',cai:{fataSus:CYAN,batTr:CYAN},roti:{fata:CYAN}},
+ {nume:'Franare (regen)',mod:'REGEN',kw:-21,amp:'-86 A',vit:'46 km/h',cai:{fataSus:CYAN,batTr:CYAN,spate:CYAN,spateRoata:CYAN},roti:{fata:CYAN,spate:CYAN},inv:true},
+ {nume:'Motorul incarca',mod:'HYBRID',kw:-6,amp:'-25 A',vit:'62 km/h',cai:{motor:AMBRA,fataSus:AMBRA,batTr:AMBRA},roti:{fata:AMBRA},inc:true},
+ {nume:'Pe loc',mod:'READY',kw:0,amp:'0 A',vit:'0 km/h',cai:{},roti:{}},
+];
+let s=0;
+const COMP=[
+ {k:'motor',x:78,y:330,w:72,h:28,t:'MOTOR'},{k:'tr',x:250,y:318,w:64,h:34,t:'MG1·MG2'},
+ {k:'bat',x:400,y:330,w:96,h:24,t:'BATERIE HV'},{k:'mgr',x:560,y:330,w:46,h:28,t:'MGR'}];
+function construieste(){
+ const S=STARI[s],G=document.getElementById('comp'),R=document.getElementById('raze'),P=document.getElementById('pulsuri'),W=document.getElementById('roti');
+ [G,R,P,W].forEach(x=>x.innerHTML='');
+ document.getElementById('mod').textContent=S.mod;document.getElementById('mod').setAttribute('fill',S.mod=='EV'||S.mod=='REGEN'?CYAN:AMBRA);
+ const kw=document.getElementById('kw');kw.textContent=(S.kw>0?'+':'')+S.kw;kw.setAttribute('fill',S.kw<0?CYAN:AMBRA);
+ document.getElementById('kwu').setAttribute('x',868+String(kw.textContent).length*27+8);
+ document.getElementById('amp').textContent=S.amp;document.getElementById('vit').textContent=S.vit;
+ const B=document.getElementById('barakw');B.innerHTML='';const apr=Math.ceil(Math.sqrt(Math.min(Math.abs(S.kw)/25,1))*10);
+ for(let i=0;i<20;i++){const dr=i>=10,dep=dr?i-10:9-i,on=dep<apr&&(S.kw>0?dr:!dr&&S.kw<0);el('rect',{x:868+i*14.1,y:178,width:11,height:16,fill:on?(S.kw>0?AMBRA:CYAN):'#3a100c'},B);}
+ // componentele: cutii de sticla in interior
+ const aprinse={motor:!!S.cai.motor,tr:!!(S.cai.fataSus),bat:true,mgr:!!S.cai.spate};
+ const culC={motor:AMBRA,tr:S.cai.motor?AMBRA:CYAN,bat:CYAN,mgr:CYAN};
+ for(const c of COMP){const on=aprinse[c.k],cul=on?culC[c.k]:'#6a2a24';
+  el('rect',{x:c.x,y:c.y,width:c.w,height:c.h,rx:5,fill:cul,'fill-opacity':on?.14:.06,stroke:cul,'stroke-width':on?2:1.2,filter:on?'url(#glow)':''},G);
+  el('text',{x:c.x+c.w/2,y:c.y-6,fill:cul,'font-size':11,'text-anchor':'middle','letter-spacing':1.5},G).textContent=c.t;}
+ // bateria: treptele de incarcare
+ for(let i=0;i<10;i++)el('rect',{x:406+i*9,y:336,width:6,height:12,fill:i<5?(i<2?'#ff3b2a':CYAN):'#1a2a30'},G);
+ // drumurile active: raza cu halou
+ for(const [k,cul] of Object.entries(S.cai)){
+  el('path',{d:DRUM[k],stroke:cul,'stroke-width':10,fill:'none',opacity:.35,filter:'url(#glowMare)','stroke-linecap':'round'},R);
+  el('path',{d:DRUM[k],stroke:cul,'stroke-width':2.5,fill:'none',opacity:.8,'stroke-linecap':'round'},R);}
+ // rotile
+ for(const [k,[x,y]] of Object.entries(ROTI)){const cul=S.roti[k];const g=el('g',{},W);
+  if(cul)el('circle',{cx:x,cy:y,r:56,fill:'none',stroke:cul,'stroke-width':6,opacity:.5,filter:'url(#glowMare)'},g);
+  el('circle',{cx:x,cy:y,r:52,fill:'#06070a',stroke:'#2a2e38','stroke-width':2},g);
+  el('circle',{cx:x,cy:y,r:38,fill:'url(#janta)',stroke:cul||'#aab4c4','stroke-width':cul?3:1.5,filter:cul?'url(#glow)':''},g);
+  const sp=el('g',{class:'spite','data-x':x,'data-y':y,'data-on':cul?1:0},g);
+  for(let i=0;i<5;i++){const u=i/5*2*Math.PI;el('path',{d:`M${x} ${y} L${x+Math.cos(u-.18)*34} ${y+Math.sin(u-.18)*34} L${x+Math.cos(u+.18)*34} ${y+Math.sin(u+.18)*34} Z`,fill:'#1a1e26',opacity:.85},sp);}
+  el('circle',{cx:x,cy:y,r:7,fill:'#14161c',stroke:'#c8d0dc'},g);el('circle',{cx:x,cy:y,r:2.5,fill:'#ff2a1a'},g);}
+ // pulsurile
+ for(const [k,cul] of Object.entries(S.cai)){const p=el('path',{d:DRUM[k],fill:'none'},P);
+  const inv=S.inv||(S.inc&&k=='batTr');for(let i=0;i<4;i++){const c=el('circle',{r:4.5,fill:'#fff6e0',filter:'url(#glow)',class:'puls'},P);
+   c._p=p;c._i=i;c._inv=inv;c._cul=cul;const h=el('circle',{r:10,fill:cul,opacity:.35,filter:'url(#glowMare)'},P);c._h=h;}}
+ document.getElementById('stari').innerHTML=STARI.map((x,i)=>`<button class="${i==s?'activ':''}" onclick="s=${i};construieste()">${x.nume}</button>`).join('');
+}
+function anim(t){
+ // pulsurile alearga pe drumuri
+ document.querySelectorAll('.puls').forEach(c=>{const L=c._p.getTotalLength();let d=((t/1000*90)+c._i*L/4)%L;if(c._inv)d=L-d;
+  const q=c._p.getPointAtLength(d);c.setAttribute('cx',q.x);c.setAttribute('cy',q.y);c._h.setAttribute('cx',q.x);c._h.setAttribute('cy',q.y);});
+ // jantele se invart cand roata trage
+ document.querySelectorAll('.spite').forEach(g=>{if(g.dataset.on=='1')g.setAttribute('transform',`rotate(${(-t/4)%360} ${g.dataset.x} ${g.dataset.y})`);});
+ // scanerul de sus si bara din bot
+ const sc=document.getElementById('scaner');sc.innerHTML='';const f=(t/90)%60,poz=f<30?f:60-f;
+ for(let i=0;i<30;i++){const d=Math.abs(i-poz);el('rect',{x:220+i*25,y:48,width:21,height:28,fill:d<1?'#ff3b2a':d<3?'#b0201a':'#2a0806'},sc);}
+ const b=document.getElementById('bara');b.innerHTML='';const n=10,f2=(t/600)%2,p2=(f2<1?f2:2-f2)*(n-1);
+ for(let i=0;i<n;i++){const d=Math.abs(i-p2),x=60+i*9.5,y=337-i*1.55;
+  el('rect',{x,y,width:7,height:4,fill:d<1?'#ff3020':d<2.5?'#a01810':'#3a0806',filter:d<1.2?'url(#glow)':''},b);}
+ requestAnimationFrame(anim);}
+construieste();requestAnimationFrame(anim);
+</script></body></html>

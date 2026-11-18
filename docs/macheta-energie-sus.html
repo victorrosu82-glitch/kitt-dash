@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KITT Dash - ENERGIE, varianta de acum imbunatatita</title>
+<style>
+body{margin:0;background:#050505;color:#e8e0d0;font-family:system-ui,sans-serif}
+.cadru{max-width:1190px;margin:0 auto;padding:10px}
+svg{width:100%;display:block;background:#000;border:2px solid #2a0a08;border-radius:14px;box-shadow:0 0 30px #ff2a1a22}
+h1{font-size:14px;letter-spacing:4px;color:#ff3b2a;font-weight:500;margin:6px 4px 10px}
+.rand{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.rand button{background:#140606;color:#c86;border:1px solid #3a1410;border-radius:6px;padding:9px 14px;font-size:14px}
+.rand button.activ{background:#ffb02e;color:#000;border-color:#ffb02e}
+.nota{color:#8a5a50;font-size:13px;margin:6px 4px;line-height:1.5}
+text{font-family:system-ui,sans-serif}
+</style></head><body><div class="cadru">
+<h1>ENERGIE · CA ACUM, IMBUNATATIT · MACHETA</h1>
+<svg id="s" viewBox="0 0 1190 460">
+<defs>
+ <linearGradient id="corp" x1="0" y1="0" x2="0" y2="1">
+  <stop offset="0" stop-color="#1a0605"/><stop offset=".5" stop-color="#0c0303"/><stop offset="1" stop-color="#1a0605"/></linearGradient>
+ <linearGradient id="sticla" x1="0" y1="0" x2="1" y2="0">
+  <stop offset="0" stop-color="#2a0c0a" stop-opacity=".9"/><stop offset="1" stop-color="#140504" stop-opacity=".9"/></linearGradient>
+ <filter id="glow" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="3.5" result="b"/>
+  <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <filter id="halou" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="8"/></filter>
+</defs>
+<text x="70" y="30" fill="#ff3b2a" font-size="16" letter-spacing="4">LEXUS NX 300h</text>
+<text x="595" y="30" fill="#6a2a20" font-size="12" text-anchor="middle" letter-spacing="4">ENERGIE</text>
+<text id="mod" x="1122" y="30" fill="#ffb02e" font-size="16" text-anchor="end" letter-spacing="4">HYBRID</text>
+<line x1="70" y1="40" x2="1122" y2="40" stroke="#2a0a08"/>
+<g id="scaner"></g>
+<text x="30" y="96" fill="#8a3a30" font-size="12" letter-spacing="3">FATA</text>
+<text x="812" y="96" fill="#8a3a30" font-size="12" letter-spacing="3" text-anchor="end">SPATE</text>
+
+<!-- caroseria vazuta de sus: bot rotunjit, talie, oglinzi, geamuri -->
+<path id="corpH" fill="none" stroke="#ff3b2a" stroke-width="10" opacity=".22" filter="url(#halou)"
+ d="M70 112 C160 104 300 104 420 108 L700 110 C760 112 800 120 812 150 L816 382 C804 412 760 420 700 422 L420 424 C300 428 160 428 70 420 C42 414 24 384 14 334 Q6 296 6 266 Q6 236 14 198 C24 148 42 118 70 112 Z"/>
+<path fill="url(#corp)" stroke="#c0402e" stroke-width="2.5"
+ d="M70 112 C160 104 300 104 420 108 L700 110 C760 112 800 120 812 150 L816 382 C804 412 760 420 700 422 L420 424 C300 428 160 428 70 420 C42 414 24 384 14 334 Q6 296 6 266 Q6 236 14 198 C24 148 42 118 70 112 Z"/>
+<!-- oglinzile -->
+<path d="M338 108 L350 92 L372 92 L370 108 Z" fill="#14050404" stroke="#c0402e" stroke-width="1.8"/>
+<path d="M338 424 L350 440 L372 440 L370 424 Z" fill="#140504" stroke="#c0402e" stroke-width="1.8"/>
+<!-- parbriz, acoperis, luneta: sticla fumurie, ca sa se vada schema prin ea -->
+<path d="M336 132 C360 126 388 124 412 124 L412 408 C388 408 360 406 336 400 C326 330 326 202 336 132 Z" fill="url(#sticla)" stroke="#5a1a14" stroke-width="1.5" opacity=".7"/>
+<path d="M412 124 L646 126 L646 406 L412 408 Z" fill="#0a0202" stroke="#3a0e0a" stroke-width="1.2" opacity=".55"/>
+<path d="M646 126 C690 128 716 134 728 150 L728 382 C716 398 690 404 646 406 Z" fill="url(#sticla)" stroke="#5a1a14" stroke-width="1.5" opacity=".7"/>
+<!-- liniile capotei -->
+<path d="M90 150 C180 142 260 140 322 140 M90 382 C180 390 260 392 322 392" stroke="#3a100c" stroke-width="1.5" fill="none"/>
+<!-- farurile si stopurile -->
+<path d="M28 168 C42 136 70 122 104 118" stroke="#d8e8ff" stroke-width="4" fill="none" filter="url(#glow)" opacity=".85"/>
+<path d="M28 364 C42 396 70 410 104 414" stroke="#d8e8ff" stroke-width="4" fill="none" filter="url(#glow)" opacity=".85"/>
+<path d="M800 136 L812 160 L812 372 L800 396" stroke="#ff2a1a" stroke-width="4" fill="none" filter="url(#glow)" opacity=".8"/>
+<!-- bara scanerului in bot -->
+<g id="bara"></g>
+
+<line x1="170" y1="150" x2="170" y2="382" stroke="#2e0d0a" stroke-width="2"/>
+<line x1="668" y1="150" x2="668" y2="382" stroke="#2e0d0a" stroke-width="2"/>
+<g id="raze"></g><g id="roti"></g><g id="comp"></g><g id="pulsuri"></g>
+
+<line x1="844" y1="96" x2="844" y2="420" stroke="#3a0e0a"/>
+<text x="868" y="112" fill="#8a3a30" font-size="13" letter-spacing="2">PUTERE BATERIE</text>
+<text id="kw" x="868" y="160" font-size="52" font-weight="300">+18</text>
+<text id="kwu" x="960" y="160" font-size="18" fill="#8a3a30">kW</text>
+<g id="barakw"></g>
+<text x="868" y="214" fill="#8a3a30" font-size="11" letter-spacing="2">INCARCA</text>
+<text x="1150" y="214" fill="#8a3a30" font-size="11" letter-spacing="2" text-anchor="end">CONSUMA</text>
+<g font-size="13" fill="#8a3a30" letter-spacing="2"><text x="868" y="256">TENSIUNE</text><text x="1028" y="256">CURENT</text>
+ <text x="868" y="334">VITEZA</text><text x="1028" y="334">MOTOR</text></g>
+<g font-size="30" fill="#ff6a4a"><text x="868" y="290">243 V</text><text id="amp" x="1028" y="290">+72 A</text>
+ <text id="vit" x="868" y="368">62 km/h</text><text x="1028" y="368">88°C</text></g>
+</svg>
+<div class="rand" id="stari"></div>
+<div class="nota">Ce e nou fata de acum: forma masinii (bot rotunjit, talie, oglinzi, parbriz si luneta), farurile albe si stopurile rosii, bara scanerului rosu in bot, brazdele rotilor care se misca atunci cand roata trage, turatiile MG1 / MG2 / MGR in cercuri, iar schema ramane aceeasi.</div>
+</div>
+<script>
+const NS='http://www.w3.org/2000/svg',AMBRA='#ffb02e',CYAN='#33d4ff';
+const el=(t,a,p)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;};
+const YM=266,FA=170,SA=668,ENG=104,TR=258,BAT=486;
+const DRUM={motor:`M${ENG+62} ${YM} L${TR-76} ${YM}`,
+ fataSus:`M${TR-25} ${YM-72} L${TR-25} ${YM-84} L${FA} ${YM-84} L${FA} 148`,
+ fataJos:`M${TR-25} ${YM+72} L${TR-25} ${YM+84} L${FA} ${YM+84} L${FA} 384`,
+ batTr:`M${BAT-70} ${YM} L${TR+76} ${YM}`, batSpate:`M${BAT+70} ${YM} L${SA-56} ${YM}`,
+ mgrSus:`M${SA} ${YM-62} L${SA} 148`, mgrJos:`M${SA} ${YM+62} L${SA} 384`};
+const STARI=[
+ {nume:'Accelerare',mod:'HYBRID',kw:18,amp:'+72 A',vit:'62 km/h',rpm:{G:-475,M:3435,R:2675},motor:'2100',
+  cai:{motor:AMBRA,fataSus:AMBRA,fataJos:AMBRA,batTr:CYAN,batSpate:CYAN,mgrSus:CYAN,mgrJos:CYAN},roti:{fata:AMBRA,spate:CYAN}},
+ {nume:'Pe baterie (EV)',mod:'EV',kw:9,amp:'+37 A',vit:'28 km/h',rpm:{G:-2100,M:2010,R:0},motor:'0',
+  cai:{fataSus:CYAN,fataJos:CYAN,batTr:CYAN},roti:{fata:CYAN}},
+ {nume:'Franare (regen)',mod:'REGEN',kw:-21,amp:'-86 A',vit:'46 km/h',rpm:{G:-3300,M:3290,R:2560},motor:'0',
+  cai:{fataSus:CYAN,fataJos:CYAN,batTr:CYAN,batSpate:CYAN,mgrSus:CYAN,mgrJos:CYAN},roti:{fata:CYAN,spate:CYAN},inv:true},
+ {nume:'Motorul incarca',mod:'HYBRID',kw:-6,amp:'-25 A',vit:'62 km/h',rpm:{G:1250,M:4440,R:0},motor:'1600',
+  cai:{motor:AMBRA,fataSus:AMBRA,fataJos:AMBRA,batTr:AMBRA},roti:{fata:AMBRA},inc:true},
+ {nume:'Pe loc',mod:'READY',kw:0,amp:'0 A',vit:'0 km/h',rpm:{G:0,M:0,R:0},motor:'0',cai:{},roti:{}},
+];
+let s=0;
+function caseta(G,x,y,w,h,titlu,on,cul){el('rect',{x:x-w/2,y:y-h/2,width:w,height:h,rx:6,fill:'#120404',stroke:on?cul:'#3a0e0a','stroke-width':on?2.5:1.5,filter:on?'url(#glow)':''},G);
+ if(titlu)el('text',{x,y:y-h/2-8,fill:on?cul:'#8a3a30','font-size':11,'text-anchor':'middle','letter-spacing':3},G).textContent=titlu;}
+function construieste(){
+ const S=STARI[s];['comp','raze','pulsuri','roti'].forEach(i=>document.getElementById(i).innerHTML='');
+ const G=document.getElementById('comp'),R=document.getElementById('raze'),P=document.getElementById('pulsuri'),W=document.getElementById('roti');
+ const m=document.getElementById('mod');m.textContent=S.mod;m.setAttribute('fill',S.mod=='EV'||S.mod=='REGEN'?CYAN:AMBRA);
+ const kw=document.getElementById('kw');kw.textContent=(S.kw>0?'+':'')+S.kw;kw.setAttribute('fill',S.kw<0?CYAN:AMBRA);
+ document.getElementById('kwu').setAttribute('x',868+kw.textContent.length*27+8);
+ document.getElementById('amp').textContent=S.amp;document.getElementById('vit').textContent=S.vit;
+ const B=document.getElementById('barakw');B.innerHTML='';const apr=Math.abs(S.kw)<.5?0:Math.ceil(Math.sqrt(Math.min(Math.abs(S.kw)/25,1))*10);
+ for(let i=0;i<20;i++){const dr=i>=10,dep=dr?i-10:9-i,on=dep<apr&&(S.kw>0?dr:!dr&&S.kw<0);el('rect',{x:868+i*14.1,y:178,width:11,height:16,fill:on?(S.kw>0?AMBRA:CYAN):'#3a100c'},B);}
+ el('line',{x1:1009,y1:172,x2:1009,y2:200,stroke:'#8a3a30','stroke-width':1.5},B);
+ // drumurile: raza cu halou
+ for(const k in DRUM){const cul=S.cai[k];
+  if(!cul){el('path',{d:DRUM[k],stroke:'#1c0806','stroke-width':2,fill:'none'},R);continue;}
+  el('path',{d:DRUM[k],stroke:cul,'stroke-width':12,fill:'none',opacity:.2,filter:'url(#halou)'},R);
+  el('path',{d:DRUM[k],stroke:cul,'stroke-width':5,fill:'none',opacity:.3},R);
+  el('path',{d:DRUM[k],stroke:cul,'stroke-width':2,fill:'none',opacity:.75},R);
+  const p=el('path',{d:DRUM[k],fill:'none'},P);const inv=S.inv||(S.inc&&k=='batTr');
+  for(let i=0;i<6;i++){const h=el('circle',{r:9,fill:cul,opacity:.3,filter:'url(#halou)'},P);const c=el('circle',{r:4,fill:'#fff6e0',filter:'url(#glow)',class:'puls'},P);c._p=p;c._i=i;c._inv=inv;c._h=h;}}
+ // rotile: 4, cu brazde care se misca
+ for(const [x,y,k] of [[FA,128,'fata'],[FA,404,'fata'],[SA,128,'spate'],[SA,404,'spate']]){const cul=S.roti[k],on=!!cul,c=on?cul:'#1e0806';
+  if(on)el('rect',{x:x-53,y:y-23,width:106,height:46,rx:10,fill:cul,opacity:.25,filter:'url(#halou)'},W);
+  el('rect',{x:x-48,y:y-18,width:96,height:36,rx:7,fill:c,stroke:on?cul:'#a8352a','stroke-width':2.5},W);
+  const g=el('g',{class:on?'brazde':'','data-x':x-48},W);const cp=el('clipPath',{id:'r'+x+y},W);el('rect',{x:x-46,y:y-16,width:92,height:32,rx:6},cp);g.setAttribute('clip-path',`url(#r${x}${y})`);
+  for(let i=-1;i<8;i++)el('line',{x1:x-48+i*14,y1:y-12,x2:x-48+i*14,y2:y+12,stroke:on?'rgba(0,0,0,.35)':'#2e0d0a','stroke-width':3},g);}
+ // casetele
+ const motorOn=!!S.cai.motor,trOn=!!S.cai.fataSus,cTr=motorOn?AMBRA:CYAN;
+ caseta(G,ENG,YM,124,104,'MOTOR',motorOn,AMBRA);
+ el('text',{x:ENG,y:YM+12,fill:motorOn?AMBRA:'#8a3a30','font-size':34,'font-weight':700,'text-anchor':'middle'},G).textContent=S.motor;
+ el('text',{x:ENG,y:YM+36,fill:motorOn?'#a87020':'#8a3a30','font-size':11,'text-anchor':'middle','letter-spacing':3},G).textContent='RPM';
+ caseta(G,TR,YM,152,144,'',trOn,cTr);
+ el('line',{x1:TR,y1:YM-58,x2:TR,y2:YM+38,stroke:'#3a0e0a','stroke-width':1.5},G);
+ for(const [dx,lit,cul,v] of [[-38,'G',motorOn?AMBRA:'#8a3a30',S.rpm.G],[38,'M',trOn?CYAN:'#8a3a30',S.rpm.M]]){
+  el('circle',{cx:TR+dx,cy:YM-36,r:20,fill:'none',stroke:cul,'stroke-width':3},G);
+  el('text',{x:TR+dx,y:YM-31,fill:cul,'font-size':14,'font-weight':700,'text-anchor':'middle'},G).textContent=lit;
+  el('text',{x:TR+dx,y:YM+14,fill:cul,'font-size':24,'font-weight':700,'text-anchor':'middle'},G).textContent=v;
+  el('text',{x:TR+dx,y:YM+31,fill:cul,'font-size':10,'text-anchor':'middle','letter-spacing':2,opacity:.75},G).textContent='RPM';}
+ el('text',{x:TR,y:YM+58,fill:trOn?cTr:'#8a3a30','font-size':12,'font-weight':700,'text-anchor':'middle','letter-spacing':3},G).textContent='MG1 · MG2';
+ caseta(G,BAT,YM,140,80,'BATERIE HV',true,CYAN);
+ for(let i=0;i<10;i++)el('rect',{x:BAT-60+i*12.2,y:YM-24,width:9,height:26,fill:i<6?(i<2?'#ff3b2a':CYAN):'#3a100c'},G);
+ el('text',{x:BAT,y:YM+28,fill:CYAN,'font-size':17,'font-weight':700,'text-anchor':'middle'},G).textContent='58%';
+ const spOn=!!S.cai.mgrSus,cR=spOn?CYAN:'#8a3a30';caseta(G,SA,YM,108,124,'MGR',spOn,CYAN);
+ el('circle',{cx:SA,cy:YM-30,r:20,fill:'none',stroke:cR,'stroke-width':3},G);
+ el('text',{x:SA,y:YM-25,fill:cR,'font-size':14,'font-weight':700,'text-anchor':'middle'},G).textContent='M';
+ el('text',{x:SA,y:YM+20,fill:cR,'font-size':24,'font-weight':700,'text-anchor':'middle'},G).textContent=S.rpm.R;
+ el('text',{x:SA,y:YM+37,fill:cR,'font-size':10,'text-anchor':'middle','letter-spacing':2,opacity:.75},G).textContent='RPM';
+ document.getElementById('stari').innerHTML=STARI.map((x,i)=>`<button class="${i==s?'activ':''}" onclick="s=${i};construieste()">${x.nume}</button>`).join('');}
+function anim(t){
+ document.querySelectorAll('.puls').forEach(c=>{const L=c._p.getTotalLength();let d=((t/1000*120)+c._i*56)%Math.max(L,56*6);if(d>L){c.setAttribute('opacity',0);c._h.setAttribute('opacity',0);return;}
+  if(c._inv)d=L-d;const q=c._p.getPointAtLength(d);c.setAttribute('opacity',1);c._h.setAttribute('opacity',.3);
+  c.setAttribute('cx',q.x);c.setAttribute('cy',q.y);c._h.setAttribute('cx',q.x);c._h.setAttribute('cy',q.y);});
+ document.querySelectorAll('.brazde').forEach(g=>g.setAttribute('transform',`translate(${(t/20)%14} 0)`));
+ const sc=document.getElementById('scaner');sc.innerHTML='';const f=(t/90)%60,poz=f<30?f:60-f;
+ for(let i=0;i<30;i++){const d=Math.abs(i-poz);el('rect',{x:220+i*25,y:48,width:21,height:28,fill:d<1?'#ff3b2a':d<3?'#b0201a':'#2a0806'},sc);}
+ const b=document.getElementById('bara');b.innerHTML='';const n=11,f2=(t/650)%2,p2=(f2<1?f2:2-f2)*(n-1);
+ for(let i=0;i<n;i++){const d=Math.abs(i-p2);el('rect',{x:10,y:228+i*7.2,width:5,height:5,rx:1,fill:d<1?'#ff3020':d<2.5?'#a01810':'#3a0806',filter:d<1.2?'url(#glow)':''},b);}
+ requestAnimationFrame(anim);}
+construieste();requestAnimationFrame(anim);
+</script></body></html>

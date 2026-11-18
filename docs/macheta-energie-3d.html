@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ro"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>KITT Dash - ENERGIE 3D, machete</title>
+<style>
+body{margin:0;background:#050505;color:#e8e0d0;font-family:system-ui,sans-serif}
+.cadru{max-width:1190px;margin:0 auto;padding:10px}
+canvas{width:100%;display:block;background:#000;border:2px solid #2a0a08;border-radius:14px;box-shadow:0 0 30px #ff2a1a22;touch-action:none;cursor:grab}
+h1{font-size:14px;letter-spacing:4px;color:#ff3b2a;font-weight:500;margin:6px 4px 10px}
+.rand{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0}
+.rand button{background:#140606;color:#c86;border:1px solid #3a1410;border-radius:6px;padding:9px 14px;font-size:14px}
+.rand button.activ{background:#ff3b2a;color:#000;border-color:#ff3b2a}
+.rand.stari button.activ{background:#ffb02e;border-color:#ffb02e}
+.nota{color:#8a5a50;font-size:13px;margin:6px 4px;line-height:1.5}
+</style></head><body><div class="cadru">
+<h1>ENERGIE · MASINA IN 3D · MACHETE</h1>
+<div class="rand" id="variante"></div>
+<canvas id="c" width="1190" height="460"></canvas>
+<div class="rand stari" id="stari"></div>
+<div class="nota" id="nota"></div>
+<div class="nota">Trage cu degetul pe masina ca s-o rotesti si sa alegi unghiul. In aplicatie unghiul ramane fix (sau se roteste foarte incet, la alegere).</div>
+</div>
+<script>
+const C=document.getElementById('c'),g=C.getContext('2d');
+const AMBRA='#ffb02e',CYAN='#33d4ff',ROSU='#ff3b2a',STINS='#3a100c';
+const VARIANTE=[
+ {nume:'1. Holograma 3/4',yaw:-0.55,pitch:0.40,dist:9,scara:205,grila:true,scaner:true,umplut:0.05,reflex:false,
+  nota:'Masina din trei sferturi, din fata-sus, ca o holograma: contur de sarma care straluceste, o raza care o scaneaza, o grila sub ea. Componentele sunt cutii luminoase in interior.'},
+ {nume:'2. Lateral, ca la Lexus',yaw:-0.22,pitch:0.14,dist:10,scara:225,grila:false,scaner:false,umplut:0.12,reflex:true,
+  nota:'Aproape din lateral, ca ecranul Lexus din poza ta: caroseria transparenta, componentele vazute prin ea, reflexia in podea.'},
+ {nume:'4. KITT, dupa poza ta',yaw:0.62,pitch:0.15,dist:11,scara:192,cx:470,cy:300,grila:false,scaner:false,solid:true,umplut:0,reflex:true,
+  nota:'Pana joasa, neagra, lucioasa, cu bara rosie a scanerului in bot, eleronul din spate si jante mari cromate. Caroseria e sticla fumurie: componentele si pulsurile de energie se vad prin ea.'},
+ {nume:'3. De sus, inclinat',yaw:0.0,pitch:1.0,dist:10,scara:215,grila:true,scaner:true,umplut:0.06,reflex:false,
+  nota:'Ca acum (fata in stanga), dar vazuta de sus si putin din fata, cu volum: se vad acoperisul, rotile si drumurile energiei in relief.'},
+];
+const STARI=[
+ {nume:'Accelerare',mod:'HYBRID',kw:18,cul:AMBRA,cai:{motor:AMBRA,fata:AMBRA,batTr:CYAN,spate:CYAN},inv:false},
+ {nume:'Pe baterie (EV)',mod:'EV',kw:9,cul:AMBRA,cai:{fata:CYAN,batTr:CYAN},inv:false},
+ {nume:'Franare (regen)',mod:'REGEN',kw:-21,cul:CYAN,cai:{fata:CYAN,batTr:CYAN,spate:CYAN},inv:true},
+ {nume:'Motorul incarca',mod:'HYBRID',kw:-6,cul:CYAN,cai:{motor:AMBRA,fata:AMBRA,batTr:AMBRA},inv:false,incarca:true},
+ {nume:'Pe loc',mod:'READY',kw:0,cul:AMBRA,cai:{},inv:false},
+];
+let v=2,s=0,yaw=VARIANTE[2].yaw,pitch=VARIANTE[2].pitch;
+
+// ---- masina: inele de-a lungul ei (x: fata = -), y sus, z lateral ----
+const INELE=[ // x, jos, centura, sus, lat jos, lat centura, lat sus
+ [-2.30,.30,.55,.68,.78,.80,.68],[-2.05,.22,.74,.86,.90,.92,.80],[-1.05,.20,.92,1.00,.92,.92,.78],
+ [-0.35,.20,.94,1.60,.92,.90,.66],[1.15,.20,.94,1.58,.92,.90,.64],[1.95,.22,.94,1.30,.90,.88,.62],[2.30,.32,.88,1.00,.82,.82,.70]];
+const INELE_KITT=[
+ [-2.38,.30,.40,.46,.78,.84,.66],[-2.05,.24,.60,.68,.90,.93,.80],[-1.05,.22,.78,.84,.94,.94,.80],
+ [-0.50,.22,.82,1.16,.94,.92,.60],[0.55,.22,.84,1.18,.94,.92,.60],[1.40,.24,.86,1.00,.94,.92,.72],[2.28,.34,.84,.92,.88,.88,.78]];
+function inel(r){const[x,yb,ye,yt,wb,we,wt]=r;return[[x,yb,-wb],[x,ye,-we],[x,yt,-wt],[x,yt,wt],[x,ye,we],[x,yb,wb]];}
+const CUTII={
+ motor:{a:[-2.0,.38,-.45],b:[-1.38,.82,.25],t:'MOTOR'},
+ tr:{a:[-1.36,.30,-.25],b:[-0.98,.72,.45],t:'MG1 · MG2'},
+ bat:{a:[0.25,.22,-.72],b:[1.05,.46,.72],t:'BATERIE HV'},
+ mgr:{a:[1.12,.24,-.22],b:[1.52,.52,.22],t:'MGR'},
+};
+const ROTI=[[-1.33,.82,'fata'],[-1.33,-.82,'fata'],[1.33,.82,'spate'],[1.33,-.82,'spate']];
+const DRUMURI={
+ motor:[[[-1.38,.58,-.1],[-1.36,.55,0]]],
+ fata:[[[-1.17,.36,.1],[-1.33,.36,.1],[-1.33,.36,.72]],[[-1.17,.36,.1],[-1.33,.36,.1],[-1.33,.36,-.72]]],
+ batTr:[[[0.25,.34,0],[-0.4,.26,0],[-0.98,.42,.1]]],
+ spate:[[[1.05,.34,0],[1.12,.38,0]],[[1.33,.38,0],[1.33,.36,.72]],[[1.33,.38,0],[1.33,.36,-.72]]],
+};
+
+function proiect(p,V){const[x,y,z]=p;const cy=Math.cos(yaw),sy=Math.sin(yaw),cp=Math.cos(pitch),sp=Math.sin(pitch);
+ let X=x*cy-z*sy,Z=x*sy+z*cy;let Y=y-0.6;let Y2=Y*cp-Z*sp,Z2=Y*sp+Z*cp;const f=V.dist/(V.dist+Z2);
+ return[(V.cx||420)+X*V.scara*f*0.62,(V.cy||285)-Y2*V.scara*f*0.62,Z2];}
+function linie(a,b,cul,lat,alfa,V){const A=proiect(a,V),B=proiect(b,V);g.globalAlpha=alfa;g.strokeStyle=cul;g.lineWidth=lat;g.beginPath();g.moveTo(A[0],A[1]);g.lineTo(B[0],B[1]);g.stroke();g.globalAlpha=1;}
+function stralucire(fn,cul,blur){g.save();g.shadowColor=cul;g.shadowBlur=blur;fn();g.restore();}
+
+function caroserie(V,t){
+ const R=INELE.map(inel);
+ // umplutura stinsa, cu sticla
+ g.save();g.globalAlpha=V.umplut;g.fillStyle=ROSU;
+ for(let i=0;i<R.length-1;i++)for(let k=0;k<5;k++){const q=[R[i][k],R[i][k+1],R[i+1][k+1],R[i+1][k]].map(p=>proiect(p,V));
+  g.beginPath();q.forEach((p,j)=>j?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.closePath();g.fill();}
+ g.restore();
+ stralucire(()=>{for(const r of R)for(let k=0;k<6;k++)linie(r[k],r[(k+1)%6],ROSU,1.6,.8,V);
+  for(let i=0;i<R.length-1;i++)for(let k=0;k<6;k++)linie(R[i][k],R[i+1][k],ROSU,1.6,.8,V);},ROSU,10);
+ // scanerul: o raza care trece prin masina
+ if(V.scaner){const x=-2.4+((t/2600)%1)*4.8;const r=INELE.reduce((a,b)=>Math.abs(b[0]-x)<Math.abs(a[0]-x)?b:a);
+  const q=inel([x,...r.slice(1)]);stralucire(()=>{for(let k=0;k<6;k++)linie(q[k],q[(k+1)%6],'#ff6a4a',2.5,.9,V)},'#ff3b2a',22);}
+}
+function normala(q){const u=q[1].map((x,k)=>x-q[0][k]),w=q[3].map((x,k)=>x-q[0][k]);
+ let n=[u[1]*w[2]-u[2]*w[1],u[2]*w[0]-u[0]*w[2],u[0]*w[1]-u[1]*w[0]];const L=Math.hypot(...n)||1;n=n.map(x=>x/L);
+ const c=q.reduce((a,p)=>a.map((x,k)=>x+p[k]/4),[0,0,0]);if(n[0]*c[0]+n[1]*(c[1]-.6)+n[2]*c[2]<0)n=n.map(x=>-x);return n;}
+function caroserieSolida(V,t){
+ const R=INELE_KITT.map(inel),fete=[];
+ for(let i=0;i<R.length-1;i++)for(let k=0;k<5;k++)fete.push([R[i][k],R[i][k+1],R[i+1][k+1],R[i+1][k]]);
+ fete.push([R[0][0],R[0][1],R[0][4],R[0][5]],[R[0][1],R[0][2],R[0][3],R[0][4]]);
+ const n=R.length-1;fete.push([R[n][0],R[n][1],R[n][4],R[n][5]],[R[n][1],R[n][2],R[n][3],R[n][4]]);
+ const Lu=[-.45,.8,-.4];const Ln=Math.hypot(...Lu);
+ const P=fete.map(q=>({q,p:q.map(x=>proiect(x,V)),n:normala(q)})).map(f=>({...f,z:f.p.reduce((a,x)=>a+x[2],0)/4})).sort((a,b)=>b.z-a.z);
+ const c=proiect([0,0,0],V),gr=g.createRadialGradient(c[0],c[1]+20,10,c[0],c[1]+20,380);gr.addColorStop(0,'#ff2a1a30');gr.addColorStop(1,'#ff2a1a00');
+ g.fillStyle=gr;g.fillRect(0,250,840,210);
+ for(const f of P){const b=Math.max(0,(f.n[0]*Lu[0]+f.n[1]*Lu[1]+f.n[2]*Lu[2])/Ln);const sticla=f.n[1]>.5&&f.q[0][1]>.9;
+  const r=Math.round(10+b*70),gg=Math.round(12+b*76),bb=Math.round(18+b*92);
+  g.fillStyle=`rgba(${r},${gg},${bb},${sticla?.55:.80})`;g.beginPath();f.p.forEach((x,i)=>i?g.lineTo(x[0],x[1]):g.moveTo(x[0],x[1]));g.closePath();g.fill();
+  g.strokeStyle=`rgba(170,185,205,${.10+b*.35})`;g.lineWidth=1;g.stroke();}
+ for(let i=0;i<R.length-1;i++)for(const k of[1,4])linie(R[i][k],R[i+1][k],'#cfd8e8',1.4,.35,V);
+ const E=[[2.0,1.06,-.84],[2.26,1.08,-.84],[2.26,1.08,.84],[2.0,1.06,.84]].map(x=>proiect(x,V));
+ g.fillStyle='rgba(30,34,44,.95)';g.beginPath();E.forEach((x,i)=>i?g.lineTo(x[0],x[1]):g.moveTo(x[0],x[1]));g.closePath();g.fill();g.strokeStyle='#8090a8';g.stroke();
+ for(const z of[-.55,.55])linie([2.08,.88,z],[2.12,1.07,z],'#5a6478',3,1,V);
+ const N=12,f0=(t/700)%2,poz=(f0<1?f0:2-f0)*(N-1);
+ for(let i=0;i<N;i++){const z=-.62+i*1.24/(N-1),a=proiect([-2.37,.41,z],V),b=proiect([-2.37,.41,z+1.24/(N-1)*.8],V);const d=Math.abs(i-poz);
+  stralucire(()=>{g.strokeStyle=d<1?'#ff3020':d<2.5?'#a01810':'#3a0806';g.lineWidth=4;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();},'#ff2010',d<1.5?18:0);}
+}
+function roataSolida(r,cul,aprinsa,V){const[x,z]=r,R=.40,n=36;
+ const cerc=(raza,dz)=>{const p=[];for(let i=0;i<=n;i++){const u=i/n*2*Math.PI;p.push(proiect([x+Math.cos(u)*raza,R+Math.sin(u)*raza,z+dz],V));}return p;};
+ const zc=z>0?.02:-.02;const anv=cerc(R,zc),jant=cerc(R*.72,zc);
+ g.fillStyle='#07080b';g.beginPath();anv.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.fill();
+ stralucire(()=>{g.strokeStyle=aprinsa?cul:'#9aa4b4';g.lineWidth=aprinsa?2.6:1.6;g.beginPath();jant.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();},aprinsa?cul:'transparent',aprinsa?16:0);
+ g.fillStyle='rgba(120,130,150,.25)';g.beginPath();jant.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.fill();
+ const rot=(performance.now()/1000)*(aprinsa?4:0);
+ for(let i=0;i<5;i++){const u=rot+i/5*2*Math.PI;const a=proiect([x,R,z+zc],V),b=proiect([x+Math.cos(u)*R*.7,R+Math.sin(u)*R*.7,z+zc],V);
+  g.strokeStyle='#c8d0dc';g.lineWidth=4;g.beginPath();g.moveTo(a[0],a[1]);g.lineTo(b[0],b[1]);g.stroke();}
+ const m=proiect([x,R,z+zc],V);g.fillStyle='#ff2a1a';g.beginPath();g.arc(m[0],m[1],3,0,7);g.fill();}
+function grila(V){g.save();for(let i=-6;i<=6;i++){linie([i*.5,0,-2.2],[i*.5,0,2.2],'#3a0e0a',1,.7,V);}
+ for(let k=-4;k<=4;k++)linie([-3,0,k*.5],[3,0,k*.5],'#3a0e0a',1,.7,V);g.restore();}
+function roata(r,cul,aprinsa,V){const[x,z]=r;const n=28;
+ for(const dz of[0,z>0?-.22:.22]){const pts=[];for(let i=0;i<=n;i++){const u=i/n*2*Math.PI;pts.push(proiect([x+Math.cos(u)*.36,.36+Math.sin(u)*.36,z+dz],V));}
+  stralucire(()=>{g.strokeStyle=aprinsa?cul:'#5a1a14';g.lineWidth=aprinsa?3:2;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p[0],p[1]):g.moveTo(p[0],p[1]));g.stroke();},aprinsa?cul:'transparent',aprinsa?14:0);}
+ for(let i=0;i<8;i++){const u=i/8*2*Math.PI;linie([x+Math.cos(u)*.36,.36+Math.sin(u)*.36,z],[x+Math.cos(u)*.36,.36+Math.sin(u)*.36,z+(z>0?-.22:.22)],aprinsa?cul:'#5a1a14',1.2,.7,V);}
+}
+function cutie(c,cul,aprinsa,V){const[a,b]=[c.a,c.b];const P=[];for(const x of[a[0],b[0]])for(const y of[a[1],b[1]])for(const z of[a[2],b[2]])P.push([x,y,z]);
+ const M=[[0,1],[2,3],[4,5],[6,7],[0,2],[1,3],[4,6],[5,7],[0,4],[1,5],[2,6],[3,7]];
+ stralucire(()=>M.forEach(([i,j])=>linie(P[i],P[j],aprinsa?cul:'#6a2018',aprinsa?2:1.2,aprinsa?1:.7,V)),cul,aprinsa?12:0);
+ const m=proiect([(a[0]+b[0])/2,b[1]+.12,(a[2]+b[2])/2],V);g.fillStyle=aprinsa?cul:'#8a3a30';g.font='600 11px system-ui';g.textAlign='center';g.fillText(c.t,m[0],m[1]-4);}
+function lungime(pl){let L=0;for(let i=0;i<pl.length-1;i++)L+=Math.hypot(...pl[i+1].map((q,k)=>q-pl[i][k]));return L;}
+function punct(pl,d){for(let i=0;i<pl.length-1;i++){const l=Math.hypot(...pl[i+1].map((q,k)=>q-pl[i][k]));if(d<=l){const u=d/l;return pl[i].map((q,k)=>q+(pl[i+1][k]-q)*u);}d-=l;}return pl[pl.length-1];}
+function flux(pl,cul,t,V){stralucire(()=>{for(let i=0;i<pl.length-1;i++)linie(pl[i],pl[i+1],cul,4,.45,V)},cul,14);
+ const L=lungime(pl);for(let d=(t/1000*0.9)%0.35;d<L;d+=0.35){for(let k=5;k>=0;k--){const dk=d-k*.03;if(dk<0)continue;const p=proiect(punct(pl,dk),V);
+  g.globalAlpha=(1-k/6)*.5;g.fillStyle=cul;g.beginPath();g.arc(p[0],p[1],3+6*(1-k/6),0,7);g.fill();}
+  const p=proiect(punct(pl,d),V);g.globalAlpha=1;stralucire(()=>{g.fillStyle='#fff6e0';g.beginPath();g.arc(p[0],p[1],3.5,0,7);g.fill();},cul,16);}}
+
+function coloana(S){const x=868;g.textAlign='left';g.fillStyle='#8a3a30';g.font='13px system-ui';g.fillText('PUTERE BATERIE',x,112);
+ g.fillStyle=S.kw<0?CYAN:AMBRA;g.font='300 52px system-ui';g.fillText((S.kw>0?'+':'')+S.kw,x,160);g.font='18px system-ui';g.fillText('kW',x+90,160);
+ for(let i=0;i<20;i++){const dr=i>=10,dep=dr?i-10:9-i,apr=Math.ceil(Math.sqrt(Math.min(Math.abs(S.kw)/25,1))*10);
+  g.fillStyle=(dep<apr&&(S.kw>0?dr:!dr&&S.kw<0))?(S.kw>0?AMBRA:CYAN):STINS;g.fillRect(x+i*14.1,178,11,16);}
+ const val=[['TENSIUNE','243 V'],['CURENT',(S.kw*4>0?'+':'')+Math.round(S.kw*4)+' A'],['VITEZA',S.kw?'62 km/h':'0 km/h'],['MOTOR','88°C']];
+ val.forEach(([e,t],i)=>{const xx=x+(i%2)*160,y=256+Math.floor(i/2)*78;g.fillStyle='#8a3a30';g.font='13px system-ui';g.fillText(e,xx,y);g.fillStyle='#ff6a4a';g.font='28px system-ui';g.fillText(t,xx,y+34);});
+ g.strokeStyle='#3a0e0a';g.beginPath();g.moveTo(844,96);g.lineTo(844,420);g.stroke();}
+function antet(S,t){g.fillStyle='#ff3b2a';g.font='16px system-ui';g.textAlign='left';g.fillText('L E X U S   N X  3 0 0 h',70,30);
+ g.fillStyle='#6a2a20';g.textAlign='center';g.font='12px system-ui';g.fillText('E N E R G I E',595,30);
+ g.fillStyle=S.mod=='REGEN'||S.mod=='EV'?CYAN:AMBRA;g.textAlign='right';g.font='16px system-ui';g.fillText(S.mod.split('').join(' '),1122,30);
+ const f=(t/90)%60,poz=f<30?f:60-f;for(let i=0;i<30;i++){const d=Math.abs(i-poz);g.fillStyle=d<1?'#ff3b2a':d<3?'#b0201a':'#2a0806';g.fillRect(220+i*25,48,21,28);}}
+
+function deseneaza(t){const V=VARIANTE[v],S=STARI[s];g.clearRect(0,0,1190,460);g.fillStyle='#000';g.fillRect(0,0,1190,460);
+ antet(S,t);g.save();g.beginPath();g.rect(0,90,840,370);g.clip();
+ if(V.grila)grila(V);
+ if(V.reflex){g.save();g.globalAlpha=.18;g.translate(0,0);g.restore();
+  const grad=g.createLinearGradient(0,330,0,460);grad.addColorStop(0,'#ff3b2a22');grad.addColorStop(1,'#0000');g.fillStyle=grad;g.fillRect(0,330,840,130);}
+ const A=S.cai;
+ if(V.solid){
+  const dep=r=>proiect([r[0],.4,r[1]],V)[2];const rr=[...ROTI].sort((a,b)=>dep(b)-dep(a));
+  rr.slice(0,2).forEach(r=>roataSolida(r,r[2]=='fata'?(A.fata||CYAN):CYAN,!!A[r[2]],V));
+  caroserieSolida(V,t);
+  rr.slice(2).forEach(r=>roataSolida(r,r[2]=='fata'?(A.fata||CYAN):CYAN,!!A[r[2]],V));
+  g.globalCompositeOperation='lighter';
+ } else {
+ caroserie(V,t);
+ for(const r of ROTI){const cheie=r[2];const cul=cheie=='fata'?(A.fata||CYAN):CYAN;roata(r,cul,!!A[cheie],V);}
+ }
+ cutie(CUTII.motor,AMBRA,!!A.motor,V);cutie(CUTII.tr,A.motor?AMBRA:CYAN,!!(A.fata||A.motor),V);cutie(CUTII.bat,CYAN,true,V);cutie(CUTII.mgr,CYAN,!!A.spate,V);
+ for(const[k,cul]of Object.entries(A))for(let pl of DRUMURI[k]){if(S.inv||(S.incarca&&k=='batTr'))pl=[...pl].reverse();flux(pl,cul,t,V);}
+ g.globalCompositeOperation="source-over";g.restore();coloana(S);
+ requestAnimationFrame(deseneaza);}
+
+function butoane(){document.getElementById('variante').innerHTML=VARIANTE.map((x,i)=>`<button class="${i==v?'activ':''}" onclick="alege(${i})">${x.nume}</button>`).join('');
+ document.getElementById('stari').innerHTML=STARI.map((x,i)=>`<button class="${i==s?'activ':''}" onclick="s=${i};butoane()">${x.nume}</button>`).join('');
+ document.getElementById('nota').textContent=VARIANTE[v].nota;}
+function alege(i){v=i;yaw=VARIANTE[i].yaw;pitch=VARIANTE[i].pitch;butoane();}
+let tras=null;C.addEventListener('pointerdown',e=>{tras=[e.clientX,e.clientY,yaw,pitch];C.setPointerCapture(e.pointerId)});
+C.addEventListener('pointermove',e=>{if(!tras)return;yaw=tras[2]+(e.clientX-tras[0])*.008;pitch=Math.max(.05,Math.min(1.4,tras[3]+(e.clientY-tras[1])*.006))});
+C.addEventListener('pointerup',()=>tras=null);
+butoane();requestAnimationFrame(deseneaza);
+</script></body></html>
