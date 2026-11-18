@@ -120,3 +120,57 @@ modurile 01/09 le știu numai motorul și hibridul. 7F1 nu știe nimic din ce am
 blocurile de mai sus, de câteva ori pe secundă, cu momente notate: pe loc → frână
 apăsată → volan stânga-dreapta → clima pornită → demaraj. Pentru combustibil e
 nevoie doar de ce arată acul de pe bord în același moment.
+
+## Tiparele Corolla puse peste NX (18.11.2026, seara)
+
+Sursa: lista Torque pentru Corolla hibrid (`corolla-pids-torque.txt`). Corolla nouă vorbește
+serviciul 22 la adresele 747 și 7D2, pe care NX nu le are. Formulele însă au aceeași formă ca
+blocurile 21 ale calculatorului hibrid NX (7E2). Verificat pe cele 15 tururi din mers ale
+explorării de la 12:22:
+
+| Bloc NX | Octeți | Ce e | Formula | Dovada |
+|---|---|---|---|---|
+| **2161** | A, B, C | temperatura MG1: acum, la pornire, maximă | octet − 40 | ca Corolla 103A (C/D/E) |
+| **2161** | D:E | **turația MG1** | D×256+E − 32768 | 0 pe loc; −3619 la 48 km/h cu motorul termic oprit (MG1 se rotește invers), −475 cu motorul la 1434 rpm |
+| **2162** | A, B, C / D:E | temperatura MG2 / **turația MG2** | idem | +3435 la 48 km/h: ~72 rpm pe km/h, cât dau reducerile NX (~3170 socotit) |
+| **2163** | A, B, C / D:E | temperatura MGR / **turația MGR** (spate) | idem | +2675 la 48 km/h; socotit din reducerea punții spate: ~2520 |
+| 2167, 2168, 2169 | A:B, C:D | cuplul MG1, MG2, MGR (cerut și realizat) | (X − 32768) / 8 Nm | 0 pe loc; MG1 negativ cât motorul termic merge (generator); MG2 +50 Nm la accelerare, −97 la frânare |
+| 2170, 2171, 2172 | A, B, C | temperaturi de invertor (acum, la pornire, maximă) | octet − 40 | ca Corolla 10A4 / 10A5; nu știm încă care e al cui |
+| 2174 | A–D | temperaturile convertorului ridicător (sus, jos, la pornire, maximă) | octet − 40 | ca Corolla 10A7 |
+| 2174 | F:G, H:I | tensiunea înainte și după ridicător | X / 2 V | 273 / 270 V pe loc, ca bateria |
+
+Turațiile au timp de citire diferit de viteză (un tur dura 2 minute), deci raportul rpm/km/h e
+orientativ. Proba ghidată (pasul de drum) le citește lângă viteză.
+
+**Win / Wout** (limitele de putere): Corolla le are la 747 1807, (X − 32768) / 100 kW. Nicio
+pereche de octeți din blocurile NX citite nu dă constant 27 / 25,5 kW cu formula asta. Rămân negăsite.
+
+## ScanGauge, Prius generația 3 (aceeași generație cu NX 300h)
+
+Sursa: <https://www.scangauge.com/support/x-gauge-commands/toyota-lexus-scion/>, secțiunea
+„Generation III Prius (2010-2015)”. Comenzile sunt pe 7E2 / 7C0 / 7C4, serviciul 21 — exact ce are NX.
+
+Cum se citesc: în RXD, primul octet e bitul de început. Numărat în RXF, octetul 4 e 0x61 la un cadru
+simplu (0x61 la octetul 5 la cel lung), iar biții din RXD sunt cu un octet înaintea lui RXF. Cu
+decalajul ăsta, fiecare comandă cade pe octetul pe care l-am găsit singuri:
+
+| ScanGauge | Bloc · octet NX | Formula | Se potrivește cu |
+|---|---|---|---|
+| Traction Battery Temperature | 2187 · A | A − 50 °C | formula noastră pe 2 octeți (confirmată cu Dr Prius) |
+| Fuel Level | 7C0 2129 · A | A / 2 l | confirmat cu acul (29 l) |
+| MG1 / MG2 RPM | 2161 / 2162 · D:E | − 32768 | ce am găsit cu lista Corolla |
+| MG1 / MG2 Torque | 2167 / 2168 · A:B | − 32768 | idem |
+| MG1 / MG2 Temp | 2161 / 2162 · **C** | C − 40 | ScanGauge ia al treilea octet. La noi C nu scade niciodată în 30 min (pare maximul), iar A urcă și coboară. De lămurit după o oprire lungă |
+| Inverter MG1 / MG2 Temp | 2170 / 2171 · A | A − 40 | da: 2170 = invertorul MG1, 2171 = invertorul MG2 (2172 probabil MGR) |
+| DC/DC Upper / Lower Temp | 2174 · A / B | − 40 | ca Corolla |
+| Inverter Coolant Temp | 2175 | − 40 | la NX blocul e mai lung; de găsit octetul |
+| **Outside Temperature** | 7E2 **2101 · D** | D − 40 | 0x3A = 18 °C, la fel ca 0146 de la hibrid. **Cel de la motor dădea 34 °C**: KITT o ia acum de la hibrid |
+| **Room Temperature** (habitaclu) | **7C4 2121 · A** | A / 4 − 6,5 °C (din 4,5·A + 203, în zecimi de °F) | candidat: 0x7E–0x82 în mers = 25–26 °C. De confirmat cu un termometru (proba ghidată, pasul 7) |
+| **Battery Discharge / Charge Max** (Wout / Win) | 7E2 **2198 · C / D** | (5·C − 201)/10 și (5·D − 1081)/10 | la 12:22: C=0x4A, D=0xB3 → 16,9 și −18,6 (kW?). Constante, ca limitele. **De confirmat cu Dr Prius**: proba de baterie citește acum și 2198 |
+| MG1 / MG2 Carrier Frequency | 217C · A / B | × 10 / 20 | frecvența de comutare a invertoarelor |
+| A/C Power Usage | 217D · C | × 50 W | puterea compresorului climei |
+
+Prius generația 2 (`prius-gen2-pids.pdf`, lista Torque oguchi-rd) e altă generație: blocurile
+(21C3, 21C4, 21CE–21D0) nu există la NX. Folositoare doar numele: „Drive Condition ID”,
+„Shift Position”, „EV-Mode Active” — la Prius 2 vin din mesajele de pe rețea (0x0120, 0x0529),
+pe care poarta NX nu le lasă să ajungă la priză.

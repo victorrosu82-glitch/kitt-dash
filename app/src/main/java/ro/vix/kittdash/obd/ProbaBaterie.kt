@@ -104,7 +104,7 @@ class ProbaBaterie(
         private const val TIMEOUT_MS = 1_500L
 
         /** Blocurile citite la fiecare tur, de la calculatorul hibrid. */
-        val BLOCURI = listOf("2181", "2187", "2192", "2195", "2161", "2162", "2163", "2170", "2101", "2146", "214C")
+        val BLOCURI = listOf("2181", "2187", "2192", "2195", "2161", "2162", "2163", "2170", "2101", "2146", "214C", "2198")
 
         /** Datele de dupa [antet], din raspunsul cu antete si cadre (ATH1). */
         fun octeti(raspuns: String?, antet: String): IntArray? {

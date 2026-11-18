@@ -45,6 +45,7 @@ class Ecrane {
         fel: FelEcran,
     ) {
         if (fel == FelEcran.HIBRID) CereriRare.hibridPeEcran()
+        if (fel == FelEcran.ENERGIE) CereriRare.energiePeEcran()
         if (fel == FelEcran.BORD) {
             bord.deseneaza(canvas, latime, inaltime, stare, nav)
             return

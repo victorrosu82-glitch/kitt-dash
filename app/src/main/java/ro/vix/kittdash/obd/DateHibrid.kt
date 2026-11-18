@@ -16,10 +16,21 @@ data class DateHibrid(
     val temperaturiBaterie: List<Float> = emptyList(),
     /** Temperaturi din sistemul hibrid, de confirmat: (eticheta, °C). */
     val temperaturiSistem: List<Pair<String, Float>> = emptyList(),
-    /** Combustibilul din rezervor, litri (7C0 2129, de confirmat). */
+    /** Combustibilul din rezervor, litri (7C0 2129, confirmat cu acul pe 18.11.2026). */
     val rezervorLitri: Float? = null,
     val laMs: Long = 0L,
+    /**
+     * Turatiile motoarelor electrice, rot/min, cu semn: MG1 (generatorul),
+     * MG2 (fata), MGR (spate). Din blocurile 2161-2163, octetii 3-4, minus 32768,
+     * ca la Toyota Corolla (10A0 / 10A1). Vezi `docs/explorare/ce-a-gasit.md`.
+     */
+    val turatii: Map<String, Int> = emptyMap(),
+    val turatiiLaMs: Long = 0L,
 ) {
+    /** Turatiile, numai daca sunt proaspete (ecranul ENERGIE le cere des). */
+    fun turatiiProaspete(acumMs: Long = System.currentTimeMillis()): Map<String, Int> =
+        if (acumMs - turatiiLaMs < 3_000L) turatii else emptyMap()
+
     val celMaiSlab: Int? get() = tensiuni.indices.minByOrNull { tensiuni[it] }
     val celMaiTare: Int? get() = tensiuni.indices.maxByOrNull { tensiuni[it] }
     val diferentaV: Float? get() = if (tensiuni.isEmpty()) null else tensiuni.max() - tensiuni.min()
@@ -45,7 +56,10 @@ data class DateHibrid(
             }
         }
 
-        /** Primul octet al blocurilor 2161-2170, minus 40: urca lin in mers. */
+        /** Turatia din blocurile 2161-2163: octetii 3-4 minus 32768 (0x8000 = oprit). */
+        fun turatie(o: IntArray?): Int? = o?.takeIf { it.size >= 5 }?.let { it[3] * 256 + it[4] - 32768 }
+
+        /** Primul octet al blocurilor 2161-2172, minus 40 (acum; urmeaza la pornire si maxima). */
         fun temperaturaSimpla(o: IntArray?): Float? = o?.firstOrNull()?.let { (it - 40).toFloat() }
 
         /** 7C0 2129: A / 2 litri, formula Toyota cunoscuta. */
@@ -115,4 +129,15 @@ object CereriRare {
 
     fun vreaHibrid(acumMs: Long = System.currentTimeMillis()): Boolean =
         acumMs - hibridVazutLaMs < 3_000L
+
+    @Volatile
+    private var energieVazutaLaMs = 0L
+
+    fun energiePeEcran(acumMs: Long = System.currentTimeMillis()) {
+        energieVazutaLaMs = acumMs
+    }
+
+    /** Ecranul ENERGIE arata turatiile MG1 / MG2 / MGR. */
+    fun vreaEnergie(acumMs: Long = System.currentTimeMillis()): Boolean =
+        acumMs - energieVazutaLaMs < 3_000L
 }

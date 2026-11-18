@@ -1,0 +1,156 @@
+"Name", "ShortName", "ModeAndPID", "Equation", "Min Value", "Max Value", "Units", "Header", "startDiagnostic", "stopDiagnostic", "scale","minimumRefreshDelayMillis"
+"Battery avg resistance","R_avg","0x22182f","(A+B+C+D+E+F+G+H+I+J+K+L+M+N+O+P+Q+R+S+T+U+V+W+X+Y+Z+AA+AB+AC+AD+AE+AF+AG+AH+AI+AJ+AK+AL+AM+AN+AO+AP+AQ+AR+AS+AT+AU+AV+AW+AX+AY+AZ+BA+BB+BC+BD)/560",0,200,"mOhm","747","","",1,0
+"Battery block 1 cell avg voltage","B1_avg","0x221819","(INT16(A:B))/12800",0,4,"V","747","","",1,0
+"Battery block 2 cell avg voltage","B2_avg","0x221819","(INT16(C:D))/12800",0,4,"V","747","","",1,0
+"Battery block 3 cell avg voltage","B3_avg","0x221819","(INT16(E:F))/12800",0,4,"V","747","","",1,0
+"Battery cooling intake temp","Tin","0x22180b","(INT16(A:B))/256-50",-40,50,"°C","747","","",1,0
+"Battery Current","Ibatt","0x22181d","(INT16(A:B)-32768)/100",-100,100,"A","747","","",1,0
+"Battery full resistance","R_full","0x22182f","(A+B+C+D+E+F+G+H+I+J+K+L+M+N+O+P+Q+R+S+T+U+V+W+X+Y+Z+AA+AB+AC+AD+AE+AF+AG+AH+AI+AJ+AK+AL+AM+AN+AO+AP+AQ+AR+AS+AT+AU+AV+AW+AX+AY+AZ+BA+BB+BC+BD)/10",0,10,"mOhm","747","","",1,0
+"Battery max cell resistance","R_max","0x22182f","MAX(A:BD)/10",0,10,"mOhm","747","","",1,0
+"Battery min cell resistance","R_min","0x22182f","MIN(A:BD)/10",0,10,"mOhm","747","","",1,0
+"Battery stack 1 cell avg voltage","S1_avg","0x22181a","(INT16(A:B))/12800",0,4,"V","747","","",1,0
+"Battery stack 2 cell avg voltage","S2_avg","0x22181a","(INT16(C:D))/12800",0,4,"V","747","","",1,0
+"Battery temp 1","T1","0x221814","(INT16(A:B))/256-50",-40,50,"°C","747","","",1,0
+"Battery temp 2","T2","0x221814","(INT16(C:D))/256-50",-40,50,"°C","747","","",1,0
+"Battery temp 3","T3","0x221814","(INT16(E:F))/256-50",-40,50,"°C","747","","",1,0
+"Battery temp 4","T4","0x221814","(INT16(G:H))/256-50",-40,50,"°C","747","","",1,0
+"Battery temp 5","T5","0x221814","(INT16(I:J))/256-50",-40,50,"°C","747","","",1,0
+"Battery temp 6","T6","0x221814","(INT16(K:L))/256-50",-40,50,"°C","747","","",1,0
+"Boost converter init temp","Tb_init","0x2210a7","C-40",-40,100,"C","7d2","","",1,0
+"Boost converter max temp","Tb_max","0x2210a7","D-40",-40,100,"°C","7d2","","",1,0
+"Boost converter temp lower","Tb_low","0x2210a7","B-40",-40,100,"°C","7d2","","",1,0
+"Boost converter temp upper","Tb_upp","0x2210a7","A-40",-40,100,"°C","7d2","","",1,0
+"Cell resistance 01","R01","0x22182f","A/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 02","R02","0x22182f","B/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 03","R03","0x22182f","C/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 04","R04","0x22182f","D/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 05","R05","0x22182f","E/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 06","R06","0x22182f","F/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 07","R07","0x22182f","G/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 08","R08","0x22182f","H/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 09","R09","0x22182f","I/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 10","R10","0x22182f","J/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 11","R11","0x22182f","K/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 12","R12","0x22182f","L/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 13","R13","0x22182f","M/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 14","R14","0x22182f","N/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 15","R15","0x22182f","O/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 16","R16","0x22182f","P/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 17","R17","0x22182f","Q/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 18","R18","0x22182f","R/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 19","R19","0x22182f","S/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 20","R20","0x22182f","T/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 21","R21","0x22182f","U/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 22","R22","0x22182f","V/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 23","R23","0x22182f","W/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 24","R24","0x22182f","X/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 25","R25","0x22182f","Y/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 26","R26","0x22182f","Z/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 27","R27","0x22182f","AA/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 28","R28","0x22182f","AB/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 29","R29","0x22182f","AC/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 30","R30","0x22182f","AD/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 31","R31","0x22182f","AE/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 32","R32","0x22182f","AF/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 33","R33","0x22182f","AG/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 34","R34","0x22182f","AH/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 35","R35","0x22182f","AI/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 36","R36","0x22182f","AJ/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 37","R37","0x22182f","AK/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 38","R38","0x22182f","AL/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 39","R39","0x22182f","AM/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 40","R40","0x22182f","AN/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 41","R41","0x22182f","AO/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 42","R42","0x22182f","AP/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 43","R43","0x22182f","AQ/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 44","R44","0x22182f","AR/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 45","R45","0x22182f","AS/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 46","R46","0x22182f","AT/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 47","R47","0x22182f","AU/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 48","R48","0x22182f","AV/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 49","R49","0x22182f","AW/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 50","R50","0x22182f","AX/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 51","R51","0x22182f","AY/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 52","R52","0x22182f","AZ/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 53","R53","0x22182f","BA/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 54","R54","0x22182f","BB/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 55","R55","0x22182f","BC/10",0,25,"mOhm","747","","",1,0
+"Cell resistance 56","R56","0x22182f","BD/10",0,25,"mOhm","747","","",1,0
+"Cell voltage 01","V01","0x22182e","(INT16(A:B))/12800",0,4,"V","747","","",1,0
+"Cell voltage 02","V02","0x22182e","(INT16(C:D))/12800",0,4,"V","747","","",1,0
+"Cell voltage 03","V03","0x22182e","(INT16(E:F))/12800",0,4,"V","747","","",1,0
+"Cell voltage 04","V04","0x22182e","(INT16(G:H))/12800",0,4,"V","747","","",1,0
+"Cell voltage 05","V05","0x22182e","(INT16(I:J))/12800",0,4,"V","747","","",1,0
+"Cell voltage 06","V06","0x22182e","(INT16(K:L))/12800",0,4,"V","747","","",1,0
+"Cell voltage 07","V07","0x22182e","(INT16(M:N))/12800",0,4,"V","747","","",1,0
+"Cell voltage 08","V08","0x22182e","(INT16(O:P))/12800",0,4,"V","747","","",1,0
+"Cell voltage 09","V09","0x22182e","(INT16(Q:R))/12800",0,4,"V","747","","",1,0
+"Cell voltage 10","V10","0x22182e","(INT16(S:T))/12800",0,4,"V","747","","",1,0
+"Cell voltage 11","V11","0x22182e","(INT16(U:V))/12800",0,4,"V","747","","",1,0
+"Cell voltage 12","V12","0x22182e","(INT16(W:X))/12800",0,4,"V","747","","",1,0
+"Cell voltage 13","V13","0x22182e","(INT16(Y:Z))/12800",0,4,"V","747","","",1,0
+"Cell voltage 14","V14","0x22182e","(INT16(AA:AB))/12800",0,4,"V","747","","",1,0
+"Cell voltage 15","V15","0x22182e","(INT16(AC:AD))/12800",0,4,"V","747","","",1,0
+"Cell voltage 16","V16","0x22182e","(INT16(AE:AF))/12800",0,4,"V","747","","",1,0
+"Cell voltage 17","V17","0x22182e","(INT16(AG:AH))/12800",0,4,"V","747","","",1,0
+"Cell voltage 18","V18","0x22182e","(INT16(AI:AJ))/12800",0,4,"V","747","","",1,0
+"Cell voltage 19","V19","0x22182e","(INT16(AK:AL))/12800",0,4,"V","747","","",1,0
+"Cell voltage 20","V20","0x22182e","(INT16(AM:AN))/12800",0,4,"V","747","","",1,0
+"Cell voltage 21","V21","0x22182e","(INT16(AO:AP))/12800",0,4,"V","747","","",1,0
+"Cell voltage 22","V22","0x22182e","(INT16(AQ:AR))/12800",0,4,"V","747","","",1,0
+"Cell voltage 23","V23","0x22182e","(INT16(AS:AT))/12800",0,4,"V","747","","",1,0
+"Cell voltage 24","V24","0x22182e","(INT16(AU:AV))/12800",0,4,"V","747","","",1,0
+"Cell voltage 25","V25","0x22182e","(INT16(AW:AX))/12800",0,4,"V","747","","",1,0
+"Cell voltage 26","V26","0x22182e","(INT16(AY:AZ))/12800",0,4,"V","747","","",1,0
+"Cell voltage 27","V27","0x22182e","(INT16(BA:BB))/12800",0,4,"V","747","","",1,0
+"Cell voltage 28","V28","0x22182e","(INT16(BC:BD))/12800",0,4,"V","747","","",1,0
+"Cell voltage 29","V29","0x22182e","(INT16(BE:BF))/12800",0,4,"V","747","","",1,0
+"Cell voltage 30","V30","0x22182e","(INT16(BG:BH))/12800",0,4,"V","747","","",1,0
+"Cell voltage 31","V31","0x22182e","(INT16(BI:BJ))/12800",0,4,"V","747","","",1,0
+"Cell voltage 32","V32","0x22182e","(INT16(BK:BL))/12800",0,4,"V","747","","",1,0
+"Cell voltage 33","V33","0x22182e","(INT16(BM:BN))/12800",0,4,"V","747","","",1,0
+"Cell voltage 34","V34","0x22182e","(INT16(BO:BP))/12800",0,4,"V","747","","",1,0
+"Cell voltage 35","V35","0x22182e","(INT16(BQ:BR))/12800",0,4,"V","747","","",1,0
+"Cell voltage 36","V36","0x22182e","(INT16(BS:BT))/12800",0,4,"V","747","","",1,0
+"Cell voltage 37","V37","0x22182e","(INT16(BU:BV))/12800",0,4,"V","747","","",1,0
+"Cell voltage 38","V38","0x22182e","(INT16(BW:BX))/12800",0,4,"V","747","","",1,0
+"Cell voltage 39","V39","0x22182e","(INT16(BY:BZ))/12800",0,4,"V","747","","",1,0
+"Cell voltage 40","V40","0x22182e","(INT16(CA:CB))/12800",0,4,"V","747","","",1,0
+"Cell voltage 41","V41","0x22182e","(INT16(CC:CD))/12800",0,4,"V","747","","",1,0
+"Cell voltage 42","V42","0x22182e","(INT16(CE:CF))/12800",0,4,"V","747","","",1,0
+"Cell voltage 43","V43","0x22182e","(INT16(CG:CH))/12800",0,4,"V","747","","",1,0
+"Cell voltage 44","V44","0x22182e","(INT16(CI:CJ))/12800",0,4,"V","747","","",1,0
+"Cell voltage 45","V45","0x22182e","(INT16(CK:CL))/12800",0,4,"V","747","","",1,0
+"Cell voltage 46","V46","0x22182e","(INT16(CM:CN))/12800",0,4,"V","747","","",1,0
+"Cell voltage 47","V47","0x22182e","(INT16(CO:CP))/12800",0,4,"V","747","","",1,0
+"Cell voltage 48","V48","0x22182e","(INT16(CQ:CR))/12800",0,4,"V","747","","",1,0
+"Cell voltage 49","V49","0x22182e","(INT16(CS:CT))/12800",0,4,"V","747","","",1,0
+"Cell voltage 50","V50","0x22182e","(INT16(CU:CV))/12800",0,4,"V","747","","",1,0
+"Cell voltage 51","V51","0x22182e","(INT16(CW:CX))/12800",0,4,"V","747","","",1,0
+"Cell voltage 52","V52","0x22182e","(INT16(CY:CZ))/12800",0,4,"V","747","","",1,0
+"Cell voltage 53","V53","0x22182e","(INT16(DA:DB))/12800",0,4,"V","747","","",1,0
+"Cell voltage 54","V54","0x22182e","(INT16(DC:DD))/12800",0,4,"V","747","","",1,0
+"Cell voltage 55","V55","0x22182e","(INT16(DE:DF))/12800",0,4,"V","747","","",1,0
+"Cell voltage 56","V56","0x22182e","(INT16(DG:DH))/12800",0,4,"V","747","","",1,0
+"HV battery SoC","HV SoC","0x015b","A*100/255",0,100,"%","07e2","","",1,0
+"Inverter coolant temperature ","InvCoolT","0x2210b2","A-40",0,100,"°C","7d2","","",1,0
+"MG1 initial temperature","T0mg1","0x22103a","D-40",-40,100,"C","7d2","","",1,0
+"MG1 inverter initial temperature","T0inv1","0x2210a4","B-40",-40,100,"C","7d2","","",1,0
+"MG1 inverter max temperature","TMinv1","0x2210a4","C-40",-40,100,"°C","7d2","","",1,0
+"MG1 inverter temperature","Tinv1","0x2210a4","A-40",-40,100,"°C","7d2","","",1,0
+"MG1 max temperature","Tmax1","0x22103a","E-40",-40,100,"°C","7d2","","",1,0
+"MG1 rpm","MG1 rpm","0x2210a0","(INT16(A:B)-32768)",-100,100,"RPM","7d2","","",1,0
+"MG1 temperature","Tmg1","0x22103a","C-40",-40,100,"°C","7d2","","",1,0
+"MG1 Torque","MG1 Trq","0x2210a0","(INT16(C:D)-32768)/8",-100,100,"Nm","7d2","","",1,0
+"MG2 initial temperature","T0mg2","0x22103b","D-40",-40,100,"C","7d2","","",1,0
+"MG2 inverter initial temperature","T0inv2","0x2210a5","B-40",-40,100,"C","7d2","","",1,0
+"MG2 inverter max temperature","TMinv2","0x2210a5","C-40",-40,100,"°C","7d2","","",1,0
+"MG2 inverter temperature","Tinv2","0x2210a5","A-40",-40,100,"°C","7d2","","",1,0
+"MG2 max temperature","Tmax2","0x22103b","E-40",-40,100,"°C","7d2","","",1,0
+"Mg2 rpm","MG2 rpm","0x2210a1","(INT16(A:B)-32768)",0,100,"rpm","7d2","","",1,0
+"MG2 temperature","Tmg2","0x22103b","C-40",-40,100,"°C","7d2","","",1,0
+"MG2 Torque","MG2 Trq","0x2210a1","(INT16(C:D)-32768)/8",-100,100,"Nm","7d2","","",1,0
+"VH voltage after boost","Vb_high","0x2210b0","INT16(C:D)/2",0,600,"V","7d2","","",1,0
+"VL voltage before boost","Vb_low","0x2210b0","INT16(A:B)/2",0,250,"V","7d2","","",1,0
+"WIN limit","WIN","0x221807","(INT16(A:B)-32768)/100",0,50,"kW","747","","",1,0
+"WOUT limit","WOUT","0x221807","(INT16(C:D)-32768)/100",0,50,"kW","747","","",1,0

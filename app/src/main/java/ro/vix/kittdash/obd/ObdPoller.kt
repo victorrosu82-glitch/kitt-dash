@@ -245,8 +245,13 @@ class ObdPoller(
             // Blocurile bateriei, numai cat le arata ecranul HIBRID: cate unul
             // pe tur, prin rotatie, ca viteza si turatia sa curga neoprite.
             // Tensiunile vin la fiecare al treilea pas, adica la ~1 s.
-            if (CereriRare.vreaHibrid()) {
-                val pas = PASI_HIBRID[pasHibrid % PASI_HIBRID.size]
+            val pasi = when {
+                CereriRare.vreaHibrid() -> PASI_HIBRID
+                CereriRare.vreaEnergie() -> PASI_ENERGIE
+                else -> null
+            }
+            if (pasi != null) {
+                val pas = pasi[pasHibrid % pasi.size]
                 pasHibrid++
                 try {
                     val vechi = depozit.stare.value.hibrid ?: DateHibrid()
@@ -312,11 +317,15 @@ class ObdPoller(
                 ?.let { d.copy(rezervorLitri = it) } ?: d
             else -> {
                 val eticheta = ETICHETE_SISTEM[pas] ?: return d
-                val t = DateHibrid.temperaturaSimpla(elm.citesteBloc(h, pas)) ?: return d
+                val bloc = elm.citesteBloc(h, pas)
+                val cuTuratie = MOTOARE[pas]?.let { motor ->
+                    DateHibrid.turatie(bloc)?.let { d.copy(turatii = d.turatii + (motor to it), turatiiLaMs = acum) }
+                } ?: d
+                val t = DateHibrid.temperaturaSimpla(bloc) ?: return cuTuratie
                 val alte = d.temperaturiSistem.filter { it.first != eticheta }
                 val toate = (alte + (eticheta to t))
                     .sortedBy { (e, _) -> ETICHETE_SISTEM.values.indexOf(e) }
-                d.copy(temperaturiSistem = toate)
+                cuTuratie.copy(temperaturiSistem = toate)
             }
         }
     }
@@ -338,6 +347,13 @@ class ObdPoller(
         /** Ordinea blocurilor pe ecranul HIBRID: tensiunile la fiecare al treilea pas. */
         val PASI_HIBRID = listOf(0x81, 0x95, 0x87, 0x81, 0x61, 0x62, 0x81, 0x63, 0x70, 0x81, REZERVOR, 0x87)
 
-        private val ETICHETE_SISTEM = linkedMapOf(0x61 to "MG1?", 0x62 to "MG2?", 0x63 to "INVERTOR?", 0x70 to "CONVERTOR?")
+        /** Pe ecranul ENERGIE: numai motoarele, ca turatiile sa vina des (~1 s). */
+        val PASI_ENERGIE = listOf(0x61, 0x62, 0x63)
+
+        /** Temperaturile din sistem: motoarele confirmate prin turatii, invertorul inca nu. */
+        private val ETICHETE_SISTEM = linkedMapOf(0x61 to "MG1", 0x62 to "MG2", 0x63 to "MGR", 0x70 to "INVERTOR?")
+
+        /** Blocul fiecarui motor electric, cu turatia lui in octetii 3-4. */
+        private val MOTOARE = mapOf(0x61 to "MG1", 0x62 to "MG2", 0x63 to "MGR")
     }
 }

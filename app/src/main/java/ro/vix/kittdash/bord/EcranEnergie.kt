@@ -96,13 +96,17 @@ class EcranEnergie(private val p: Pensula) {
         val trAprinsa = f.rotiFata || f.generator
         val cTr = if (f.motor) AMBRA else CYAN
         caseta(c, TR_X, YM, 120f, 92f, "", trAprinsa, cTr)
-        p.text(c, TR_X, YM + 38f, 11f, if (trAprinsa) cTr else ETICHETA, "MG1 · MG2", Paint.Align.CENTER, 2f, gros = true)
+        p.text(c, TR_X, YM + 41f, 11f, if (trAprinsa) cTr else ETICHETA, "MG1 · MG2", Paint.Align.CENTER, 2f, gros = true)
         val cG = if (f.motor) AMBRA else ETICHETA
         val cM = if (f.fata) CYAN else ETICHETA
         p.cerc(c, TR_X - 25f, YM - 8f, 20f, cG, plin = false, grosime = 3f)
         p.cerc(c, TR_X + 25f, YM - 8f, 20f, cM, plin = false, grosime = 3f)
         p.text(c, TR_X - 25f, YM - 3f, 13f, cG, "G", Paint.Align.CENTER, gros = true)
         p.text(c, TR_X + 25f, YM - 3f, 13f, cM, "M", Paint.Align.CENTER, gros = true)
+        // turatiile motoarelor electrice, cand le avem proaspete
+        val rot = s.hibrid?.turatiiProaspete().orEmpty()
+        rot["MG1"]?.let { p.text(c, TR_X - 25f, YM + 26f, 12f, cG, it.toString(), Paint.Align.CENTER, gros = true) }
+        rot["MG2"]?.let { p.text(c, TR_X + 25f, YM + 26f, 12f, cM, it.toString(), Paint.Align.CENTER, gros = true) }
 
         // bateria HV, cu treptele de incarcare
         caseta(c, BAT_X, YM, 140f, 80f, "BATERIE HV", true, CYAN)
@@ -115,7 +119,8 @@ class EcranEnergie(private val p: Pensula) {
 
         // motorul din spate
         caseta(c, SA, YM, 70f, 72f, "MGR", f.spate, CYAN)
-        p.text(c, SA, YM + 6f, 17f, if (f.spate) CYAN else ETICHETA, "M", Paint.Align.CENTER, gros = true)
+        p.text(c, SA, YM + 2f, 17f, if (f.spate) CYAN else ETICHETA, "M", Paint.Align.CENTER, gros = true)
+        rot["MGR"]?.let { p.text(c, SA, YM + 24f, 12f, if (f.spate) CYAN else ETICHETA, it.toString(), Paint.Align.CENTER, gros = true) }
 
         p.text(c, X0 + 6f, Y0 - 8f, 12f, ETICHETA, "FATA", spatiere = 3f)
         p.text(c, X1 - 6f, Y0 - 8f, 12f, ETICHETA, "SPATE", Paint.Align.RIGHT, 3f)

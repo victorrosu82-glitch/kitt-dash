@@ -144,7 +144,6 @@ class EcranHibrid(private val p: Pensula) {
                 ETICHETE_TERMOMETRE[i], Paint.Align.CENTER, 1f, gros = confirmat)
         }
         p.text(c, cx, 330f, 13f, ETICHETA, "MOTOARE SI INVERTOR", spatiere = 2f)
-        p.text(c, cx + 440f, 330f, 10f, ROSU_STERS, "(DE CONFIRMAT)", Paint.Align.RIGHT, 1f)
         h?.temperaturiSistem.orEmpty().take(4).forEachIndexed { i, (eticheta, v) ->
             val x = cx + i * 112f
             p.text(c, x, 350f, 11f, ROSU_STERS, eticheta, spatiere = 1.5f)

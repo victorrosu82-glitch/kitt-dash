@@ -79,7 +79,7 @@ enum class ObdPid(
         listOf(Marime.PRESIUNE_ATM to { b: IntArray -> b[0].toDouble() }),
     ),
     TEMP_EXTERIOARA(
-        0x46, 1, null, 5000L,
+        0x46, 1, "7E2", 5000L, // la hibrid: motorul o masoara langa el (34 °C cand afara erau 18, 18.11.2026)
         listOf(Marime.TEMP_EXTERIOARA to { b: IntArray -> b[0] - 40.0 }),
     ),
     /**
