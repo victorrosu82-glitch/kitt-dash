@@ -10,3 +10,65 @@
 11-18 10:17:02  Navigatia spre casa n-a pornit: Navigation intent cannot have a component
 11-18 10:18:40  Ecranul KITT a trecut in spate
 11-18 10:18:40  Masina mi-a luat panza inapoi
+11-18 11:45:44  Aplicatia porneste
+11-18 12:21:35  Gazda com.google.android.projection.gearhead: fdb00c43dbde8b51cb312aa81d3b5fa17713adb94b28f598d77f8eb89daceedf - in lista
+11-18 12:21:35  Gazda com.google.android.projection.gearhead: 1ca8dcc0bed3cbd872d2cb791200c0292ca9975768a82d676b8b424fb65b5295 - in lista
+11-18 12:21:35  Masina cere ecranul
+11-18 12:21:35  Cer legatura cu adaptorul
+11-18 12:21:35  Ecranul KITT e iar pe masina
+11-18 12:21:35  Am primit panza masinii: 1190x460
+11-18 12:21:35  Zona libera acum: 1090x360 la (12,88), forma 3,03, din panza 1190x460
+11-18 12:21:35  Desenez in Rect(12, 12 - 1102, 448)
+11-18 12:25:47  Zona libera mereu: 386x412 la (792,24), forma 0,94, din panza 1190x460
+11-18 12:25:47  Desenez in Rect(792, 12 - 1178, 448)
+11-18 12:26:04  Zona libera mereu: 1090x360 la (12,88), forma 3,03, din panza 1190x460
+11-18 12:26:04  Desenez in Rect(12, 12 - 1102, 448)
+11-18 12:26:53  Zona libera mereu: 670x360 la (12,88), forma 1,86, din panza 1190x460
+11-18 12:26:53  Desenez in Rect(12, 12 - 682, 448)
+11-18 12:26:55  Zona libera mereu: 1090x360 la (12,88), forma 3,03, din panza 1190x460
+11-18 12:26:55  Desenez in Rect(12, 12 - 1102, 448)
+11-18 12:26:55  Zona libera mereu: 386x412 la (792,24), forma 0,94, din panza 1190x460
+11-18 12:26:55  Desenez in Rect(792, 12 - 1178, 448)
+11-18 12:26:57  Ecranul KITT a trecut in spate
+11-18 12:26:57  Masina mi-a luat panza inapoi
+11-18 12:27:08  Cer legatura cu adaptorul
+11-18 12:27:08  Ecranul KITT e iar pe masina
+11-18 12:27:08  Navigatie de la com.waze: sageata 70x70
+11-18 12:27:08  Am primit panza masinii: 1190x460
+11-18 12:27:08  Zona libera acum: 386x412 la (792,24), forma 0,94, din panza 1190x460
+11-18 12:27:08  Desenez in Rect(792, 12 - 1178, 448)
+11-18 12:27:08  Zona libera mereu: 1090x360 la (12,88), forma 3,03, din panza 1190x460
+11-18 12:27:08  Desenez in Rect(12, 12 - 1102, 448)
+11-18 12:42:47  Ecranul KITT a trecut in spate
+11-18 12:42:47  Masina mi-a luat panza inapoi
+11-18 12:42:54  Ecranul KITT e iar pe masina
+11-18 12:42:54  Am primit panza masinii: 1190x460
+11-18 12:42:54  Zona libera acum: 1166x436 la (12,12), forma 2,67, din panza 1190x460
+11-18 12:42:54  Zona libera mereu: 1090x360 la (12,88), forma 3,03, din panza 1190x460
+11-18 12:42:54  Desenez in Rect(12, 12 - 1102, 448)
+11-18 12:46:56  Ecranul KITT a trecut in spate
+11-18 12:46:56  Masina mi-a luat panza inapoi
+11-18 12:47:05  Ecranul KITT e iar pe masina
+11-18 12:47:05  Am primit panza masinii: 1190x460
+11-18 12:47:05  Zona libera acum: 1166x436 la (12,12), forma 2,67, din panza 1190x460
+11-18 12:47:05  Zona libera mereu: 1090x360 la (12,88), forma 3,03, din panza 1190x460
+11-18 12:47:05  Desenez in Rect(12, 12 - 1102, 448)
+11-18 12:55:26  Ecranul KITT a trecut in spate
+11-18 12:55:26  Masina mi-a luat panza inapoi
+11-18 12:55:28  Ecranul KITT e iar pe masina
+11-18 12:55:28  Am primit panza masinii: 1190x460
+11-18 12:55:28  Zona libera acum: 1166x436 la (12,12), forma 2,67, din panza 1190x460
+11-18 12:55:28  Zona libera mereu: 1090x360 la (12,88), forma 3,03, din panza 1190x460
+11-18 12:55:28  Desenez in Rect(12, 12 - 1102, 448)
+11-18 13:05:42  Ecranul KITT a trecut in spate
+11-18 13:05:42  Masina mi-a luat panza inapoi
+11-18 13:37:15  Gazda com.google.android.projection.gearhead: fdb00c43dbde8b51cb312aa81d3b5fa17713adb94b28f598d77f8eb89daceedf - in lista
+11-18 13:37:15  Gazda com.google.android.projection.gearhead: 1ca8dcc0bed3cbd872d2cb791200c0292ca9975768a82d676b8b424fb65b5295 - in lista
+11-18 13:37:15  Masina cere ecranul
+11-18 13:37:15  Cer legatura cu adaptorul
+11-18 13:37:15  Ecranul KITT e iar pe masina
+11-18 13:37:15  Am primit panza masinii: 1190x460
+11-18 13:37:15  Zona libera acum: 1090x360 la (12,88), forma 3,03, din panza 1190x460
+11-18 13:37:15  Desenez in Rect(12, 12 - 1102, 448)
+11-18 13:40:23  Ecranul KITT a trecut in spate
+11-18 13:40:23  Masina mi-a luat panza inapoi

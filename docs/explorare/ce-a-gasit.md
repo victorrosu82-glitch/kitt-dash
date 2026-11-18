@@ -83,3 +83,40 @@ Reparat după asta:
   („Navigation intent cannot have a component”). Acum se încearcă pe rând:
   cererea de navigație cu pachetul Waze, Waze pornit direct cu adresa, apoi
   cererea fără adresant. Jurnalul spune care a mers.
+
+## Explorarea completă din 18.11.2026, 12:22–12:56
+
+Raport: `KittDash-explorare-20261118-125622.txt` (34 min, fără întreruperi).
+Analiză: `python -I tools/analiza_explorare.py <raport>`.
+Citirile repetate (pasul 5) s-au făcut **în mers**: 0–53 km/h, motorul pornind și
+oprindu-se, bateria între 42 și 62 %. Un tur durează ~2 minute, deci viteza din tur
+nu e din aceeași clipă cu fiecare bloc — corelațiile de mai jos sunt orientative.
+
+Toate cele 12 calculatoare au răspuns pe serviciul 21. Niciunul nu știe 22, iar
+modurile 01/09 le știu numai motorul și hibridul. 7F1 nu știe nimic din ce am întrebat.
+
+### Candidați, de confirmat cu o probă țintită
+
+| Calculator | Bloc · octet | Ce pare | De ce |
+|---|---|---|---|
+| 7C0 bord | **2129** · 0 | **nivelul combustibilului**, A/2 litri | 0x26–0x3E (19–31 l), se clatină în mers ca un plutitor; formula e cea Toyota cunoscută. Confirmare: comparat cu acul de pe bord |
+| 7C0 bord | 2121 · 0 | viteza afișată | 0 când mașina stă, până la 0x3B = 59 |
+| 7B0 ABS | **2103** · 0–3 | **viteza fiecărei roți** | patru octeți aproape egali, 0 pe loc, cresc împreună |
+| 7B0 ABS | 2121, 2143 · 0 | viteza mașinii după ABS | urmează 2103 |
+| 7B0 ABS | 2104 · 3, 2107 · 0 | presiunea de frânare / pedala | stă la 0x19 și sare la 0x33–0x3A în aceleași tururi |
+| 7B0 ABS | 2147 · 0–1, 2106 · 3 | accelerații laterale / longitudinale | în jurul lui 0x80 / 0xFF, cu semn |
+| 7A1 direcție | 2116 · 0–1, 2121–2122 | unghiul / cuplul volanului | în jurul lui 0x80, se mișcă doar în mers |
+| 7A1 direcție | 210A · 1 | temperatura motorului direcției | crește lin 0x0E → 0x23 |
+| 7C4 clima | 2121, 2122, 2124–2126, 214B, 2153 | temperaturi: habitaclu, afară, evaporator | variază lent; 2124 scade 0x46 → 0x11 când pornește clima |
+| 7C4 clima | 2141–2143, 2170 | temperaturile cerute, stânga = dreapta | perechi de octeți egali, se schimbă în trepte |
+| 724 hibrid | 2161–2163 · 0, 2 | temperaturile MG1 / MG2 / invertorului | urcă lin 0x3C–0x55 (−40 → 20–45 °C) |
+| 724 hibrid | 2170–2174 · 0–1 | alte temperaturi (convertor, răcire) | 0x3B–0x4A, urcă lin |
+| 724 hibrid | 2187 | temperaturile bateriei (confirmat ca formă) | urcă lin 17,5 → 18,5 °C pe primul senzor |
+| 724 hibrid | 2181 | tensiunile celor 17 blocuri (confirmat) | în mers coboară sub sarcină: 0x2C.. = 13,8 V la descărcare puternică |
+
+### Proba de confirmare propusă
+
+În loc de altă explorare de 34 de minute, o probă scurtă care citește numai
+blocurile de mai sus, de câteva ori pe secundă, cu momente notate: pe loc → frână
+apăsată → volan stânga-dreapta → clima pornită → demaraj. Pentru combustibil e
+nevoie doar de ce arată acul de pe bord în același moment.
