@@ -71,8 +71,24 @@ class SimulatorObdLink(
         c == "0140" -> masca(0x40)
         c == "0160" -> masca(0x60)
         c == "0180" -> masca(0x80)
+        c.startsWith("01") && c.length > 4 -> raspundeGrup(c)
         c.startsWith("01") && c.length >= 4 -> raspundePid(c)
+        c.startsWith("21") && c.length == 4 -> BLOCURI[c.substring(2)]?.let { "61" + c.substring(2) + it + "\r\r" } ?: "7F2112\r\r"
         else -> "?\r\r"
+    }
+
+    /** Mai multe PID-uri intr-o intrebare: 41 0D xx 0C xx xx ... */
+    private fun raspundeGrup(c: String): String {
+        drum.avanseaza(ceas() - inceputMs)
+        val parti = c.substring(2).chunked(2).mapNotNull { it.toIntOrNull(16) }
+        val sb = StringBuilder("41")
+        for (numar in parti) {
+            if (numar in pidLipsa) continue
+            val pid = ObdPid.dupaPid(numar) ?: continue
+            sb.append("%02X".format(numar))
+            octetiPentru(pid).forEach { sb.append("%02X".format(it)) }
+        }
+        return if (sb.length == 2) "NO DATA\r\r" else "$sb\r\r"
     }
 
     private fun raspundePid(c: String): String {
@@ -226,5 +242,19 @@ class SimulatorObdLink(
             // Se descarca la tractiune si se incarca la franare.
             bateriaHv = (bateriaHv + if (franeaza) 0.004 else -0.002).coerceIn(38.0, 78.0)
         }
+    }
+
+    private companion object {
+        /** Blocurile bateriei, asa cum le-a dat Lexusul pe 18.11.2026 (7E2). */
+        val BLOCURI = mapOf(
+            "81" to "37BE37BE376C377C37A537A5377C37BE37F7382037A53795379537A5376C377C37BE" + "AE870B86",
+            "95" to "1313121212131313141413131313121313",
+            "87" to "448A4C6B4D944A0249CC4CF04BCA",
+            "61" to "4E455080",
+            "62" to "4B424D80",
+            "63" to "3C363C80",
+            "70" to "40425000",
+            "29" to "49",
+        )
     }
 }

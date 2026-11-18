@@ -95,14 +95,7 @@ class Elm327(private val legatura: ObdLink) {
      * secunda pe care le da adaptorul.
      */
     fun citeste(pid: ObdPid): Map<Marime, Double> {
-        if (pid.antet != antetCurent) {
-            val tinta = pid.antet ?: ANTET_IMPLICIT
-            val raspuns = legatura.comanda("ATSH$tinta", TIMEOUT_AT)
-            if (!raspuns.contineOk()) {
-                throw ObdException("Adaptorul a refuzat ATSH$tinta: ${raspuns.peUnRand()}")
-            }
-            antetCurent = pid.antet
-        }
+        alegeAntetul(pid.antet)
         val raspuns = legatura.comanda(pid.cerere, TIMEOUT_PID)
         val octeti = octetiDin(raspuns, pid.antetRaspuns) ?: return emptyMap()
         if (octeti.size < pid.octeti) return emptyMap()
@@ -111,6 +104,62 @@ class Elm327(private val legatura: ObdLink) {
         } catch (_: IndexOutOfBoundsException) {
             emptyMap()
         }
+    }
+
+    /**
+     * Cere mai multe PID-uri ale aceluiasi calculator intr-o singura
+     * intrebare ("010D0C11"). Standardul permite pana la 6; masina raspunde
+     * cu toate, unul dupa altul: 41 0D xx 0C xx xx 11 xx. O intrebare in loc
+     * de trei inseamna de doua-trei ori mai multe citiri pe secunda.
+     *
+     * Intoarce null daca raspunsul nu are forma asteptata - atunci bucla se
+     * intoarce la intrebarile cate una.
+     */
+    fun citesteGrup(pids: List<ObdPid>): Map<ObdPid, Map<Marime, Double>>? {
+        require(pids.isNotEmpty() && pids.all { it.antet == pids[0].antet })
+        alegeAntetul(pids[0].antet)
+        val cerere = "01" + pids.joinToString("") { "%02X".format(it.pid) }
+        val raspuns = legatura.comanda(cerere, TIMEOUT_PID)
+        val octeti = octetiDin(raspuns, "41%02X".format(pids[0].pid)) ?: return null
+        // dupa primul PID vin datele lui, apoi PID, date, PID, date...
+        val rezultat = mutableMapOf<ObdPid, Map<Marime, Double>>()
+        var poz = 0
+        var pid: ObdPid? = pids[0]
+        while (pid != null) {
+            if (poz + pid.octeti > octeti.size) return null
+            val bucata = octeti.copyOfRange(poz, poz + pid.octeti)
+            rezultat[pid] = try {
+                pid.marimi.associate { (marime, formula) -> marime to formula(bucata) }
+            } catch (_: IndexOutOfBoundsException) {
+                return null
+            }
+            poz += pid.octeti
+            if (poz >= octeti.size) break
+            val urmator = octeti[poz]
+            pid = pids.firstOrNull { it.pid == urmator } ?: break
+            poz++
+        }
+        return rezultat
+    }
+
+    /**
+     * Cere un bloc Toyota (serviciul 21) de la calculatorul [antet] si
+     * intoarce octetii de dupa "61xx", sau null. Pentru blocurile bateriei HV.
+     */
+    fun citesteBloc(antet: String, bloc: Int): IntArray? {
+        alegeAntetul(antet)
+        val raspuns = legatura.comanda("21%02X".format(bloc), TIMEOUT_PID)
+        return octetiDin(raspuns, "61%02X".format(bloc))
+    }
+
+    private fun alegeAntetul(antet: String?) {
+        if (antet == antetCurent) return
+        val tinta = antet ?: ANTET_IMPLICIT
+        val raspuns = legatura.comanda("ATSH$tinta", TIMEOUT_AT)
+        if (!raspuns.contineOk()) {
+            throw ObdException("Adaptorul a refuzat ATSH$tinta: ${raspuns.peUnRand()}")
+        }
+        antetCurent = antet
     }
 
     companion object {

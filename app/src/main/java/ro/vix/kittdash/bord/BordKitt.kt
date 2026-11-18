@@ -520,14 +520,14 @@ class BordKitt {
         progres: Float,
         intindere: Float,
     ) {
-        scris.textSize = 34f
-        scris.letterSpacing = 0.06f
-        val latimeText = scris.measureText(melodie)
+        // Pe 18.11.2026: mai mare, ingrosata si numai in fasia din mijloc,
+        // cam cat chenarul galben desenat de Victor (vezi [Ecrane]).
+        scrisGros.textSize = 42f
+        scrisGros.letterSpacing = 0.04f
+        val latimeText = scrisGros.measureText(melodie)
 
-        // Banda tine toata latimea ecranului, nu doar caietul de 1280:
-        // altfel, pe un ecran lat, textul intra peste coloana din dreapta.
-        val stanga = -intindere
-        val dreapta = LATIME_BANDA + intindere
+        val stanga = CX - JUMATATE_BANDA
+        val dreapta = CX + JUMATATE_BANDA
         val deLa = dreapta + 20f
         val panaLa = stanga - latimeText - 20f
         val x = deLa + (panaLa - deLa) * progres
@@ -540,13 +540,13 @@ class BordKitt {
         }
 
         val salvat = canvas.save()
-        canvas.clipRect(stanga, 612f, dreapta, 668f)
-        scris.color = ambra
-        scris.alpha = (opacitate * 255).roundToInt().coerceIn(0, 255)
-        scris.textAlign = Paint.Align.LEFT
-        canvas.drawText(melodie, x, 652f, scris)
-        scris.alpha = 255
-        scris.letterSpacing = 0f
+        canvas.clipRect(stanga, 600f, dreapta, 668f)
+        scrisGros.color = ambra
+        scrisGros.alpha = (opacitate * 255).roundToInt().coerceIn(0, 255)
+        scrisGros.textAlign = Paint.Align.LEFT
+        canvas.drawText(melodie, x, 654f, scrisGros)
+        scrisGros.alpha = 255
+        scrisGros.letterSpacing = 0f
         canvas.restoreToCount(salvat)
     }
 
@@ -667,6 +667,9 @@ class BordKitt {
          * de desen, nu pe ecran: banda sta sub ceas, unde e si modulatorul.
          */
         const val LATIME_BANDA = 1280f
+
+        /** Jumatatea fasiei melodiei, in caietul bordului (~ chenarul galben). */
+        const val JUMATATE_BANDA = 520f
 
         /**
          * Cat de tare se stinge bordul noaptea. 0x8C din 0xFF inseamna ca

@@ -9,6 +9,7 @@ enum class FelEcran(val titlu: String) {
     VITEZA("VITEZA"),
     ENERGIE("ENERGIE"),
     CONSOLA("CONSOLA"),
+    HIBRID("HIBRID"),
     ;
 
     fun urmatorul(): FelEcran = entries[(ordinal + 1) % entries.size]

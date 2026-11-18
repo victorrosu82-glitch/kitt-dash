@@ -49,6 +49,10 @@ data class CarState(
     val explorareProgres: Float = 0f,
     /** Unde s-a scris raportul ultimei explorari. */
     val fisierExplorare: String? = null,
+    /** Bateria pe blocuri si temperaturile, citite rar (ecranul HIBRID). */
+    val hibrid: DateHibrid? = null,
+    /** Drumul de acum: km, timp pe baterie, energie recuperata, consum. */
+    val drum: Drum = Drum(),
 ) {
     fun valoare(marime: Marime): Double? = valori[marime]?.valoare
 

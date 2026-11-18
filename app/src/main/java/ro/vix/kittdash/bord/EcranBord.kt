@@ -109,7 +109,10 @@ fun EcranBord(
     // telefonul, si n-are rost sa se stinga tocmai cand te uiti la el.
     DisposableEffect(Unit) {
         vedere.keepScreenOn = true
-        onDispose { vedere.keepScreenOn = false }
+        onDispose {
+            vedere.keepScreenOn = false
+            muzica.inchide()
+        }
     }
 
     Box(

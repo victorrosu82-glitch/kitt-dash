@@ -18,7 +18,7 @@ LINIE = re.compile(r"^([0-9A-F]{4,6}) -> (.*)$")
 
 def octeti(raspuns: str) -> list[int] | None:
     """Datele utile dintr-un raspuns cu antete (ATH1), fara antet si fara PCI."""
-    cadre = re.findall(r"\b([0-9A-F]{3})((?: [0-9A-F]{2})+)", raspuns)
+    cadre = re.findall(r"\b([0-9A-F]{3})((?: [0-9A-F]{2}(?![0-9A-F]))+)", raspuns)
     if not cadre:
         return None
     date: list[int] = []

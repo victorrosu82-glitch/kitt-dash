@@ -24,7 +24,7 @@ se schimbă cu încărcarea și cu sarcina:
 
 1. Mașina pe loc, frâna de mână trasă, **READY**, clima și farurile oprite.
 2. Așteaptă să se oprească motorul termic (dacă pornește să încarce, mai aștepți).
-3. Pe telefon, în KITT: **„Probă baterie”** (butonul nou). Citește 2 minute, la 2 secunde,
+3. Pe telefon, în KITT: **„Proba baterie (2 min, pentru Dr Prius)”**, sub „Explorează mașina”. Citește 2 minute, la 2 secunde,
    numai blocurile de mai sus, și scrie fișierul `KittDash-proba-baterie-….txt` în Download.
 4. Când KITT spune „gata”, apasă **Oprește** în KITT (adaptorul ține o singură legătură).
 5. Pornește Dr Prius, intră pe ecranul bateriei și **pornește jurnalul**. Lasă-l 2 minute.

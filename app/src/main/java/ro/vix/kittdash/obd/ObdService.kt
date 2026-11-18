@@ -44,6 +44,7 @@ class ObdService : LifecycleService() {
         val simulator = intent?.getBooleanExtra(EXTRA_SIMULATOR, false) ?: false
         val sonda = intent?.getBooleanExtra(EXTRA_SONDA, false) ?: false
         val explorare = intent?.getBooleanExtra(EXTRA_EXPLORARE, false) ?: false
+        val proba = intent?.getBooleanExtra(EXTRA_PROBA, false) ?: false
         val doarDacaNuMerge = intent?.getBooleanExtra(EXTRA_DOAR_DACA_NU_MERGE, false) ?: false
 
         // Ecranul masinii cere legatura de fiecare data cand revine. Daca deja
@@ -62,6 +63,7 @@ class ObdService : LifecycleService() {
                 faceSondaHibrida = sonda,
                 scrieSonda = ::scrieJurnalSonda,
                 faceExplorare = explorare,
+                faceProba = proba,
                 scrieExplorare = ::scrieRaportExplorare,
             )
             poller.ruleaza()
@@ -95,9 +97,9 @@ class ObdService : LifecycleService() {
      * Raportul explorarii merge in Download, langa APK, ca sa-l poti trimite
      * direct din telefon. O copie ramane si in fisierele aplicatiei.
      */
-    private fun scrieRaportExplorare(text: String): String? {
+    private fun scrieRaportExplorare(fel: String, text: String): String? {
         val acum = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
-        val nume = "KittDash-explorare-$acum.txt"
+        val nume = "KittDash-$fel-$acum.txt"
         try {
             File(getExternalFilesDir(null) ?: filesDir, nume).writeText(text)
         } catch (e: Exception) {
@@ -169,6 +171,7 @@ class ObdService : LifecycleService() {
         private const val EXTRA_SIMULATOR = "simulator"
         private const val EXTRA_SONDA = "sonda"
         private const val EXTRA_EXPLORARE = "explorare"
+        private const val EXTRA_PROBA = "proba"
         private const val EXTRA_DOAR_DACA_NU_MERGE = "doar_daca_nu_merge"
 
         /**
@@ -180,11 +183,13 @@ class ObdService : LifecycleService() {
             adresa: String,
             sondaHibrida: Boolean = false,
             explorare: Boolean = false,
+            proba: Boolean = false,
         ) {
             val intent = Intent(context, ObdService::class.java)
                 .putExtra(EXTRA_ADRESA, adresa)
                 .putExtra(EXTRA_SONDA, sondaHibrida)
                 .putExtra(EXTRA_EXPLORARE, explorare)
+                .putExtra(EXTRA_PROBA, proba)
             context.startForegroundService(intent)
         }
 

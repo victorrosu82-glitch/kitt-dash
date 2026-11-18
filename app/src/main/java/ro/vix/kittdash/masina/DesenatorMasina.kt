@@ -81,6 +81,9 @@ class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
     @Volatile
     private var deseneaza = false
 
+    /** Desenam pe placa grafica pana cand panza ne spune ca nu se poate. */
+    private var placaGrafica = true
+
     /** Cand am pus ultimul cadru pe ecran (ceasul de la pornirea telefonului). */
     @Volatile
     private var ultimulCadruMs = 0L
@@ -93,7 +96,7 @@ class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
         override fun run() {
             if (!deseneaza) return
             unCadru()
-            desen.postDelayed(this, PERIOADA_CADRU_MS)
+            desen.postDelayed(this, ecrane.perioadaMs(PreferinteMasina.ecran(carContext)))
         }
     }
 
@@ -139,6 +142,7 @@ class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
 
     /** La sfarsitul ecranului: firul de desen nu mai are ce face. */
     fun inchide() {
+        muzica.inchide()
         opreste()
         fir.quitSafely()
     }
@@ -305,7 +309,20 @@ class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
         if (!s.isValid) return
 
         val panza = try {
-            s.lockCanvas(null)
+            // Desenul pe placa grafica a telefonului: mult mai putin lucru pentru
+            // procesor, deci mai putina baterie. Daca panza masinii nu-l primeste,
+            // ne intoarcem o data pentru totdeauna la desenul obisnuit.
+            if (placaGrafica) {
+                try {
+                    s.lockHardwareCanvas()
+                } catch (e: Exception) {
+                    placaGrafica = false
+                    Jurnal.scrie(carContext, "Panza nu primeste desen pe placa grafica: ${e.message}")
+                    s.lockCanvas(null)
+                }
+            } else {
+                s.lockCanvas(null)
+            }
         } catch (e: IllegalArgumentException) {
             nuPotLuaPanza("IllegalArgumentException ${e.message}")
             return

@@ -242,7 +242,8 @@ class LogicaBordTest {
 
         // Dupa ce trece banda, modulatorul isi ia locul inapoi.
         var ultima: StareBord? = null
-        repeat(20) {
+        // banda tine Netezitor.SECUNDE_MELODIE (12,9 s); 30 x 0,6 s = 18 s
+        repeat(30) {
             ceas += 600_000_000L
             ultima = netezitor.urmatoareaStare(CarState())
         }

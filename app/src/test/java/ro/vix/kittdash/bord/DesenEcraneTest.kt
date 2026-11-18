@@ -9,6 +9,8 @@ import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 import ro.vix.kittdash.navigatie.InstructiuneNav
+import ro.vix.kittdash.obd.DateHibrid
+import ro.vix.kittdash.obd.Drum
 import ro.vix.kittdash.obd.ModHibrid
 import java.io.File
 
@@ -65,5 +67,30 @@ class DesenEcraneTest {
     @Test
     fun faraMasinaNuCrapa() {
         for (fel in FelEcran.entries) deseneaza("gol-${fel.name.lowercase()}", fel, StareBord())
+    }
+
+    @Test
+    fun hibrid() {
+        val h = DateHibrid(
+            tensiuni = listOf(17.42f, 17.42f, 17.32f, 17.34f, 17.38f, 17.38f, 17.34f, 17.42f, 17.48f,
+                17.52f, 17.38f, 17.36f, 17.36f, 17.38f, 17.32f, 17.34f, 17.42f),
+            rezistente = listOf(19, 19, 18, 18, 18, 19, 19, 19, 20, 20, 19, 19, 19, 19, 18, 19, 19),
+            temperaturiBaterie = listOf(17.5f, 26.2f, 27.6f, 23.9f, 23.4f, 26.8f, 25.6f),
+            temperaturiSistem = listOf("MG1?" to 38f, "MG2?" to 35f, "INVERTOR?" to 20f, "CONVERTOR?" to 24f),
+            rezervorLitri = 36.5f,
+        )
+        val drum = Drum(km = 12.4, secundeInMers = 1500.0, secundePeBaterie = 960.0, kWhRecuperat = 0.38, litri = 0.57)
+        deseneaza("hibrid", FelEcran.HIBRID, stare(0f, 0f, -3f, 52f, ModHibrid.READY).copy(hibrid = h, drum = drum))
+        deseneaza("hibrid-gol", FelEcran.HIBRID, stare(0f, 0f, 0f, 52f, ModHibrid.READY))
+    }
+
+    @Test
+    fun melodiaPeToateEcranele() {
+        for (fel in FelEcran.entries) {
+            deseneaza(
+                "melodie-${fel.name.lowercase()}", fel,
+                stare(87f, 2100f, 14f, 61f, ModHibrid.HYBRID).copy(melodie = "Survivor — Eye of the Tiger", melodieProgres = 0.4f),
+            )
+        }
     }
 }

@@ -9,7 +9,8 @@ class FelEcranTest {
         assertEquals(FelEcran.VITEZA, FelEcran.BORD.urmatorul())
         assertEquals(FelEcran.ENERGIE, FelEcran.VITEZA.urmatorul())
         assertEquals(FelEcran.CONSOLA, FelEcran.ENERGIE.urmatorul())
-        assertEquals(FelEcran.BORD, FelEcran.CONSOLA.urmatorul())
+        assertEquals(FelEcran.HIBRID, FelEcran.CONSOLA.urmatorul())
+        assertEquals(FelEcran.BORD, FelEcran.HIBRID.urmatorul())
     }
 
     @Test

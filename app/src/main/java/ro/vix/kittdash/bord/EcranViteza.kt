@@ -32,10 +32,13 @@ class EcranViteza(private val p: Pensula) {
     fun deseneaza(c: Canvas, s: StareBord, nav: InstructiuneNav?) {
         p.antet(c, s, FelEcran.VITEZA.titlu)
 
-        // cifrele mari, cu halou
-        val viteza = if (s.areLegatura) s.vitezaKmh.roundToInt().toString() else "--"
-        p.text(c, 595f, 318f, 262f, ROSU, viteza, Paint.Align.CENTER, -6f, gros = false, alfa = 0.16f)
-        p.text(c, 595f, 318f, 250f, ROSU_APRINS, viteza, Paint.Align.CENTER, -6f)
+        // cifrele mari, de sapte segmente, ca afisajele consolei; cele
+        // nefolosite raman stinse, ca la un afisaj adevarat
+        val viteza = if (s.areLegatura) s.vitezaKmh.roundToInt().coerceIn(0, 999).toString() else "---"
+        val xc = 595f - (3 * CIFRA_L + 2 * CIFRA_GOL) / 2f
+        viteza.padStart(3, ' ').forEachIndexed { i, ch ->
+            p.cifra7(c, xc + i * (CIFRA_L + CIFRA_GOL), 112f, CIFRA_L, CIFRA_H, ch, ROSU_APRINS)
+        }
         p.text(c, 595f, 352f, 20f, ROSU_STERS, "KM/H", Paint.Align.CENTER, 8f)
 
         // rigla de viteza pe toata latimea
@@ -113,6 +116,9 @@ class EcranViteza(private val p: Pensula) {
 
     companion object {
         const val RIGLA = 60
+        const val CIFRA_L = 100f
+        const val CIFRA_H = 210f
+        const val CIFRA_GOL = 26f
         const val VITEZA_MAXIMA = 180f
         const val TREPTE_PUTERE = 5
     }

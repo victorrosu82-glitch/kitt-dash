@@ -34,6 +34,10 @@ data class StareBord(
     val tempCatalizator: Float? = null,
     /** Consumul socotit din debitul de aer, litri pe ora. */
     val consumLh: Float? = null,
+    /** Bateria pe blocuri si temperaturile, citite rar. */
+    val hibrid: ro.vix.kittdash.obd.DateHibrid? = null,
+    /** Drumul de acum. */
+    val drum: ro.vix.kittdash.obd.Drum = ro.vix.kittdash.obd.Drum(),
     val mod: ModHibrid = ModHibrid.NECUNOSCUT,
     val areLegatura: Boolean = false,
     val peSimulator: Boolean = false,
@@ -136,6 +140,8 @@ class Netezitor(
             sarcina = masina.valoare(Marime.SARCINA_MOTOR)?.toFloat(),
             tempCatalizator = masina.valoare(Marime.TEMP_CATALIZATOR)?.toFloat(),
             consumLh = masina.valoare(Marime.DEBIT_AER)?.let { Consum.litriPeOra(it).toFloat() },
+            hibrid = masina.hibrid,
+            drum = masina.drum,
             mod = ModHibrid.din(masina),
             areLegatura = masina.conectat,
             peSimulator = masina.simulator,
@@ -192,8 +198,11 @@ class Netezitor(
         /** Puterea la care modulatorul de voce e plin. */
         const val PUTERE_VOCE_PLINA = 25f
 
-        /** Cat tine banda cu melodia, de la un capat la altul. */
-        const val SECUNDE_MELODIE = 9f
+        /**
+         * Cat tine banda cu melodia, de la un capat la altul. Era 9 s; pe
+         * 18.11.2026 Victor a cerut-o cu 30% mai incet: 9 / 0,7 = 12,9 s.
+         */
+        const val SECUNDE_MELODIE = 12.9f
 
         /** Cat de rar intrebam ce cânta: o data pe secunda ajunge. */
         const val NS_INTRE_INTREBARI = 1_000_000_000L

@@ -28,11 +28,14 @@ class ObdPoller(
     private val scrieSonda: (List<RandSonda>) -> Unit = {},
     /** Daca da, dupa initializare exploreaza toata masina, o singura data. */
     faceExplorare: Boolean = false,
-    /** Scrie raportul explorarii si spune unde (sau null daca n-a putut). */
-    private val scrieExplorare: (String) -> String? = { null },
+    /** Daca da, dupa initializare face proba de baterie (2 minute), o data. */
+    faceProba: Boolean = false,
+    /** Scrie un raport (fel, text) si spune unde (sau null daca n-a putut). */
+    private val scrieExplorare: (String, String) -> String? = { _, _ -> null },
 ) {
 
     private var deExplorat = faceExplorare
+    private var deProbat = faceProba
 
     /** Ruleaza pana la anularea corutinei. */
     suspend fun ruleaza() = withContext(Dispatchers.IO) {
@@ -83,6 +86,10 @@ class ObdPoller(
                     exploreaza(link)
                     elm.uitaAntetul()
                 }
+                if (deProbat) {
+                    probeaza(link)
+                    elm.uitaAntetul()
+                }
 
                 pauzaMs = PAUZA_MINIMA_MS
                 interogheazaLaNesfarsit(elm, suportate)
@@ -121,9 +128,20 @@ class ObdPoller(
         ).ruleaza()
         // O singura data: daca legatura cade si se reface, nu o luam de la capat.
         deExplorat = false
-        val unde = scrieExplorare(raport)
+        val unde = scrieExplorare("explorare", raport)
         depozit.actualizeaza { it.copy(explorare = null, explorareProgres = 1f, fisierExplorare = unde) }
         Log.i(TAG, "Explorare terminata, raport in $unde")
+    }
+
+    private fun probeaza(link: ObdLink) {
+        val raport = ProbaBaterie(
+            link,
+            progres = { text, f -> depozit.actualizeaza { it.copy(explorare = text, explorareProgres = f) } },
+        ).ruleaza()
+        deProbat = false
+        val unde = scrieExplorare("proba-baterie", raport)
+        depozit.actualizeaza { it.copy(explorare = null, explorareProgres = 1f, fisierExplorare = unde) }
+        Log.i(TAG, "Proba de baterie terminata, raport in $unde")
     }
 
     /**
@@ -142,52 +160,88 @@ class ObdPoller(
         // legatura abia dupa mai multe la rand.
         var taceriLaRand = 0
 
+        // Cererile cu mai multe PID-uri deodata. Daca masina sau adaptorul nu
+        // le inteleg, ne intoarcem la cate una si nu mai incercam.
+        var grupuriMerg = true
+        var urmatoareleBlocuri = 0L
+        var drum = Drum()
+        var ultimulDrumMs = ceas()
+
         while (coroutineContext.isActive) {
             val acum = ceas()
             var amCerutCeva = false
 
-            for (pid in ObdPid.entries) {
-                if (pid !in deCerut) continue
-                if (acum < (urmatoarea[pid] ?: 0L)) continue
-
-                var aTacut = false
-                val valori = try {
-                    val v = elm.citeste(pid)
-                    taceriLaRand = 0
-                    v
-                } catch (e: ObdException) {
-                    aTacut = true
-                    taceriLaRand++
-                    if (taceriLaRand >= TACERI_MAXIME) {
-                        throw ObdException(
-                            "Adaptorul a tacut de $taceriLaRand ori la rand: ${e.message}", e,
-                        )
-                    }
-                    Log.d(TAG, "${pid.eticheta}: ${e.message} (tacerea $taceriLaRand)")
-                    emptyMap()
-                }
-                contorRaspunsuri++
-                amCerutCeva = true
-                urmatoarea[pid] = ceas() + pid.perioadaMs
-
-                when {
-                    // Tacerea e vina legaturii, nu a PID-ului: nu-l scoatem
-                    // din lista pentru ca adaptorul a intarziat o data.
-                    aTacut -> Unit
-                    valori.isEmpty() -> {
-                        val n = (ratari[pid] ?: 0) + 1
-                        ratari[pid] = n
-                        if (n >= RATARI_MAXIME) {
-                            deCerut.remove(pid)
-                            Log.i(TAG, "${pid.eticheta}: masina nu da PID-ul, nu-l mai cer")
+            val datorate = ObdPid.entries.filter { it in deCerut && acum >= (urmatoarea[it] ?: 0L) }
+            // grupate pe calculator, ca sa nu schimbam adresa de mai multe ori pe tur
+            for ((_, deAcelasi) in datorate.groupBy { it.antet }) {
+                val bucati = if (grupuriMerg) deAcelasi.chunked(GRUP_MAXIM) else deAcelasi.map { listOf(it) }
+                for (bucata in bucati) {
+                    var aTacut = false
+                    val rezultat: Map<ObdPid, Map<Marime, Double>> = try {
+                        val r = citesteBucata(elm, bucata, grupuriMerg)
+                        if (r == null) {
+                            grupuriMerg = false
+                            Log.i(TAG, "Masina nu raspunde la mai multe PID-uri deodata; le cer pe rand")
+                            bucata.associateWith { elm.citeste(it) }
+                        } else {
+                            r
+                        }.also { taceriLaRand = 0 }
+                    } catch (e: ObdException) {
+                        aTacut = true
+                        taceriLaRand++
+                        if (taceriLaRand >= TACERI_MAXIME) {
+                            throw ObdException(
+                                "Adaptorul a tacut de $taceriLaRand ori la rand: ${e.message}", e,
+                            )
                         }
+                        Log.d(TAG, "${bucata.joinToString { it.eticheta }}: ${e.message} (tacerea $taceriLaRand)")
+                        emptyMap()
                     }
-                    else -> {
-                        ratari[pid] = 0
-                        depozit.pune(valori, ceas())
+                    amCerutCeva = true
+                    val dupa = ceas()
+                    for (pid in bucata) {
+                        urmatoarea[pid] = dupa + pid.perioadaMs
+                        val valori = rezultat[pid].orEmpty()
+                        when {
+                            // Tacerea e vina legaturii, nu a PID-ului: nu-l scoatem
+                            // din lista pentru ca adaptorul a intarziat o data.
+                            aTacut -> Unit
+                            valori.isEmpty() -> {
+                                val n = (ratari[pid] ?: 0) + 1
+                                ratari[pid] = n
+                                if (n >= RATARI_MAXIME) {
+                                    deCerut.remove(pid)
+                                    Log.i(TAG, "${pid.eticheta}: masina nu da PID-ul, nu-l mai cer")
+                                }
+                            }
+                            else -> {
+                                ratari[pid] = 0
+                                contorRaspunsuri++
+                                depozit.pune(valori, dupa)
+                            }
+                        }
                     }
                 }
             }
+
+            // Blocurile bateriei: rare, si numai cat le arata ecranul HIBRID.
+            if (CereriRare.vreaHibrid() && ceas() >= urmatoareleBlocuri) {
+                urmatoareleBlocuri = ceas() + PERIOADA_HIBRID_MS
+                try {
+                    val date = citesteHibrid(elm)
+                    depozit.actualizeaza { it.copy(hibrid = date) }
+                    taceriLaRand = 0
+                } catch (e: ObdException) {
+                    Log.d(TAG, "Blocurile bateriei: ${e.message}")
+                }
+                amCerutCeva = true
+            }
+
+            // Drumul de acum, socotit din ce avem deja.
+            val acumDrum = ceas()
+            drum = drum.cu(depozit.stare.value, (acumDrum - ultimulDrumMs) / 1000.0)
+            ultimulDrumMs = acumDrum
+            if (drum != depozit.stare.value.drum) depozit.actualizeaza { it.copy(drum = drum) }
 
             // Media raspunsurilor pe secunda, reinnoita din secunda in secunda.
             val trecut = ceas() - inceputMasurare
@@ -202,6 +256,31 @@ class ObdPoller(
         }
     }
 
+    /**
+     * O bucata de PID-uri: cate unul, sau toate intr-o singura intrebare.
+     * Intoarce null daca intrebarea comuna n-a fost inteleasa.
+     */
+    private fun citesteBucata(elm: Elm327, bucata: List<ObdPid>, grupuri: Boolean): Map<ObdPid, Map<Marime, Double>>? {
+        if (bucata.size == 1 || !grupuri) return bucata.associateWith { elm.citeste(it) }
+        val r = elm.citesteGrup(bucata) ?: return null
+        // un raspuns fara niciun PID cerut = intrebarea n-a fost inteleasa
+        return if (r.values.all { it.isEmpty() }) null else r
+    }
+
+    /** Bateria pe blocuri, temperaturile si rezervorul. Vezi [DateHibrid]. */
+    private fun citesteHibrid(elm: Elm327): DateHibrid {
+        val h = "7E2"
+        val tensiuni = DateHibrid.tensiuni(elm.citesteBloc(h, 0x81))
+        val rezistente = DateHibrid.rezistente(elm.citesteBloc(h, 0x95))
+        val temperaturi = DateHibrid.temperaturi(elm.citesteBloc(h, 0x87))
+        val sistem = listOf(0x61 to "MG1?", 0x62 to "MG2?", 0x63 to "INVERTOR?", 0x70 to "CONVERTOR?")
+            .mapNotNull { (bloc, eticheta) ->
+                DateHibrid.temperaturaSimpla(elm.citesteBloc(h, bloc))?.let { eticheta to it }
+            }
+        val rezervor = DateHibrid.rezervor(elm.citesteBloc("7C0", 0x29))
+        return DateHibrid(tensiuni, rezistente, temperaturi, sistem, rezervor, ceas())
+    }
+
     companion object {
         private const val TAG = "ObdPoller"
         private const val PAUZA_MINIMA_MS = 1_000L
@@ -209,5 +288,11 @@ class ObdPoller(
         private const val TURA_MINIMA_MS = 20L
         private const val RATARI_MAXIME = 3
         private const val TACERI_MAXIME = 5
+
+        /** Cate PID-uri punem intr-o intrebare: 3 incap intr-un singur cadru CAN. */
+        const val GRUP_MAXIM = 3
+
+        /** Cat de des citim blocurile bateriei cand e deschis ecranul HIBRID. */
+        const val PERIOADA_HIBRID_MS = 5_000L
     }
 }

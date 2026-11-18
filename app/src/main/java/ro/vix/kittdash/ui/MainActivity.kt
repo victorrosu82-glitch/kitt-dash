@@ -312,7 +312,7 @@ private fun Explorare(stare: CarState) {
         when {
             ruleaza -> {
                 Text(
-                    text = "Explorez masina: ${(stare.explorareProgres * 100).toInt()}%",
+                    text = "Lucrez: ${(stare.explorareProgres * 100).toInt()}%",
                     color = CYAN, fontSize = 14.sp, fontFamily = FontFamily.Monospace,
                 )
                 Text(
@@ -341,6 +341,16 @@ private fun Explorare(stare: CarState) {
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Exploreaza masina", color = CYAN, maxLines = 1, fontSize = 13.sp) }
+                Spacer(Modifier.height(6.dp))
+                OutlinedButton(
+                    onClick = {
+                        val adresa = AdaptorTinutMinte.citeste(context)
+                        if (adresa != null) ObdService.porneste(context, adresa, proba = true)
+                    },
+                    enabled = stare.conectat && !stare.simulator,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Proba baterie (2 min, pentru Dr Prius)", color = AMBRA, maxLines = 1, fontSize = 13.sp) }
                 Text(
                     text = "Intreaba toate calculatoarele ce date au. Numai citire, " +
                         "nimic nu se schimba in masina. Masina pe loc, in READY; " +
