@@ -31,6 +31,29 @@ import ro.vix.kittdash.ui.MainActivity
 class ObdService : LifecycleService() {
 
     private var bucla: Job? = null
+    private var barometru: Barometru? = null
+    private var istoric: IstoricBaterie? = null
+
+    override fun onCreate() {
+        super.onCreate()
+        val depozit = CarStateRepository.INSTANTA
+        barometru = Barometru(this) { hPa -> depozit.actualizeaza { it.copy(presiuneTelefonHpa = hPa) } }
+            .also { it.porneste() }
+        val ist = IstoricBaterie(this).also { istoric = it }
+        depozit.actualizeaza { it.copy(istoricPrimaZi = ist.prima()) }
+        // nota bateriei intra in istoric, o data pe schimbare
+        lifecycleScope.launch {
+            var ultima: Sanatate? = null
+            depozit.stare.collect { st ->
+                val s = st.sanatate
+                if (s != null && s != ultima) {
+                    ultima = s
+                    ist.noteaza(s)
+                    if (st.istoricPrimaZi == null) depozit.actualizeaza { it.copy(istoricPrimaZi = ist.prima()) }
+                }
+            }
+        }
+    }
 
     /** Adaptorul la care lucreaza bucla acum. */
     private var adresaCurenta: String? = null
@@ -45,6 +68,7 @@ class ObdService : LifecycleService() {
         val sonda = intent?.getBooleanExtra(EXTRA_SONDA, false) ?: false
         val explorare = intent?.getBooleanExtra(EXTRA_EXPLORARE, false) ?: false
         val proba = intent?.getBooleanExtra(EXTRA_PROBA, false) ?: false
+        val ghidata = intent?.getBooleanExtra(EXTRA_GHIDATA, false) ?: false
         val doarDacaNuMerge = intent?.getBooleanExtra(EXTRA_DOAR_DACA_NU_MERGE, false) ?: false
 
         // Ecranul masinii cere legatura de fiecare data cand revine. Daca deja
@@ -64,6 +88,7 @@ class ObdService : LifecycleService() {
                 scrieSonda = ::scrieJurnalSonda,
                 faceExplorare = explorare,
                 faceProba = proba,
+                faceGhidata = ghidata,
                 scrieExplorare = ::scrieRaportExplorare,
             )
             poller.ruleaza()
@@ -158,6 +183,7 @@ class ObdService : LifecycleService() {
     }
 
     override fun onDestroy() {
+        barometru?.opreste()
         bucla?.cancel()
         CarStateRepository.INSTANTA.deconectat()
         super.onDestroy()
@@ -172,6 +198,7 @@ class ObdService : LifecycleService() {
         private const val EXTRA_SONDA = "sonda"
         private const val EXTRA_EXPLORARE = "explorare"
         private const val EXTRA_PROBA = "proba"
+        private const val EXTRA_GHIDATA = "ghidata"
         private const val EXTRA_DOAR_DACA_NU_MERGE = "doar_daca_nu_merge"
 
         /**
@@ -184,12 +211,14 @@ class ObdService : LifecycleService() {
             sondaHibrida: Boolean = false,
             explorare: Boolean = false,
             proba: Boolean = false,
+            ghidata: Boolean = false,
         ) {
             val intent = Intent(context, ObdService::class.java)
                 .putExtra(EXTRA_ADRESA, adresa)
                 .putExtra(EXTRA_SONDA, sondaHibrida)
                 .putExtra(EXTRA_EXPLORARE, explorare)
                 .putExtra(EXTRA_PROBA, proba)
+                .putExtra(EXTRA_GHIDATA, ghidata)
             context.startForegroundService(intent)
         }
 

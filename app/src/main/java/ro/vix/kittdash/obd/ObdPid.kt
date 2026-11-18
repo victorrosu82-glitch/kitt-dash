@@ -13,6 +13,7 @@ enum class Marime(val eticheta: String, val unitate: String) {
     TEMP_LICHID("Temp. lichid racire", "°C"),
     TEMP_AER_ADMISIE("Temp. aer admisie", "°C"),
     TEMP_EXTERIOARA("Temp. exterioara", "°C"),
+    PRESIUNE_ATM("Presiune atmosferica", "kPa"),
     TEMP_CATALIZATOR("Temp. catalizator", "°C"),
     DEBIT_AER("Debit aer", "g/s"),
     TENSIUNE_MODUL("Tensiune modul", "V"),
@@ -72,6 +73,11 @@ enum class ObdPid(
      * Temperatura de afara. O dau amandoua calculatoarele; o cerem de la cel
      * al motorului, ca sa nu mai schimbam adresa pentru ea.
      */
+    /** Presiunea aerului, kPa intregi: altitudinea cand telefonul n-are barometru. */
+    PRESIUNE_ATM(
+        0x33, 1, null, 10_000L,
+        listOf(Marime.PRESIUNE_ATM to { b: IntArray -> b[0].toDouble() }),
+    ),
     TEMP_EXTERIOARA(
         0x46, 1, null, 5000L,
         listOf(Marime.TEMP_EXTERIOARA to { b: IntArray -> b[0] - 40.0 }),

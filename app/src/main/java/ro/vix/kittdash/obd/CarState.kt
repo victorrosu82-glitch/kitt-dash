@@ -53,6 +53,14 @@ data class CarState(
     val hibrid: DateHibrid? = null,
     /** Drumul de acum: km, timp pe baterie, energie recuperata, consum. */
     val drum: Drum = Drum(),
+    /** Presiunea aerului de la barometrul telefonului, hPa (null daca n-are). */
+    val presiuneTelefonHpa: Double? = null,
+    /** Nota bateriei HV, din blocuri si rezistente. */
+    val sanatate: Sanatate? = null,
+    /** Ultima diferenta dintre blocuri masurata cu bateria in repaus, mV. */
+    val diferentaRepausMv: Int? = null,
+    /** Prima zi din istoricul bateriei si rezistenta medie de atunci. */
+    val istoricPrimaZi: Pair<String, Double>? = null,
 ) {
     fun valoare(marime: Marime): Double? = valori[marime]?.valoare
 

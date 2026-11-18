@@ -13,6 +13,7 @@ import ro.vix.kittdash.bord.Pensula.Companion.VALOARE
 import ro.vix.kittdash.bord.Pensula.Companion.VERDE
 import ro.vix.kittdash.bord.Pensula.Companion.VERDE_STINS
 import ro.vix.kittdash.obd.DateHibrid
+import ro.vix.kittdash.obd.Nota
 import ro.vix.kittdash.obd.Drum
 import kotlin.math.roundToInt
 
@@ -29,7 +30,7 @@ class EcranHibrid(private val p: Pensula) {
 
     fun deseneaza(c: Canvas, s: StareBord, h: DateHibrid?, drum: Drum) {
         p.antet(c, s, FelEcran.HIBRID.titlu)
-        blocuri(c, h)
+        blocuri(c, s, h)
         p.linie(c, 680f, 96f, 680f, 450f, LINIE_PANOU, 1.5f)
         bateriaAcum(c, s, h)
         temperaturi(c, h)
@@ -37,7 +38,7 @@ class EcranHibrid(private val p: Pensula) {
         p.puncte(c, FelEcran.HIBRID)
     }
 
-    private fun blocuri(c: Canvas, h: DateHibrid?) {
+    private fun blocuri(c: Canvas, s: StareBord, h: DateHibrid?) {
         p.text(c, 40f, 112f, 13f, ETICHETA, "BATERIE HV · 17 BLOCURI", spatiere = 2f)
         p.text(c, 640f, 112f, 13f, ROSU_STERS, "V / BLOC", Paint.Align.RIGHT, 2f)
         val x0 = 40f
@@ -90,9 +91,22 @@ class EcranHibrid(private val p: Pensula) {
                 else -> ROSU
             },
             diferenta?.let { "${(it * 1000).roundToInt()} mV" } ?: BordKitt.LIPSA)
-        p.text(c, 200f, 418f, 12f, ETICHETA, "CEL MAI SLAB", spatiere = 2f)
-        p.text(c, 200f, 446f, 26f, ROSU, slab?.let { "blocul ${it + 1}" } ?: BordKitt.LIPSA)
-        p.text(c, 400f, 418f, 12f, ETICHETA, "REZISTENTA MEDIE", spatiere = 2f)
+        // nota bateriei: din blocuri in repaus si din rezistente
+        val sanatate = s.sanatate
+        p.text(c, 200f, 418f, 12f, ETICHETA, "SANATATE", spatiere = 2f)
+        p.text(c, 200f, 446f, 26f,
+            when (sanatate?.nota) {
+                Nota.BUNA -> VERDE
+                Nota.DE_URMARIT -> AMBRA
+                Nota.SLABA -> ROSU
+                null -> ETICHETA
+            },
+            sanatate?.nota?.text ?: BordKitt.LIPSA, gros = true)
+        sanatate?.let { p.text(c, 200f, 400f, 10f, ROSU_STERS, it.motiv.uppercase(), spatiere = 1f) }
+        val prima = s.istoricPrimaZi
+        p.text(c, 400f, 418f, 12f, ETICHETA,
+            if (prima != null) "REZISTENTA · ${prima.first.substring(8, 10)}.${prima.first.substring(5, 7)}: ${prima.second.roundToInt()}" else "REZISTENTA MEDIE",
+            spatiere = 2f)
         val medie = h?.rezistente?.takeIf { it.isNotEmpty() }?.average()
         p.text(c, 400f, 446f, 26f, VALOARE, medie?.let { "${it.roundToInt()} mΩ" } ?: BordKitt.LIPSA)
     }

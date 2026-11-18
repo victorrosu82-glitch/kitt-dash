@@ -30,12 +30,15 @@ class ObdPoller(
     faceExplorare: Boolean = false,
     /** Daca da, dupa initializare face proba de baterie (2 minute), o data. */
     faceProba: Boolean = false,
+    /** Daca da, dupa initializare face proba ghidata (mod de condus, clima, MG), o data. */
+    faceGhidata: Boolean = false,
     /** Scrie un raport (fel, text) si spune unde (sau null daca n-a putut). */
     private val scrieExplorare: (String, String) -> String? = { _, _ -> null },
 ) {
 
     private var deExplorat = faceExplorare
     private var deProbat = faceProba
+    private var deGhidat = faceGhidata
 
     /** Ruleaza pana la anularea corutinei. */
     suspend fun ruleaza() = withContext(Dispatchers.IO) {
@@ -90,6 +93,10 @@ class ObdPoller(
                     probeaza(link)
                     elm.uitaAntetul()
                 }
+                if (deGhidat) {
+                    ghideaza(link)
+                    elm.uitaAntetul()
+                }
 
                 pauzaMs = PAUZA_MINIMA_MS
                 interogheazaLaNesfarsit(elm, suportate)
@@ -142,6 +149,17 @@ class ObdPoller(
         val unde = scrieExplorare("proba-baterie", raport)
         depozit.actualizeaza { it.copy(explorare = null, explorareProgres = 1f, fisierExplorare = unde) }
         Log.i(TAG, "Proba de baterie terminata, raport in $unde")
+    }
+
+    private fun ghideaza(link: ObdLink) {
+        val raport = ProbaGhidata(
+            link,
+            progres = { text, f -> depozit.actualizeaza { it.copy(explorare = text, explorareProgres = f) } },
+        ).ruleaza()
+        deGhidat = false
+        val unde = scrieExplorare("proba-ghidata", raport)
+        depozit.actualizeaza { it.copy(explorare = null, explorareProgres = 1f, fisierExplorare = unde) }
+        Log.i(TAG, "Proba ghidata terminata, raport in $unde")
     }
 
     /**
@@ -233,7 +251,15 @@ class ObdPoller(
                 try {
                     val vechi = depozit.stare.value.hibrid ?: DateHibrid()
                     val nou = citestePasHibrid(elm, pas, vechi)
-                    depozit.actualizeaza { it.copy(hibrid = nou) }
+                    depozit.actualizeaza { st ->
+                        val curent = st.valoare(Marime.HV_CURENT)?.toFloat()
+                        val repaus = SanatateBaterie.diferentaInRepaus(nou, curent) ?: st.diferentaRepausMv
+                        st.copy(
+                            hibrid = nou,
+                            diferentaRepausMv = repaus,
+                            sanatate = SanatateBaterie.evalueaza(nou, curent, repaus),
+                        )
+                    }
                     taceriLaRand = 0
                 } catch (e: ObdException) {
                     Log.d(TAG, "Blocul bateriei $pas: ${e.message}")

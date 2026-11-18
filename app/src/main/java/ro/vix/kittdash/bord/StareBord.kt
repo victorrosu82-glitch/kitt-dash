@@ -38,6 +38,10 @@ data class StareBord(
     val hibrid: ro.vix.kittdash.obd.DateHibrid? = null,
     /** Drumul de acum. */
     val drum: ro.vix.kittdash.obd.Drum = ro.vix.kittdash.obd.Drum(),
+    /** Altitudinea, m: din barometrul telefonului sau, mai grosier, al masinii. */
+    val altitudineM: Float? = null,
+    val sanatate: ro.vix.kittdash.obd.Sanatate? = null,
+    val istoricPrimaZi: Pair<String, Double>? = null,
     val mod: ModHibrid = ModHibrid.NECUNOSCUT,
     val areLegatura: Boolean = false,
     val peSimulator: Boolean = false,
@@ -142,6 +146,10 @@ class Netezitor(
             consumLh = masina.valoare(Marime.DEBIT_AER)?.let { Consum.litriPeOra(it).toFloat() },
             hibrid = masina.hibrid,
             drum = masina.drum,
+            altitudineM = (masina.presiuneTelefonHpa ?: masina.valoare(Marime.PRESIUNE_ATM)?.times(10.0))
+                ?.let { ro.vix.kittdash.obd.Altitudine.dinPresiune(it).toFloat() },
+            sanatate = masina.sanatate,
+            istoricPrimaZi = masina.istoricPrimaZi,
             mod = ModHibrid.din(masina),
             areLegatura = masina.conectat,
             peSimulator = masina.simulator,

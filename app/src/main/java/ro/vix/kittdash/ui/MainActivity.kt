@@ -58,6 +58,8 @@ import ro.vix.kittdash.obd.CarState
 import ro.vix.kittdash.obd.Marime
 import ro.vix.kittdash.obd.ModHibrid
 import ro.vix.kittdash.obd.ObdService
+import ro.vix.kittdash.obd.GhidProba
+import ro.vix.kittdash.obd.PasGhid
 import ro.vix.kittdash.obd.RandSonda
 import ro.vix.kittdash.obd.StareConexiune
 
@@ -303,6 +305,7 @@ private fun EcranDeTest(vm: MainViewModel = viewModel()) {
 private fun Explorare(stare: CarState) {
     val context = LocalContext.current
     val ruleaza = stare.explorare != null
+    val pasGhid by GhidProba.pas.collectAsStateWithLifecycle()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -310,6 +313,7 @@ private fun Explorare(stare: CarState) {
             .padding(12.dp),
     ) {
         when {
+            ruleaza && pasGhid != null -> PasulProbei(pasGhid!!)
             ruleaza -> {
                 Text(
                     text = "Lucrez: ${(stare.explorareProgres * 100).toInt()}%",
@@ -351,6 +355,16 @@ private fun Explorare(stare: CarState) {
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
                     modifier = Modifier.fillMaxWidth(),
                 ) { Text("Proba baterie (2 min, pentru Dr Prius)", color = AMBRA, maxLines = 1, fontSize = 13.sp) }
+                Spacer(Modifier.height(6.dp))
+                OutlinedButton(
+                    onClick = {
+                        val adresa = AdaptorTinutMinte.citeste(context)
+                        if (adresa != null) ObdService.porneste(context, adresa, ghidata = true)
+                    },
+                    enabled = stare.conectat && !stare.simulator,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 10.dp),
+                    modifier = Modifier.fillMaxWidth(),
+                ) { Text("Proba ghidata: mod, clima, MG1/MG2 (~10 min)", color = CYAN, maxLines = 1, fontSize = 13.sp) }
                 Text(
                     text = "Intreaba toate calculatoarele ce date au. Numai citire, " +
                         "nimic nu se schimba in masina. Masina pe loc, in READY; " +
@@ -360,6 +374,68 @@ private fun Explorare(stare: CarState) {
             }
         }
     }
+}
+
+/**
+ * Un pas al probei ghidate: ce sa faci, ce sa scrii, si butonul „Gata”.
+ * Pasul de drum merge singur; atunci nu se atinge telefonul.
+ */
+@Composable
+private fun PasulProbei(pas: PasGhid) {
+    val note = remember(pas.nr) { mutableStateOf(mapOf<String, String>()) }
+    var trimis by remember(pas.nr) { mutableStateOf(false) }
+    Text(
+        text = "Pasul ${pas.nr} din ${pas.total}: ${pas.titlu}",
+        color = CYAN, fontSize = 16.sp, fontWeight = FontWeight.Bold, fontFamily = FontFamily.Monospace,
+    )
+    Spacer(Modifier.height(6.dp))
+    Text(text = pas.text, color = AMBRA, fontSize = 14.sp)
+    Spacer(Modifier.height(8.dp))
+    for (camp in pas.campuri) {
+        OutlinedTextField(
+            value = note.value[camp] ?: "",
+            onValueChange = { note.value = note.value + (camp to it) },
+            label = { Text(camp, fontSize = 12.sp) },
+            singleLine = true,
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedTextColor = AMBRA,
+                unfocusedTextColor = AMBRA,
+                focusedBorderColor = CYAN,
+                unfocusedBorderColor = ROSU_STINS,
+                focusedLabelColor = CYAN,
+                unfocusedLabelColor = ROSU_STINS,
+                cursorColor = CYAN,
+            ),
+            modifier = Modifier.fillMaxWidth(),
+        )
+        Spacer(Modifier.height(4.dp))
+    }
+    if (pas.automat) {
+        Text(
+            text = "Merge singur: mai sunt ${pas.secundeRamase ?: 0} s. Nu atinge telefonul.",
+            color = CYAN, fontSize = 14.sp, fontFamily = FontFamily.Monospace,
+        )
+    } else {
+        Text(
+            text = "Tururi citite: ${pas.tururi}" + if (pas.tururi < 2) " (asteapta 2)" else "",
+            color = ROSU_STINS, fontSize = 12.sp, fontFamily = FontFamily.Monospace,
+        )
+        Spacer(Modifier.height(6.dp))
+        Button(
+            onClick = {
+                GhidProba.gata(note.value.filterValues { it.isNotBlank() })
+                trimis = true
+            },
+            enabled = !trimis,
+            modifier = Modifier.fillMaxWidth(),
+        ) { Text(if (trimis) "Termin turul..." else "Gata, pasul urmator", fontSize = 14.sp) }
+    }
+    Spacer(Modifier.height(6.dp))
+    OutlinedButton(
+        onClick = { GhidProba.renunta() },
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 6.dp),
+        modifier = Modifier.fillMaxWidth(),
+    ) { Text("Opreste proba", color = ROSU_STINS, fontSize = 12.sp) }
 }
 
 /**

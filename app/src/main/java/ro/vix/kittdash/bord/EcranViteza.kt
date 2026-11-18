@@ -68,6 +68,10 @@ class EcranViteza(private val p: Pensula) {
         }
         p.text(c, 100f, 262f, 38f, AMBRA, s.socProcent?.let { "${it.roundToInt()}%" } ?: BordKitt.LIPSA)
 
+        // altitudinea, sub baterie
+        p.text(c, 40f, 300f, 13f, ETICHETA, "ALTITUDINE", spatiere = 2f)
+        p.text(c, 40f, 338f, 30f, VALOARE, s.altitudineM?.let { "${it.roundToInt()} m" } ?: BordKitt.LIPSA)
+
         // puterea, in dreapta: sus cat trage, jos cat recupereaza
         p.text(c, 1150f, 120f, 13f, ETICHETA, "POWER", Paint.Align.RIGHT, 2f)
         val sus = LogicaBord.trepteSus(s.putereKw, TREPTE_PUTERE)
