@@ -145,12 +145,12 @@ class EcranHibrid(private val p: Pensula) {
             Triple("PE BATERIE", d.procentBaterie?.let { "${it.roundToInt()}%" }, CYAN),
             Triple("RECUPERAT", if (d.km > 0.1) "%.2f kWh".format(d.kWhRecuperat).replace('.', ',') else null, CYAN),
             Triple("CONSUM", d.litriLa100?.let { "%.1f l/100".format(it).replace('.', ',') }, AMBRA),
-            Triple("REZERVOR ?", h?.rezervorLitri?.let { "${it.roundToInt()} l" }, AMBRA),
+            Triple("REZERVOR", h?.rezervorLitri?.let { "${it.roundToInt()} l" }, AMBRA),
         )
         randuri.forEachIndexed { i, (eticheta, valoare, culoare) ->
             val x = cx + i * 112f
             p.text(c, x, 414f, 11f, ETICHETA, eticheta, spatiere = 1.5f)
-            p.text(c, x, 442f, 22f, culoare, valoare ?: BordKitt.LIPSA, alfa = if (i == 3) 0.75f else 1f)
+            p.text(c, x, 442f, 22f, culoare, valoare ?: BordKitt.LIPSA, alfa = 1f)
         }
     }
 

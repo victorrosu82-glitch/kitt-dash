@@ -12,15 +12,14 @@ import ro.vix.kittdash.bord.Pensula.Companion.ROSU
 import ro.vix.kittdash.bord.Pensula.Companion.STINS
 import ro.vix.kittdash.bord.Pensula.Companion.VALOARE
 import android.graphics.Color
-import kotlin.math.floor
 import kotlin.math.hypot
-import kotlin.math.max
 import kotlin.math.roundToInt
 
 /**
  * Ecranul 3: pe unde curge energia, pe schema NX 300h E-Four vazuta de sus,
- * cu fata in stanga. Sagetile mici curg in sensul energiei: portocalii
- * dinspre motorul termic, albastre pe partea electrica. In dreapta, cifrele
+ * cu fata in stanga. Pe fiecare drum activ alunecă pulsuri de lumina in
+ * sensul energiei, ca pe ecranul Lexus: portocalii dinspre motorul termic,
+ * albastre pe partea electrica. In dreapta, cifrele
  * bateriei HV. Macheta: `docs/macheta-ecran-3-*.png`.
  */
 class EcranEnergie(private val p: Pensula) {
@@ -28,8 +27,8 @@ class EcranEnergie(private val p: Pensula) {
     fun deseneaza(c: Canvas, s: StareBord) {
         p.antet(c, s, FelEcran.ENERGIE.titlu)
         val f = FluxEnergie.din(s.turatie, s.putereKw, s.vitezaKmh)
-        // cat au inaintat sagetile: patru pasi pe secunda
-        val faza = s.timpS * PASI_PE_SECUNDA
+        // cat au inaintat pulsurile, in puncte
+        val faza = s.timpS * VITEZA_PULS
 
         schema(c, s, f, faza)
         coloanaBaterie(c, s)
@@ -183,45 +182,79 @@ class EcranEnergie(private val p: Pensula) {
     }
 
     /**
-     * Un drum de energie: linie subtire, iar peste ea sageti mici care se
-     * aprind pe rand, in sensul in care curge energia.
+     * Un drum de energie. Stins: o linie subtire. Activ: un fascicul cu halou,
+     * iar pe el pulsuri luminoase cu coada, care alearga in sensul energiei.
+     * [faza] e cat au inaintat pulsurile, in puncte.
      */
     private fun flux(c: Canvas, puncte: List<Pair<Float, Float>>, culoare: Int, activ: Boolean, faza: Float) {
-        for (k in 0 until puncte.size - 1) {
-            val (ax, ay) = puncte[k]
-            val (bx, by) = puncte[k + 1]
-            p.linie(c, ax, ay, bx, by, if (activ) culoare else DRUM_STINS, if (activ) 3f else 2f, if (activ) 0.3f else 1f)
+        p.drum.reset()
+        p.drum.moveTo(puncte[0].first, puncte[0].second)
+        for (k in 1 until puncte.size) p.drum.lineTo(puncte[k].first, puncte[k].second)
+        if (!activ) {
+            p.linie.color = DRUM_STINS
+            p.linie.strokeWidth = 2f
+            c.drawPath(p.drum, p.linie)
+            return
         }
-        if (!activ) return
-        var parcurs = 0f
-        for (k in 0 until puncte.size - 1) {
-            val (ax, ay) = puncte[k]
-            val (bx, by) = puncte[k + 1]
-            val l = hypot(bx - ax, by - ay)
-            val ux = (bx - ax) / l
-            val uy = (by - ay) / l
-            val n = max(2, (l / PAS_SAGETI).roundToInt())
-            val pas = l / n
-            for (i in 1 until n) {
-                val x = ax + ux * i * pas
-                val y = ay + uy * i * pas
-                // stralucirea urca spre varf si alearga inainte cu timpul
-                val pozitie = (parcurs + i * pas) / PAS_SAGETI - faza
-                val treapta = pozitie - 4f * floor(pozitie / 4f)
-                val alfa = 0.35f + 0.65f * (treapta / 3f).coerceIn(0f, 1f)
-                p.linie.color = culoare
-                p.linie.alpha = (alfa * 255).roundToInt()
-                p.linie.strokeWidth = 4.5f
-                p.drum.reset()
-                p.drum.moveTo(x - ux * 7f - uy * 9f, y - uy * 7f + ux * 9f)
-                p.drum.lineTo(x + ux * 6f, y + uy * 6f)
-                p.drum.lineTo(x - ux * 7f + uy * 9f, y - uy * 7f - ux * 9f)
-                c.drawPath(p.drum, p.linie)
-            }
-            parcurs += l
+        // fasciculul: halou larg si slab, apoi miezul
+        for ((latime, alfa) in FASCICUL) {
+            p.linie.color = culoare
+            p.linie.alpha = alfa
+            p.linie.strokeWidth = latime
+            c.drawPath(p.drum, p.linie)
         }
         p.linie.alpha = 255
+
+        val lungimi = FloatArray(puncte.size - 1) { k ->
+            hypot(puncte[k + 1].first - puncte[k].first, puncte[k + 1].second - puncte[k].second)
+        }
+        val total = lungimi.sum()
+        val cap = deschide(culoare)
+        // pulsurile, la SPATIU_PULS unul de altul; primul porneste din capatul drumului
+        var d = faza % SPATIU_PULS
+        while (d < total + COADA_PULS) {
+            for (k in COADA_PASI downTo 0) {
+                val dk = d - k * (COADA_PULS / COADA_PASI)
+                if (dk < 0f || dk > total) continue
+                val (x, y) = punctPe(puncte, lungimi, dk)
+                val stingere = 1f - k / (COADA_PASI + 1f)
+                puls.color = culoare
+                puls.alpha = (70 * stingere).roundToInt()
+                c.drawCircle(x, y, 4f + 8f * stingere, puls)
+                if (k == 0) {
+                    puls.color = cap
+                    puls.alpha = 255
+                    c.drawCircle(x, y, 4.5f, puls)
+                }
+            }
+            d += SPATIU_PULS
+        }
     }
+
+    /** Punctul aflat la distanta [d] de inceputul drumului. */
+    private fun punctPe(puncte: List<Pair<Float, Float>>, lungimi: FloatArray, d: Float): Pair<Float, Float> {
+        var rest = d
+        for (k in lungimi.indices) {
+            val l = lungimi[k]
+            if (rest <= l || k == lungimi.lastIndex) {
+                val t = if (l > 0f) (rest / l).coerceIn(0f, 1f) else 0f
+                val (ax, ay) = puncte[k]
+                val (bx, by) = puncte[k + 1]
+                return (ax + (bx - ax) * t) to (ay + (by - ay) * t)
+            }
+            rest -= l
+        }
+        return puncte.last()
+    }
+
+    /** Culoarea pulsului, spre alb, ca un varf de lumina. */
+    private fun deschide(culoare: Int): Int = Color.rgb(
+        (Color.red(culoare) + 255 * 2) / 3,
+        (Color.green(culoare) + 255 * 2) / 3,
+        (Color.blue(culoare) + 255 * 2) / 3,
+    )
+
+    private val puls = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
 
     companion object {
         private const val X0 = 24f
@@ -238,8 +271,14 @@ class EcranEnergie(private val p: Pensula) {
         private const val TR_X = 258f
         private const val BAT_X = 486f
 
-        private const val PAS_SAGETI = 24f
-        private const val PASI_PE_SECUNDA = 4f
+        /** Pulsurile de energie: cat de repede alearga, cat de rare, cat de lunga e coada. */
+        private const val VITEZA_PULS = 120f
+        private const val SPATIU_PULS = 56f
+        private const val COADA_PULS = 30f
+        private const val COADA_PASI = 6
+
+        /** Fasciculul: (grosime, opacitate din 255), de la halou spre miez. */
+        private val FASCICUL = listOf(14f to 28, 7f to 60, 2.5f to 170)
 
         /** Casute de fiecare parte a barei de putere. */
         private const val BARA_PE_PARTE = 10

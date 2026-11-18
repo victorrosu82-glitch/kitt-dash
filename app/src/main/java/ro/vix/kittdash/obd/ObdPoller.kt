@@ -163,7 +163,7 @@ class ObdPoller(
         // Cererile cu mai multe PID-uri deodata. Daca masina sau adaptorul nu
         // le inteleg, ne intoarcem la cate una si nu mai incercam.
         var grupuriMerg = true
-        var urmatoareleBlocuri = 0L
+        var pasHibrid = 0
         var drum = Drum()
         var ultimulDrumMs = ceas()
 
@@ -224,15 +224,19 @@ class ObdPoller(
                 }
             }
 
-            // Blocurile bateriei: rare, si numai cat le arata ecranul HIBRID.
-            if (CereriRare.vreaHibrid() && ceas() >= urmatoareleBlocuri) {
-                urmatoareleBlocuri = ceas() + PERIOADA_HIBRID_MS
+            // Blocurile bateriei, numai cat le arata ecranul HIBRID: cate unul
+            // pe tur, prin rotatie, ca viteza si turatia sa curga neoprite.
+            // Tensiunile vin la fiecare al treilea pas, adica la ~1 s.
+            if (CereriRare.vreaHibrid()) {
+                val pas = PASI_HIBRID[pasHibrid % PASI_HIBRID.size]
+                pasHibrid++
                 try {
-                    val date = citesteHibrid(elm)
-                    depozit.actualizeaza { it.copy(hibrid = date) }
+                    val vechi = depozit.stare.value.hibrid ?: DateHibrid()
+                    val nou = citestePasHibrid(elm, pas, vechi)
+                    depozit.actualizeaza { it.copy(hibrid = nou) }
                     taceriLaRand = 0
                 } catch (e: ObdException) {
-                    Log.d(TAG, "Blocurile bateriei: ${e.message}")
+                    Log.d(TAG, "Blocul bateriei $pas: ${e.message}")
                 }
                 amCerutCeva = true
             }
@@ -267,18 +271,28 @@ class ObdPoller(
         return if (r.values.all { it.isEmpty() }) null else r
     }
 
-    /** Bateria pe blocuri, temperaturile si rezervorul. Vezi [DateHibrid]. */
-    private fun citesteHibrid(elm: Elm327): DateHibrid {
+    /** Un singur bloc al calculatorului hibrid, pus peste ce stiam. Vezi [DateHibrid]. */
+    private fun citestePasHibrid(elm: Elm327, pas: Int, d: DateHibrid): DateHibrid {
         val h = "7E2"
-        val tensiuni = DateHibrid.tensiuni(elm.citesteBloc(h, 0x81))
-        val rezistente = DateHibrid.rezistente(elm.citesteBloc(h, 0x95))
-        val temperaturi = DateHibrid.temperaturi(elm.citesteBloc(h, 0x87))
-        val sistem = listOf(0x61 to "MG1?", 0x62 to "MG2?", 0x63 to "INVERTOR?", 0x70 to "CONVERTOR?")
-            .mapNotNull { (bloc, eticheta) ->
-                DateHibrid.temperaturaSimpla(elm.citesteBloc(h, bloc))?.let { eticheta to it }
+        val acum = ceas()
+        return when (pas) {
+            0x81 -> DateHibrid.tensiuni(elm.citesteBloc(h, pas)).takeIf { it.isNotEmpty() }
+                ?.let { d.copy(tensiuni = it, laMs = acum) } ?: d
+            0x95 -> DateHibrid.rezistente(elm.citesteBloc(h, pas)).takeIf { it.isNotEmpty() }
+                ?.let { d.copy(rezistente = it) } ?: d
+            0x87 -> DateHibrid.temperaturi(elm.citesteBloc(h, pas)).takeIf { it.isNotEmpty() }
+                ?.let { d.copy(temperaturiBaterie = it) } ?: d
+            REZERVOR -> DateHibrid.rezervor(elm.citesteBloc("7C0", 0x29))
+                ?.let { d.copy(rezervorLitri = it) } ?: d
+            else -> {
+                val eticheta = ETICHETE_SISTEM[pas] ?: return d
+                val t = DateHibrid.temperaturaSimpla(elm.citesteBloc(h, pas)) ?: return d
+                val alte = d.temperaturiSistem.filter { it.first != eticheta }
+                val toate = (alte + (eticheta to t))
+                    .sortedBy { (e, _) -> ETICHETE_SISTEM.values.indexOf(e) }
+                d.copy(temperaturiSistem = toate)
             }
-        val rezervor = DateHibrid.rezervor(elm.citesteBloc("7C0", 0x29))
-        return DateHibrid(tensiuni, rezistente, temperaturi, sistem, rezervor, ceas())
+        }
     }
 
     companion object {
@@ -292,7 +306,12 @@ class ObdPoller(
         /** Cate PID-uri punem intr-o intrebare: 3 incap intr-un singur cadru CAN. */
         const val GRUP_MAXIM = 3
 
-        /** Cat de des citim blocurile bateriei cand e deschis ecranul HIBRID. */
-        const val PERIOADA_HIBRID_MS = 5_000L
+        /** Rezervorul sta la alt calculator (7C0); aici doar un semn in rotatie. */
+        private const val REZERVOR = -1
+
+        /** Ordinea blocurilor pe ecranul HIBRID: tensiunile la fiecare al treilea pas. */
+        val PASI_HIBRID = listOf(0x81, 0x95, 0x87, 0x81, 0x61, 0x62, 0x81, 0x63, 0x70, 0x81, REZERVOR, 0x87)
+
+        private val ETICHETE_SISTEM = linkedMapOf(0x61 to "MG1?", 0x62 to "MG2?", 0x63 to "INVERTOR?", 0x70 to "CONVERTOR?")
     }
 }

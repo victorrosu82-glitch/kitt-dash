@@ -298,11 +298,12 @@ class DesenatorMasina(private val carContext: CarContext) : SurfaceCallback {
      * butoane a sablonului de navigatie. Pe Lexus (panza 1190x460) asta lua
      * aproape o cincime din ecran, iar banda nu se vede decat cand atingi
      * ecranul - atunci butoanele apar o clipa peste coltul din dreapta-sus al
-     * bordului si se ascund singure. Latimea o luam tot din zona libera, ca
-     * bordul sa nu intre sub bara de aplicatii sau sub o fereastra alaturata.
+     * bordului si se ascund singure. In stanga pornim din zona libera, ca
+     * bordul sa nu intre sub bara de aplicatii; in dreapta mergem pana la
+     * margine, pentru ca acolo nu mai e nicio banda de butoane (18.11.2026).
      */
     private fun inaltimeIntreaga(zona: Rect): Rect =
-        Rect(zona.left, MARGINE, zona.right, inaltime - MARGINE)
+        Rect(zona.left, MARGINE, latime - MARGINE, inaltime - MARGINE)
 
     private fun unCadru() {
         val s = suprafata ?: return

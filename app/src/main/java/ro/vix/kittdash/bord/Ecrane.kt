@@ -29,11 +29,10 @@ class Ecrane {
     /**
      * Cat asteptam intre cadre pe fiecare ecran. Unde se misca scanerul sau
      * sagetile raman 30 de cadre; consola n-are nimic care sa alerge, deci
-     * 15 ii ajung, iar ecranul HIBRID se schimba la cateva secunde.
+     * 15 ii ajung.
      */
     fun perioadaMs(fel: FelEcran): Long = when (fel) {
         FelEcran.CONSOLA -> 66L
-        FelEcran.HIBRID -> 50L
         else -> 33L
     }
 
