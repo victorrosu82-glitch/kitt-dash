@@ -48,7 +48,7 @@ function antet(mod,culMod,titlu){
   r(SX+i*pas,52,pas-4,28,op>0.08?RED:DIM,{opacity:op>0.08?Math.max(0.12,op).toFixed(2):1})}
 }
 // Puncte care arata pe ce ecran esti: 1 bordul, 2 viteza, 3 energie
-function puncte(activ){for(let i=1;i<=3;i++)mk('circle',{cx:595+(i-2)*18,cy:447,r:4,fill:i===activ?RED:DIM},null,G)}
+function puncte(activ){const n=activ>3?5:3;for(let i=1;i<=n;i++)mk('circle',{cx:595+(i-(n+1)/2)*18,cy:447,r:4,fill:i===activ?RED:DIM},null,G)}
 
 // =======================================================================
 if(ECRAN==='2'){
@@ -313,6 +313,61 @@ if(ECRAN==='consola'){
   t(x+13,Y+H+16,11,'#6a6a6a',v+'%','middle',1)});
 }
 
+// =======================================================================
+// ECRAN HIBRID - sanatatea si temperaturile sistemului hibrid. Valorile sunt
+// cele citite din Lexus pe 18.11.2026 (explorarea, calculatorul 724).
+if(ECRAN==='hibrid'){
+ antet('HYBRID',AMB,'HIBRID');
+ const hex='37 BE 37 BE 37 6C 37 7C 37 A5 37 A5 37 7C 37 BE 37 F7 38 20 37 A5 37 95 37 95 37 A5 37 6C 37 7C 37 BE'.split(' ');
+ const V=[];for(let i=0;i<hex.length;i+=2)V.push(parseInt(hex[i]+hex[i+1],16)*79.99/65535);
+ const R='13 13 12 12 12 13 13 13 14 14 13 13 13 13 12 13 13'.split(' ').map(x=>parseInt(x,16));
+ const T=['448A','4C6B','4D94','4A02','49CC','4CF0','4BCA'].map(h=>parseInt(h,16)*255.9/65535-50);
+ const vmin=Math.min(...V),vmax=Math.max(...V),imin=V.indexOf(vmin),imax=V.indexOf(vmax);
+
+ // --- stanga: cele 17 blocuri ale bateriei -------------------------------
+ t(40,112,13,LAB,'BATERIE HV · 17 BLOCURI','start',2);
+ t(640,112,13,RS,'V / BLOC','end',2);
+ const X0=40,X1=640,YB=330,H=190,pas=(X1-X0)/17,jos=vmin-0.15,sus=vmax+0.05;
+ // liniile de reper
+ for(const v of [17.2,17.3,17.4,17.5]){const y=YB-(v-jos)/(sus-jos)*H;if(y>YB-H-5&&y<YB){ln(X0,y,X1,y,LINE,1);t(X1+4,y+4,10,RS,v.toFixed(1).replace('.',','),'start')}}
+ V.forEach((v,i)=>{
+  const h=(v-jos)/(sus-jos)*H,x=X0+i*pas+4,w=pas-8;
+  const c=i===imin?RED:(i===imax?AMB:CY);
+  r(x,YB-h,w,h,c,{opacity:0.85,rx:2});
+  r(x-2,YB-h-2,w+4,4,c,{rx:1});
+  t(x+w/2,YB+16,11,i===imin||i===imax?c:RS,String(i+1),'middle',0,i===imin||i===imax?700:400);
+  // rezistenta interna, sub numar
+  t(x+w/2,YB+32,10,R[i]>=20?AMB:'#6a2a22',R[i],'middle');
+ });
+ t(X0,YB+50,11,LAB,'mΩ REZISTENTA INTERNA PE BLOC','start',1.5);
+ // rezumatul sanatatii
+ const delta=(vmax-vmin);
+ t(40,418,12,LAB,'DIFERENTA','start',2);
+ t(40,446,26,delta<0.3?'#2fd34a':(delta<0.5?AMB:RED),(delta*1000).toFixed(0)+' mV','start',0,500);
+ t(200,418,12,LAB,'CEL MAI SLAB','start',2);t(200,446,26,RED,'blocul '+(imin+1),'start',0,500);
+ t(400,418,12,LAB,'REZISTENTA MEDIE','start',2);t(400,446,26,VAL,(R.reduce((a,b)=>a+b)/R.length).toFixed(0)+' mΩ','start',0,500);
+ ln(680,96,680,450,LINE,1.5);
+
+ // --- dreapta sus: bateria acum -----------------------------------------
+ const CX=705;
+ t(CX,112,13,LAB,'INCARCARE','start',2);t(CX,160,48,CY,'52%','start',0,500);
+ t(CX+170,112,13,LAB,'TENSIUNE','start',2);t(CX+170,150,28,VAL,(V.reduce((a,b)=>a+b)).toFixed(0)+' V');
+ t(CX+330,112,13,LAB,'PUTERE','start',2);t(CX+330,150,28,CY,'-3 kW');
+ // --- temperaturi --------------------------------------------------------
+ t(CX,196,13,LAB,'TEMPERATURI BATERIE · 7 SENZORI','start',2);
+ T.forEach((v,i)=>{const x=CX+i*62,h=(v-0)/50*70;
+  r(x,212,40,70,'#0c2a12',{rx:3});r(x,282-h,40,h,v>45?RED:(v>35?AMB:'#2fd34a'),{rx:3});
+  t(x+20,300,12,ALBc(),v.toFixed(0)+'°','middle',0,500)});
+ function ALBc(){return '#d8d8d8'}
+ t(CX,330,13,LAB,'MOTOARE SI INVERTOR','start',2);t(CX+440,330,10,RS,'(DE CONFIRMAT)','end',1);
+ [['MG1',38],['MG2',41],['INVERTOR',36],['CONVERTOR',31]].forEach(([n,v],i)=>{const x=CX+i*112;
+  t(x,350,11,RS,n,'start',1.5);t(x,376,24,AMB,v+'°C','start',0,500)});
+ // --- jos: drumul de azi ------------------------------------------------
+ ln(CX,392,1150,392,LINE,1);
+ [['PE BATERIE','64%',CY],['RECUPERAT','0,38 kWh',CY],['CONSUM','4,6 l/100',AMB],['REZERVOR','28 l',AMB]].forEach(([n,v,c],i)=>{const x=CX+i*112;
+  t(x,414,11,LAB,n,'start',1.5);t(x,442,22,c,v,'start',0,500)});
+ puncte(5);
+}
 </script>
 </body>
 </html>
