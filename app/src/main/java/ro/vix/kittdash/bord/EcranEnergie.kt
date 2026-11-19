@@ -25,7 +25,7 @@ import kotlin.math.roundToInt
 class EcranEnergie(private val p: Pensula) {
 
     fun deseneaza(c: Canvas, s: StareBord) {
-        p.antet(c, s, FelEcran.ENERGIE.titlu)
+        p.antet(c, s, FelEcran.ENERGIE.titlu, cuScaner = false)
         val f = FluxEnergie.din(s.turatie, s.putereKw, s.vitezaKmh)
         // cat au inaintat pulsurile, in puncte
         val faza = s.timpS * VITEZA_PULS
@@ -54,10 +54,10 @@ class EcranEnergie(private val p: Pensula) {
         flux(c, if (f.inBaterie) MGR_SUS.reversed() else MGR_SUS, CYAN, f.spate, faza)
         flux(c, if (f.inBaterie) MGR_JOS.reversed() else MGR_JOS, CYAN, f.spate, faza)
 
-        roata(c, FA, Y0 + 24f, f.rotiFata, cRotiFata, s.timpS)
-        roata(c, FA, Y1 - 24f, f.rotiFata, cRotiFata, s.timpS)
-        roata(c, SA, Y0 + 24f, f.spate, CYAN, s.timpS)
-        roata(c, SA, Y1 - 24f, f.spate, CYAN, s.timpS)
+        roata(c, FA, Y0 + 30f, f.rotiFata, cRotiFata, s.timpS)
+        roata(c, FA, Y1 - 30f, f.rotiFata, cRotiFata, s.timpS)
+        roata(c, SA, Y0 + 30f, f.spate, CYAN, s.timpS)
+        roata(c, SA, Y1 - 30f, f.spate, CYAN, s.timpS)
 
         // motorul termic, cu turatia mare
         caseta(c, ENG_X, YM, 124f, 104f, "MOTOR", f.motor, AMBRA)
@@ -107,22 +107,40 @@ class EcranEnergie(private val p: Pensula) {
      * parbriz si luneta de sticla fumurie (schema se vede prin ele), faruri,
      * stopuri si bara scanerului rosu in varful botului.
      */
+    /** Un punct pe masina: [u] de-a lungul ei (0 = botul, 1 = spatele), [v] din axa spre lateral (1 = cea mai lata). */
+    private fun pu(u: Float) = X0 + u * LUNGIME
+    private fun pv(v: Float) = YM - v * JUMATATE
+
+    /** Linie neteda prin puncte (u, v): trece prin mijlocul fiecarui segment. */
+    private fun neted(d: android.graphics.Path, pts: List<Pair<Float, Float>>, inchis: Boolean) {
+        val x = pts.map { pu(it.first) }
+        val y = pts.map { pv(it.second) }
+        val n = pts.size
+        if (inchis) {
+            d.moveTo((x[n - 1] + x[0]) / 2f, (y[n - 1] + y[0]) / 2f)
+            for (k in 0 until n) {
+                val u = (k + 1) % n
+                d.quadTo(x[k], y[k], (x[k] + x[u]) / 2f, (y[k] + y[u]) / 2f)
+            }
+            d.close()
+        } else {
+            d.moveTo(x[0], y[0])
+            for (k in 1 until n - 1) d.quadTo(x[k], y[k], (x[k] + x[k + 1]) / 2f, (y[k] + y[k + 1]) / 2f)
+            d.lineTo(x[n - 1], y[n - 1])
+        }
+    }
+
+    /**
+     * Masina vazuta de sus, cu fata in stanga, dupa schita Lexus NX 300h
+     * (4630 x 1845 mm, osiile la 995 si 3655 mm de bot): botul lat si rotunjit,
+     * aripile din fata, oglinzile, parbrizul, acoperisul cu trapa, luneta si
+     * spatele care se ingusteaza. Sticla e fumurie, ca schema sa se vada prin ea.
+     */
     private fun caroseria(c: Canvas, timpS: Float) {
         val d = p.drum
         d.reset()
-        d.moveTo(70f, 112f)
-        d.cubicTo(160f, 104f, 300f, 104f, 420f, 108f)
-        d.lineTo(700f, 110f)
-        d.cubicTo(760f, 112f, 800f, 120f, 812f, 150f)
-        d.lineTo(816f, 382f)
-        d.cubicTo(804f, 412f, 760f, 420f, 700f, 422f)
-        d.lineTo(420f, 424f)
-        d.cubicTo(300f, 428f, 160f, 428f, 70f, 420f)
-        d.cubicTo(42f, 414f, 24f, 384f, 14f, 334f)
-        d.quadTo(6f, 296f, 6f, 266f)
-        d.quadTo(6f, 236f, 14f, 198f)
-        d.cubicTo(24f, 148f, 42f, 118f, 70f, 112f)
-        d.close()
+        val sus = CONTUR_NX
+        neted(d, sus + sus.reversed().map { it.first to -it.second }, true)
         p.umplere.color = Color.parseColor("#0c0303")
         c.drawPath(d, p.umplere)
         p.linie.color = ROSU
@@ -135,33 +153,37 @@ class EcranEnergie(private val p: Pensula) {
         c.drawPath(d, p.linie)
 
         // oglinzile
-        for ((y0, y1) in listOf(108f to 92f, 424f to 440f)) {
-            d.reset(); d.moveTo(338f, y0); d.lineTo(350f, y1); d.lineTo(372f, y1); d.lineTo(370f, y0); d.close()
+        for (sg in listOf(1f, -1f)) {
+            d.reset()
+            d.moveTo(pu(0.355f), pv(0.93f * sg)); d.lineTo(pu(0.380f), pv(1.08f * sg))
+            d.lineTo(pu(0.405f), pv(1.07f * sg)); d.lineTo(pu(0.405f), pv(0.93f * sg)); d.close()
             p.umplere.color = Color.parseColor("#140504"); c.drawPath(d, p.umplere)
             p.linie.color = CONTUR; p.linie.strokeWidth = 1.8f; c.drawPath(d, p.linie)
         }
-        // parbrizul, acoperisul si luneta
-        d.reset(); d.moveTo(336f, 132f); d.cubicTo(360f, 126f, 388f, 124f, 412f, 124f); d.lineTo(412f, 408f)
-        d.cubicTo(388f, 408f, 360f, 406f, 336f, 400f); d.cubicTo(326f, 330f, 326f, 202f, 336f, 132f); d.close()
-        sticla(c, d)
-        p.dreptunghi(c, 412f, 126f, 234f, 280f, Color.parseColor("#0a0202"), 0f, 0.55f)
-        p.rama(c, 412f, 126f, 234f, 280f, Color.parseColor("#3a0e0a"), 1.2f)
-        d.reset(); d.moveTo(646f, 126f); d.cubicTo(690f, 128f, 716f, 134f, 728f, 150f); d.lineTo(728f, 382f)
-        d.cubicTo(716f, 398f, 690f, 404f, 646f, 406f); d.close()
-        sticla(c, d)
-        // liniile capotei si osiile
+        // parbrizul, acoperisul cu trapa, luneta
+        d.reset(); neted(d, PARBRIZ_NX + PARBRIZ_NX.reversed().map { it.first to -it.second }, true); sticla(c, d)
+        d.reset(); neted(d, ACOPERIS_NX + ACOPERIS_NX.reversed().map { it.first to -it.second }, true)
+        p.umplere.color = Color.parseColor("#0a0202"); p.umplere.alpha = 150; c.drawPath(d, p.umplere); p.umplere.alpha = 255
+        p.linie.color = Color.parseColor("#3a0e0a"); p.linie.strokeWidth = 1.2f; c.drawPath(d, p.linie)
+        p.rama(c, pu(0.47f), pv(0.45f), pu(0.62f) - pu(0.47f), pv(-0.45f) - pv(0.45f), Color.parseColor("#2a0a08"), 1.2f, 6f)
+        d.reset(); neted(d, LUNETA_NX + LUNETA_NX.reversed().map { it.first to -it.second }, true); sticla(c, d)
+        // nervurile capotei, in V spre grila
         p.linie.color = PARBRIZ; p.linie.strokeWidth = 1.5f
-        d.reset(); d.moveTo(90f, 150f); d.cubicTo(180f, 142f, 260f, 140f, 322f, 140f); c.drawPath(d, p.linie)
-        d.reset(); d.moveTo(90f, 382f); d.cubicTo(180f, 390f, 260f, 392f, 322f, 392f); c.drawPath(d, p.linie)
-        p.linie(c, FA, 150f, FA, 382f, OSIE, 2f)
-        p.linie(c, SA, 150f, SA, 382f, OSIE, 2f)
-        // farurile, albe, si stopurile, rosii
-        d.reset(); d.moveTo(28f, 168f); d.cubicTo(42f, 136f, 70f, 122f, 104f, 118f); lumina(c, d, FAR)
-        d.reset(); d.moveTo(28f, 364f); d.cubicTo(42f, 396f, 70f, 410f, 104f, 414f); lumina(c, d, FAR)
-        d.reset(); d.moveTo(800f, 136f); d.lineTo(812f, 160f); d.lineTo(812f, 372f); d.lineTo(800f, 396f); lumina(c, d, ROSU)
+        for (sg in listOf(1f, -1f)) {
+            d.reset(); neted(d, listOf(0.03f to 0.30f * sg, 0.12f to 0.48f * sg, 0.27f to 0.62f * sg), false); c.drawPath(d, p.linie)
+            d.reset(); neted(d, listOf(0.06f to 0.12f * sg, 0.16f to 0.22f * sg, 0.27f to 0.30f * sg), false); c.drawPath(d, p.linie)
+        }
+        p.linie(c, FA, pv(0.80f), FA, pv(-0.80f), OSIE, 2f)
+        p.linie(c, SA, pv(0.80f), SA, pv(-0.80f), OSIE, 2f)
+        // stopurile, in colturile din spate
+        for (sg in listOf(1f, -1f)) {
+            d.reset(); neted(d, listOf(0.905f to 0.93f * sg, 0.955f to 0.84f * sg, 0.985f to 0.62f * sg), false)
+            lumina(c, d, ROSU)
+        }
         // bara scanerului, in varful botului: un punct rosu care merge sus-jos
         val f2 = (timpS / 0.65f) % 2f
         val poz = (if (f2 < 1f) f2 else 2f - f2) * (SCANER_BOT - 1)
+        val x0 = pu(0.012f)
         for (i in 0 until SCANER_BOT) {
             val dist = kotlin.math.abs(i - poz)
             val cul = when {
@@ -169,8 +191,9 @@ class EcranEnergie(private val p: Pensula) {
                 dist < 2.5f -> Color.parseColor("#a01810")
                 else -> Color.parseColor("#3a0806")
             }
-            if (dist < 1.2f) p.dreptunghi(c, 7f, 225f + i * 7.2f, 11f, 11f, cul, 3f, 0.35f)
-            p.dreptunghi(c, 10f, 228f + i * 7.2f, 5f, 5f, cul, 1f)
+            val y = YM - (SCANER_BOT - 1) * 3.6f + i * 7.2f
+            if (dist < 1.2f) p.dreptunghi(c, x0 - 3f, y - 3f, 11f, 11f, cul, 3f, 0.35f)
+            p.dreptunghi(c, x0, y, 5f, 5f, cul, 1f)
         }
     }
 
@@ -197,7 +220,7 @@ class EcranEnergie(private val p: Pensula) {
     }
 
     private fun coloanaBaterie(c: Canvas, s: StareBord) {
-        val cx = 868f
+        val cx = 906f
         p.linie(c, cx - 24f, 96f, cx - 24f, 420f, LINIE_PANOU, 1.5f)
         p.text(c, cx, 112f, 13f, ETICHETA, "PUTERE BATERIE", spatiere = 2f)
         val kw = s.putereKw.roundToInt()
@@ -208,7 +231,7 @@ class EcranEnergie(private val p: Pensula) {
 
         // bara cu mijlocul la zero: stanga incarca, dreapta consuma; scara
         // cu radacina, ca puterile mici, cele de zi cu zi, sa se vada
-        val bw = 282f
+        val bw = 262f
         val jumatate = BARA_PE_PARTE
         val aprinse = if (kotlin.math.abs(s.putereKw) < 0.5f) 0 else kotlin.math.ceil(ScaraPutere.fractie(s.putereKw) * jumatate).toInt()
         val pas = bw / (2 * jumatate)
@@ -337,19 +360,21 @@ class EcranEnergie(private val p: Pensula) {
     private val puls = Paint(Paint.ANTI_ALIAS_FLAG).apply { style = Paint.Style.FILL }
 
     companion object {
-        private const val X0 = 24f
-        private const val X1 = 818f
-        private const val Y0 = 104f
-        private const val Y1 = 428f
+        private const val X0 = 8f
+        private const val X1 = 870f
+        private const val Y0 = 94f
+        private const val Y1 = 438f
+        private const val LUNGIME = X1 - X0
+        private const val JUMATATE = (Y1 - Y0) / 2f
         private const val YM = (Y0 + Y1) / 2f
 
         /** Osiile: fata si spate. */
-        private const val FA = 170f
-        private const val SA = 668f
+        private const val FA = X0 + 0.215f * LUNGIME
+        private const val SA = X0 + 0.789f * LUNGIME
 
         private const val ENG_X = 104f
         private const val TR_X = 258f
-        private const val BAT_X = 486f
+        private const val BAT_X = 500f
 
         /** Pulsurile de energie: cat de repede alearga, cat de rare, cat de lunga e coada. */
         private const val VITEZA_PULS = 120f
@@ -371,12 +396,27 @@ class EcranEnergie(private val p: Pensula) {
         private val FAR = Color.parseColor("#d8e8ff")
         private const val SCANER_BOT = 11
 
+        /**
+         * Conturul de sus, din bot spre spate, dupa schita NX 300h: (u, v),
+         * u de-a lungul masinii, v jumatatea de latime (1 = aripile).
+         */
+        private val CONTUR_NX = listOf(
+            0.000f to 0.00f, 0.002f to 0.45f, 0.008f to 0.66f, 0.020f to 0.80f, 0.040f to 0.90f,
+            0.070f to 0.96f, 0.110f to 0.99f, 0.160f to 1.00f, 0.300f to 0.99f, 0.350f to 0.96f,
+            0.500f to 0.955f, 0.660f to 0.965f, 0.730f to 0.99f, 0.800f to 1.00f, 0.860f to 0.99f,
+            0.910f to 0.96f, 0.945f to 0.90f, 0.970f to 0.80f, 0.988f to 0.66f, 0.997f to 0.45f,
+            1.000f to 0.00f,
+        )
+        private val PARBRIZ_NX = listOf(0.300f to 0.00f, 0.290f to 0.40f, 0.275f to 0.74f, 0.420f to 0.82f, 0.425f to 0.40f, 0.425f to 0.00f)
+        private val ACOPERIS_NX = listOf(0.425f to 0.00f, 0.425f to 0.80f, 0.620f to 0.82f, 0.820f to 0.78f, 0.830f to 0.40f, 0.830f to 0.00f)
+        private val LUNETA_NX = listOf(0.830f to 0.00f, 0.830f to 0.60f, 0.840f to 0.76f, 0.905f to 0.60f, 0.915f to 0.30f, 0.915f to 0.00f)
+
         private val MOTOR_LA_TR = listOf(ENG_X + 62f to YM, TR_X - 76f to YM)
-        private val TR_LA_FATA_SUS = listOf(TR_X - 25f to YM - 72f, TR_X - 25f to YM - 84f, FA to YM - 84f, FA to Y0 + 44f)
-        private val TR_LA_FATA_JOS = listOf(TR_X - 25f to YM + 72f, TR_X - 25f to YM + 84f, FA to YM + 84f, FA to Y1 - 44f)
+        private val TR_LA_FATA_SUS = listOf(TR_X - 25f to YM - 72f, TR_X - 25f to YM - 84f, FA to YM - 84f, FA to Y0 + 50f)
+        private val TR_LA_FATA_JOS = listOf(TR_X - 25f to YM + 72f, TR_X - 25f to YM + 84f, FA to YM + 84f, FA to Y1 - 50f)
         private val BAT_LA_TR = listOf(BAT_X - 70f to YM, TR_X + 76f to YM)
         private val BAT_LA_SPATE = listOf(BAT_X + 70f to YM, SA - 54f to YM)
-        private val MGR_SUS = listOf(SA to YM - 62f, SA to Y0 + 44f)
-        private val MGR_JOS = listOf(SA to YM + 62f, SA to Y1 - 44f)
+        private val MGR_SUS = listOf(SA to YM - 62f, SA to Y0 + 50f)
+        private val MGR_JOS = listOf(SA to YM + 62f, SA to Y1 - 50f)
     }
 }
