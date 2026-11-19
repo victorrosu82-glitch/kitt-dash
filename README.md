@@ -6,6 +6,39 @@ Citește datele prin adaptorul Bluetooth ELM327 (Viecar 1.5). Uz personal, făr�
 Planul pe etape și hotărârile luate: [docs/kitt-dash-plan.md](docs/kitt-dash-plan.md).
 Macheta aprobată a bordului: [docs/dashboard-kitt.html](docs/dashboard-kitt.html).
 
+## Instalarea pe telefon, pas cu pas
+
+**Se instalează numai prin KingInstaller.** Android Auto ascunde aplicațiile care nu vin
+din Magazin Play; KingInstaller instalează APK-ul astfel încât Android Auto să-l primească.
+Instalat altfel (deschis direct din Descărcări sau prin cablu, cu `adb install`), KITT se
+instalează, dar **nu apare pe ecranul mașinii**. De ce, în detaliu:
+[Instalarea pe telefon: numai prin KingInstaller](#instalarea-pe-telefon-numai-prin-kinginstaller).
+
+**O singură dată, la început:**
+
+1. Descarcă KingInstaller de la github.com/fcaronte/KingInstaller (secțiunea *Releases*,
+   fișierul `.apk`; aici a mers versiunea 2.6.1).
+2. Deschide fișierul descărcat. Telefonul întreabă dacă browserul are voie să instaleze
+   aplicații: răspunzi **Permite**, apoi **Instalează**.
+3. Prima dată când KingInstaller instalează ceva, telefonul întreabă și pentru el:
+   tot **Permite**.
+
+**La fiecare versiune nouă a lui KITT:**
+
+1. Pune `KittDash.apk` pe telefon, în **Descărcări** (din chat, din mail sau prin cablu).
+2. **Deconectează telefonul de la mașină** — o instalare în timp ce Android Auto rulează
+   lasă ecranul KITT negru până la reconectare.
+3. Deschide **KingInstaller** → alege fișierul `KittDash.apk`.
+4. **Lasă toate comutatoarele oprite** (Shizuku, Root): metoda simplă e cea care merge.
+5. Apasă **Install**. Apare fereastra telefonului: **Actualizează** (sau **Instalează**
+   prima dată).
+6. Conectează telefonul la mașină. KITT apare în lista de aplicații de navigație din
+   Android Auto.
+
+Versiunea nouă se instalează peste cea veche și păstrează setările (adaptorul ales,
+istoricul bateriei) numai dacă e semnată cu aceeași cheie. Un APK compilat pe alt
+calculator are altă semnătură: trebuie întâi dezinstalată versiunea veche.
+
 ## Unde suntem
 
 **Etapele 1 si 2 — gata, probate pe masina** (14.11.2026, Lexus NX 300h, Samsung S25+ /
@@ -276,7 +309,7 @@ Pentru o probă fără mașină: `python tools\sonda_elm327.py --simulator`.
 ```
 gradlew.bat test              # testele pe decodare și simulator, fără telefon
 gradlew.bat assembleDebug     # APK în app\build\outputs\apk\debug
-gradlew.bat installDebug      # pe telefonul legat pe USB
+gradlew.bat installDebug      # numai pentru probe; in masina NU apare (vezi KingInstaller)
 ```
 
 APK mic, semnat cu cheia de depanare, de copiat pe telefon:
